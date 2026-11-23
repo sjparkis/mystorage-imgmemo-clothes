@@ -1,0 +1,1618 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MyStorage — DB 설계서</title>
+  <style>
+    :root {
+      --primary: #4F46E5;
+      --primary-light: #EEF2FF;
+      --secondary: #10B981;
+      --secondary-light: #ECFDF5;
+      --accent: #F59E0B;
+      --accent-light: #FFFBEB;
+      --danger: #EF4444;
+      --gray-50: #F9FAFB;
+      --gray-100: #F3F4F6;
+      --gray-200: #E5E7EB;
+      --gray-300: #D1D5DB;
+      --gray-400: #9CA3AF;
+      --gray-500: #6B7280;
+      --gray-700: #374151;
+      --gray-900: #111827;
+      --radius: 12px;
+      --radius-sm: 8px;
+      --shadow: 0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06);
+      --shadow-md: 0 4px 6px rgba(0,0,0,0.07), 0 2px 4px rgba(0,0,0,0.06);
+      --shadow-lg: 0 10px 15px rgba(0,0,0,0.08), 0 4px 6px rgba(0,0,0,0.05);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Pretendard', 'Noto Sans KR', sans-serif;
+      color: var(--gray-900);
+      background: var(--gray-50);
+      line-height: 1.6;
+    }
+
+    /* 커버 */
+    .cover {
+      background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%);
+      color: white;
+      padding: 60px 48px;
+      position: relative;
+      overflow: hidden;
+    }
+    .cover::before {
+      content: '';
+      position: absolute;
+      top: -60px; right: -60px;
+      width: 320px; height: 320px;
+      background: rgba(255,255,255,0.06);
+      border-radius: 50%;
+    }
+    .cover::after {
+      content: '';
+      position: absolute;
+      bottom: -80px; left: -40px;
+      width: 240px; height: 240px;
+      background: rgba(255,255,255,0.04);
+      border-radius: 50%;
+    }
+    .cover-badge {
+      display: inline-block;
+      background: rgba(255,255,255,0.2);
+      border: 1px solid rgba(255,255,255,0.3);
+      border-radius: 20px;
+      padding: 4px 14px;
+      font-size: 13px;
+      font-weight: 500;
+      margin-bottom: 20px;
+    }
+    .cover h1 {
+      font-size: 42px;
+      font-weight: 800;
+      letter-spacing: -1px;
+      margin-bottom: 10px;
+    }
+    .cover .subtitle {
+      font-size: 18px;
+      opacity: 0.85;
+      margin-bottom: 28px;
+    }
+    .cover-meta {
+      display: flex;
+      gap: 32px;
+      font-size: 14px;
+      opacity: 0.75;
+    }
+
+    /* 목차 */
+    .toc {
+      background: white;
+      border-bottom: 1px solid var(--gray-200);
+      padding: 20px 0;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: var(--shadow);
+    }
+    .toc-inner {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 40px;
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .toc-label { font-size: 12px; font-weight: 600; color: var(--gray-500); text-transform: uppercase; letter-spacing: 0.5px; margin-right: 6px; white-space: nowrap; }
+    .toc a {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--gray-700);
+      text-decoration: none;
+      padding: 4px 10px;
+      border-radius: 20px;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+    .toc a:hover { background: var(--primary-light); color: var(--primary); }
+
+    /* 레이아웃 */
+    .container { max-width: 1100px; margin: 0 auto; padding: 0 40px; }
+
+    .section { padding: 56px 0; }
+    .section + .section { border-top: 1px solid var(--gray-200); }
+
+    .section-header { margin-bottom: 32px; }
+    .section-number {
+      display: inline-block;
+      background: var(--primary);
+      color: white;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 20px;
+      margin-bottom: 10px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+    .section-header h2 {
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+    }
+    .section-header p {
+      margin-top: 8px;
+      font-size: 15px;
+      color: var(--gray-500);
+    }
+
+    /* 테이블 섹션 */
+    .table-section {
+      background: white;
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: var(--shadow-md);
+      margin-bottom: 32px;
+    }
+    .table-section-header {
+      padding: 20px 28px;
+      border-bottom: 1px solid var(--gray-100);
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+    }
+    .table-icon {
+      width: 40px; height: 40px;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px;
+      font-weight: 800;
+      flex-shrink: 0;
+    }
+    .table-title { font-size: 20px; font-weight: 800; margin-bottom: 4px; }
+    .table-desc { font-size: 14px; color: var(--gray-500); }
+    .table-badges { display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
+    .tbadge {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+    .tbadge-rls { background: #EDE9FE; color: #5B21B6; }
+    .tbadge-migration { background: var(--gray-100); color: var(--gray-600); }
+    .tbadge-view { background: #DCFCE7; color: #166534; }
+    .tbadge-external { background: var(--secondary-light); color: #065F46; }
+
+    /* 컬럼 표 */
+    .schema-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    .schema-table thead tr {
+      background: var(--primary);
+      color: white;
+    }
+    .schema-table thead th {
+      padding: 11px 16px;
+      text-align: left;
+      font-weight: 600;
+      font-size: 13px;
+    }
+    .schema-table tbody tr {
+      border-bottom: 1px solid var(--gray-100);
+      transition: background 0.1s;
+    }
+    .schema-table tbody tr:last-child { border-bottom: none; }
+    .schema-table tbody tr:hover { background: var(--gray-50); }
+    .schema-table tbody td {
+      padding: 10px 16px;
+      vertical-align: middle;
+      font-size: 13px;
+    }
+    .col-name-cell {
+      font-weight: 700;
+      font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+      font-size: 13px;
+    }
+    .col-type-cell {
+      font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+      font-size: 12px;
+      color: #7C3AED;
+    }
+    .badge {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      margin-right: 3px;
+      white-space: nowrap;
+    }
+    .badge-pk { background: #FEF3C7; color: #92400E; }
+    .badge-fk { background: #DBEAFE; color: #1E40AF; }
+    .badge-uk { background: #F3E8FF; color: #6D28D9; }
+    .badge-nn { background: var(--gray-100); color: var(--gray-600); }
+    .badge-def { background: #ECFDF5; color: #065F46; }
+    .badge-chk { background: #FFF7ED; color: #C2410C; }
+
+    .fk-ref {
+      font-size: 11px;
+      color: var(--primary);
+      font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+      display: block;
+      margin-top: 2px;
+    }
+
+    /* RLS 섹션 */
+    .rls-section {
+      padding: 20px 28px;
+      border-top: 1px solid var(--gray-100);
+    }
+    .rls-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #5B21B6;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .rls-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .rls-item {
+      background: #FAFAF9;
+      border: 1px solid var(--gray-200);
+      border-radius: 6px;
+      padding: 8px 14px;
+      font-size: 13px;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+    .rls-op {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+    .rls-op.select { background: #DBEAFE; color: #1E40AF; }
+    .rls-op.insert { background: #DCFCE7; color: #166534; }
+    .rls-op.update { background: var(--accent-light); color: #92400E; }
+    .rls-op.delete { background: #FEE2E2; color: #991B1B; }
+    .rls-op.all { background: #F3E8FF; color: #6D28D9; }
+    .rls-desc { font-size: 13px; color: var(--gray-700); }
+    .rls-code {
+      font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+      font-size: 11px;
+      color: var(--gray-500);
+      display: block;
+      margin-top: 2px;
+    }
+
+    /* 인덱스 섹션 */
+    .index-section {
+      padding: 16px 28px;
+      border-top: 1px solid var(--gray-100);
+      background: var(--gray-50);
+    }
+    .index-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--gray-500);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+    .index-list { display: flex; gap: 8px; flex-wrap: wrap; }
+    .index-item {
+      background: white;
+      border: 1px solid var(--gray-200);
+      border-radius: 5px;
+      padding: 4px 10px;
+      font-size: 12px;
+      font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+      color: var(--gray-700);
+    }
+
+    /* 함수/트리거 섹션 */
+    .func-card {
+      background: white;
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: var(--shadow-md);
+      margin-bottom: 20px;
+    }
+    .func-header {
+      padding: 18px 24px;
+      background: var(--gray-900);
+      color: white;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .func-name { font-size: 16px; font-weight: 700; font-family: 'Menlo', 'Monaco', 'Courier New', monospace; }
+    .func-sig { font-size: 12px; color: var(--gray-400); font-family: 'Menlo', 'Monaco', 'Courier New', monospace; margin-top: 2px; }
+    .func-badge {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 4px;
+      text-transform: uppercase;
+    }
+    .func-badge.fn { background: #7C3AED; color: white; }
+    .func-badge.view { background: var(--secondary); color: white; }
+    .func-body { padding: 20px 24px; }
+    .func-desc { font-size: 14px; color: var(--gray-700); margin-bottom: 14px; }
+    pre.code-block {
+      background: #1E1E2E;
+      color: #CDD6F4;
+      padding: 16px 20px;
+      border-radius: var(--radius-sm);
+      font-size: 12px;
+      font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+      overflow-x: auto;
+      line-height: 1.7;
+    }
+    .kw { color: #CBA6F7; }
+    .fn-name { color: #89B4FA; }
+    .str { color: #A6E3A1; }
+    .cmt { color: #6C7086; font-style: italic; }
+    .num { color: #FAB387; }
+
+    /* 오프라인 캐시 */
+    .offline-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 16px;
+    }
+
+    /* 뷰 */
+    .view-col-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--gray-100);
+      font-size: 13px;
+    }
+    .view-col-row:last-child { border-bottom: none; }
+
+    @media (max-width: 768px) {
+      .cover { padding: 40px 24px; }
+      .cover h1 { font-size: 28px; }
+      .container { padding: 0 20px; }
+      .toc-inner { padding: 0 20px; }
+      .offline-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- 커버 -->
+<div class="cover">
+  <div style="max-width:1100px; margin:0 auto; position:relative; z-index:1;">
+    <div class="cover-badge">Database Design</div>
+    <h1>MyStorage — DB 설계서</h1>
+    <p class="subtitle">Supabase PostgreSQL 스키마 · RLS 정책 · 오프라인 캐시 (Drift SQLite)</p>
+    <div class="cover-meta">
+      <span>버전 1.0</span>
+      <span>2026-11-23</span>
+      <span>migrations/001–004</span>
+    </div>
+  </div>
+</div>
+
+<!-- 목차 -->
+<nav class="toc">
+  <div class="toc-inner">
+    <span class="toc-label">테이블</span>
+    <a href="#t-auth-users">auth.users</a>
+    <a href="#t-organizations">organizations</a>
+    <a href="#t-org-members">org_members</a>
+    <a href="#t-storages">storages</a>
+    <a href="#t-clothes">clothes</a>
+    <a href="#t-tags">tags</a>
+    <a href="#t-clothes-tags">clothes_tags</a>
+    <a href="#t-subscriptions">subscriptions</a>
+    <a href="#t-admin-stats">admin_stats</a>
+    <a href="#s-offline">오프라인 캐시</a>
+    <a href="#s-functions">함수 / 뷰</a>
+  </div>
+</nav>
+
+<!-- auth.users -->
+<section class="section" id="t-auth-users">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-number">01 · External</div>
+      <h2>auth.users</h2>
+      <p>Supabase Auth 가 관리하는 사용자 테이블. 직접 DDL 조작 불가. 모든 사용자 인증 및 식별의 기준점입니다.</p>
+    </div>
+
+    <div class="table-section">
+      <div class="table-section-header">
+        <div class="table-icon" style="background:var(--secondary); color:white;">U</div>
+        <div>
+          <div class="table-title">auth.users</div>
+          <div class="table-desc">Supabase 내장 인증 테이블 — 직접 생성/수정 불가</div>
+          <div class="table-badges">
+            <span class="tbadge tbadge-external">Supabase 내장</span>
+          </div>
+        </div>
+      </div>
+      <table class="schema-table">
+        <thead>
+          <tr>
+            <th style="width:180px;">컬럼명</th>
+            <th style="width:140px;">타입</th>
+            <th style="width:160px;">제약조건</th>
+            <th>설명</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="col-name-cell">id</td>
+            <td class="col-type-cell">uuid</td>
+            <td><span class="badge badge-pk">PK</span> <span class="badge badge-nn">NN</span></td>
+            <td>사용자 고유 식별자. 모든 테이블의 user 참조 기준</td>
+          </tr>
+          <tr>
+            <td class="col-name-cell">email</td>
+            <td class="col-type-cell">text</td>
+            <td><span class="badge badge-uk">UNIQUE</span></td>
+            <td>로그인 이메일</td>
+          </tr>
+          <tr>
+            <td class="col-name-cell">created_at</td>
+            <td class="col-type-cell">timestamptz</td>
+            <td></td>
+            <td>계정 생성 시각</td>
+          </tr>
+          <tr>
+            <td colspan="4" style="background:var(--gray-50); font-size:12px; color:var(--gray-500); font-style:italic; text-align:center; padding:10px;">
+              위 컬럼 외에도 Supabase 내부 컬럼 다수 존재 (encrypted_password, confirmation_token 등). 앱에서 직접 사용하지 않음.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="index-section">
+        <div class="index-title">참조 관계 (이 테이블이 부모)</div>
+        <div class="index-list">
+          <span class="index-item">organizations.owner_id → id</span>
+          <span class="index-item">organization_members.user_id → id</span>
+          <span class="index-item">clothes.created_by → id</span>
+          <span class="index-item">subscriptions.user_id → id</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- organizations -->
+<section class="section" id="t-organizations">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-number">02 · Core</div>
+      <h2>organizations</h2>
+      <p>가족/그룹 단위의 최상위 조직 단위. 모든 보관소(storages)와 옷(clothes)은 조직에 속합니다.</p>
+    </div>
+
+    <div class="table-section">
+      <div class="table-section-header">
+        <div class="table-icon" style="background:var(--primary); color:white;">O</div>
+        <div>
+          <div class="table-title">organizations</div>
+          <div class="table-desc">그룹/가족 단위 조직. storages, clothes 의 최상위 소유 단위</div>
+          <div class="table-badges">
+            <span class="tbadge tbadge-rls">RLS 적용</span>
+            <span class="tbadge tbadge-migration" style="background:var(--gray-100); color:var(--gray-700);">001_schema.sql</span>
+          </div>
+        </div>
+      </div>
+      <table class="schema-table">
+        <thead>
+          <tr>
+            <th style="width:180px;">컬럼명</th>
+            <th style="width:140px;">타입</th>
+            <th style="width:200px;">제약조건</th>
+            <th>설명</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="col-name-cell">id</td>
+            <td class="col-type-cell">uuid</td>
+            <td><span class="badge badge-pk">PK</span> <span class="badge badge-def">DEFAULT gen_random_uuid()</span></td>
+            <td>조직 고유 식별자</td>
+          </tr>
+          <tr>
+            <td class="col-name-cell">name</td>
+            <td class="col-type-cell">text</td>
+            <td><span class="badge badge-nn">NOT NULL</span></td>
+            <td>조직명 (예: "우리 가족", "자취방")</td>
+          </tr>
+          <tr>
+            <td class="col-name-cell">owner_id</td>
+            <td class="col-type-cell">uuid</td>
+            <td>
+              <span class="badge badge-fk">FK</span> <span class="badge badge-nn">NOT NULL</span>
+              <span class="fk-ref">→ auth.users(id)</span>
+            </td>
+            <td>조직 소유자. 초대/삭제 권한 보유</td>
+          </tr>
+          <tr>
+            <td class="col-name-cell">created_at</td>
+            <td class="col-type-cell">timestamptz</td>
+            <td><span class="badge badge-def">DEFAULT now()</span></td>
+            <td>조직 생성 시각</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="rls-section">
+        <div class="rls-title">Row Level Security 정책</div>
+        <div class="rls-list">
+          <div class="rls-item">
+            <span class="rls-op select">SELECT</span>
+            <div>
+              <span class="rls-desc">org_members_select — 조직 멤버만 조회 가능</span>
+              <span class="rls-code">USING (is_org_member(id))</span>
+            </div>
+          </div>
+          <div class="rls-item">
+            <span class="rls-op insert">INSERT</span>
+            <div>
+              <span class="rls-desc">org_insert — 본인이 owner 로 삽입하는 경우만 허용</span>
+              <span class="rls-code">WITH CHECK (owner_id = auth.uid())</span>
+            </div>
+          </div>
+          <div class="rls-item">
+            <span class="rls-op update">UPDATE</span>
+            <div>
+              <span class="rls-desc">org_owner_update — 소유자만 수정 가능</span>
+              <span class="rls-code">USING (owner_id = auth.uid())</span>
+            </div>
+          </div>
+          <div class="rls-item">
+            <span class="rls-op delete">DELETE</span>
+            <div>
+              <span class="rls-desc">org_owner_delete — 소유자만 삭제 가능</span>
+              <span class="rls-code">USING (owner_id = auth.uid())</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="index-section">
+        <div class="index-title">인덱스</div>
+        <div class="index-list">
+          <span class="index-item">PK: id</span>
+          <span class="index-item">IDX: owner_id (FK 자동)</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- organization_members -->
+<section class="section" id="t-org-members">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-number">03 · Core</div>
+      <h2>organization_members</h2>
+      <p>사용자와 조직 간의 멤버십 테이블. 한 사용자가 여러 조직에 소속될 수 있으며, 역할(role)로 권한을 구분합니다.</p>
+    </div>
+
+    <div class="table-section">
+      <div class="table-section-header">
+        <div class="table-icon" style="background:var(--gray-500); color:white;">M</div>
+        <div>
+          <div class="table-title">organization_members</div>
+          <div class="table-desc">조직-사용자 멤버십. UNIQUE(org_id, user_id) 로 중복 가입 방지</div>
+          <div class="table-badges">
+            <span class="tbadge tbadge-rls">RLS 적용</span>
+            <span class="tbadge tbadge-migration" style="background:var(--gray-100); color:var(--gray-700);">001_schema.sql</span>
+          </div>
+        </div>
+      </div>
+      <table class="schema-table">
+        <thead>
+          <tr>
+            <th style="width:180px;">컬럼명</th>
+            <th style="width:140px;">타입</th>
+            <th style="width:200px;">제약조건</th>
+            <th>설명</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="col-name-cell">id</td>
+            <td class="col-type-cell">uuid</td>
+            <td><span class="badge badge-pk">PK</span> <span class="badge badge-def">DEFAULT gen_random_uuid()</span></td>
+            <td>멤버십 고유 식별자</td>
+          </tr>
+          <tr>
+            <td class="col-name-cell">org_id</td>
+            <td class="col-type-cell">uuid</td>
+            <td>
+              <span class="badge badge-fk">FK</span> <span class="badge badge-nn">NOT NULL</span>
+              <span class="fk-ref">→ organizations(id) ON DELETE CASCADE</span>
+            </td>
+            <td>소속 조직 ID</td>
+          </tr>
+          <tr>
+            <td class="col-name-cell">user_id</td>
+            <td class="col-type-cell">uuid</td>
+            <td>
+              <span class="badge badge-fk">FK</span> <span class="badge badge-nn">NOT NULL</span>
+              <span class="fk-ref">→ auth.users(id)</span>
+            </td>
+            <td>멤버 사용자 ID</td>
+          </tr>
+          <tr>
+            <td class="col-name-cell">role</td>
+            <td class="col-type-cell">text</td>
+            <td>
+              <span class="badge badge-nn">NOT NULL</span>
+              <span class="badge badge-chk">CHECK</span>
+              <span class="badge badge-def">DEFAULT 'member'</span>
+            </td>
+            <td>'owner' 또는 'member'. 소유자는 초대/삭제 가능</td>
+          </tr>
+          <tr>
+            <td class="col-name-cell">joined_at</td>
+            <td class="col-type-cell">timestamptz</td>
+            <td><span class="badge badge-def">DEFAULT now()</span></td>
+            <td>조직 가입 시각</td>
+          </tr>
+          <tr>
+            <td colspan="4" style="background:#FFFBEB; font-size:12px; color:#92400E; padding:8px 16px;">
+              UNIQUE(org_id, user_id) — 동일 사용자의 중복 멤버십 방지
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="rls-section">
+        <div class="rls-title">Row Level Security 정책</div>
+        <div class="rls-list">
+          <div class="rls-item">
+            <span class="rls-op select">SELECT</span>
+            <div>
+              <span class="rls-desc">members_select — 같은 조직 멤버만 조회 가능</span>
+              <span class="rls-code">USING (is_org_member(org_id))</span>
+            </div>
+          </div>
+          <div class="rls-item">
+            <span class="rls-op insert">INSERT</span>
+            <div>
+              <span class="rls-desc">members_insert — 조직 소유자만 멤버 추가 가능</span>
+              <span class="rls-code">WITH CHECK (org_id IN (SELECT id FROM organizations WHERE owner_id = auth.uid()))</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="index-section">
+        <div class="index-title">인덱스</div>
+        <div class="index-list">
+          <span class="index-item">PK: id</span>
+          <span class="index-item">UNIQUE: (org_id, user_id)</span>
+          <span class="index-item">IDX: org_id (FK 자동)</span>
+          <span class="index-item">IDX: user_id (FK 자동)</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- storages -->
+<section class="section" id="t-storages">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-number">04 · Core</div>
+      <h2>storages</h2>
+      <p>옷을 보관하는 물리적/논리적 공간 (서랍, 옷장, 박스 등). QR 코드로 모바일 스캔을 통해 빠른 접근이 가능합니다.</p>
+    </div>
+
+    <div class="table-section">
+      <div class="table-section-header">
+        <div class="table-icon" style="background:var(--primary); color:white;">S</div>
+        <div>
+          <div class="table-title">storages</div>
+          <div class="table-desc">보관소 단위. QR 코드 스캔으로 즉시 접근 가능. qr_code 는 전역 유일값</div>
+          <div class="table-badges">
+            <span class="tbadge tbadge-rls">RLS 적용</span>
+            <span class="tbadge tbadge-migration" style="background:var(--gray-100); color:var(--gray-700);">001_schema.sql</span>
+          </div>
+        </div>
+      </div>
+      <table class="schema-table">
+        <thead>
+          <tr>
+            <th style="width:180px;">컬럼명</th>
+            <th style="width:140px;">타입</th>
+            <th style="width:200px;">제약조건</th>
+            <th>설명</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="col-name-cell">id</td>
+            <td class="col-type-cell">uuid</td>
+            <td><span class="badge badge-pk">PK</span> <span class="badge badge-def">DEFAULT gen_random_uuid()</span></td>
+            <td>보관소 고유 식별자</td>
+          </tr>
+          <tr>
+            <td class="col-name-cell">org_id</td>
+            <td class="col-type-cell">uuid</td>
+            <td>
+              <span class="badge badge-fk">FK</span> <span class="badge badge-nn">NOT NULL</span>
+              <span class="fk-ref">→ organizations(id) ON DELETE CASCADE</span>
+            </td>
+            <td>소속 조직 ID. 조직 삭제 시 보관소도 삭제됨</td>
+          </tr>
+          <tr>
+            <td class="col-name-cell">name</td>
+            <td class="col-type-cell">text</td>
+            <td><span class="badge badge-nn">NOT NULL</span></td>
+            <td>보관소 이름 (예: "안방 서랍 1단")</td>
+          </tr>
+          <tr>
+            <td class="col-name-cell">photo_url</td>
+            <td class="col-type-cell">text</td>
+            <td></td>
+            <td>보관소 사진 URL (Supabase Storage). null 허용</td>
+          </tr>
+          <tr>
+            <td class="col-name-cell">qr_code</td>
+            <td class="col-type-cell">uuid</td>
+            <td>
+              <span class="badge badge-uk">UNIQUE</span> <span class="badge badge-nn">NOT NULL</span>
+              <span class="badge badge-def">DEFAULT gen_random_uuid()</span>
+            </td>
+            <td>QR 코드용 UUID. 전역 유일값으로 스캔 시 보관소 식별</td>
+          </tr>
+          <tr>
+            <td class="col-name-cell">description</td>
+            <td class="col-type-cell">text</td>
+            <td></td>
+            <td>보관소 설명 메모. null 허용</td>
+          </tr>
+          <tr>
+            <td class="col-name-cell">created_at</td>
+            <td class="col-type-cell">timestamptz</td>
+            <td><span class="badge badge-def">DEFAULT now()</span></td>
+            <td>보관소 생성 시각</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="rls-section">
+        <div class="rls-title">Row Level Security 정책</div>
+        <div class="rls-list">
+          <div class="rls-item">
+            <span class="rls-op select">SELECT</span>
+            <div>
+              <span class="rls-desc">storages_select — 조직 멤버만 조회 가능</span>
+              <span class="rls-code">USING (is_org_member(org_id))</span>
+            </div>
+          </div>
+          <div class="rls-item">
+            <span class="rls-op all">ALL</span>
+            <div>
+              <span class="rls-desc">storages_all — 조직 멤버면 INSERT / UPDATE / DELETE 모두 허용</span>
+              <span class="rls-code">USING (is_org_member(org_id))</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="index-section">
+        <div class="index-title">인덱스</div>
+        <div class="index-list">
+          <span class="index-item">PK: id</span>
+          <span class="index-item">UNIQUE: qr_code</span>
+          <span class="index-item">IDX: org_id (FK 자동)</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- clothes -->
+<section class="section" id="t-clothes">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-number">05 · Core</div>
+      <h2>clothes</h2>
+      <p>앱의 핵심 엔티티. 보관 중인 개별 옷 아이템을 나타냅니다. 보관소(storage)에 배치되며, 태그로 분류됩니다.</p>
+    </div>
+
+    <div class="table-section">
+      <div class="table-section-header">
+        <div class="table-icon" style="background:var(--primary); color:white;">C</div>
+        <div>
+          <div class="table-title">clothes</div>
+          <div class="table-desc">핵심 엔티티. 옷 1건을 나타내며 storage_id ON DELETE SET NULL 로 보관소 삭제 시에도 옷 데이터 보존</div>
+          <div class="table-badges">
+            <span class="tbadge tbadge-rls">RLS 적용</span>
+            <span class="tbadge tbadge-migration" style="background:var(--gray-100); color:var(--gray-700);">001_schema.sql</span>
+          </div>
+        </div>
+      </div>
+      <table class="schema-table">
+        <thead>
+          <tr>
+            <th style="width:180px;">컬럼명</th>
+            <th style="width:140px;">타입</th>
+            <th style="width:200px;">제약조건</th>
+            <th>설명</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="col-name-cell">id</td>
+            <td class="col-type-cell">uuid</td>
+            <td><span class="badge badge-pk">PK</span> <span class="badge badge-def">DEFAULT gen_random_uuid()</span></td>
+            <td>옷 고유 식별자</td>
+          </tr>
+          <tr>
+            <td class="col-name-cell">org_id</td>
+            <td class="col-type-cell">uuid</td>
+            <td>
+              <span class="badge badge-fk">FK</span> <span class="badge badge-nn">NOT NULL</span>
+              <span class="fk-ref">→ organizations(id) ON DELETE CASCADE</span>
+            </td>
+            <td>소속 조직 ID. RLS 접근 제어 기준</td>
+          </tr>
+          <tr>
+            <td class="col-name-cell">storage_id</td>
+            <td class="col-type-cell">uuid</td>
+            <td>
+              <span class="badge badge-fk">FK</span>
+              <span class="fk-ref">→ storages(id) ON DELETE SET NULL</span>
+            </td>
+            <td>현재 보관 중인 보관소. null = 미배치 상태</td>
+          </tr>
+          <tr>
+            <td class="col-name-cell">photo_url</td>
+            <td class="col-type-cell">text</td>
+            <td></td>
+            <td>옷 사진 URL (Supabase Storage). null 허용</td>
+          </tr>
+          <tr>
+            <td class="col-name-cell">name</td>
+            <td class="col-type-cell">text</td>
+            <td></td>
+            <td>옷 이름/설명. null 허용 (AI 태그로만 식별 가능)</td>
+          </tr>
+          <tr>
+            <td class="col-name-cell">created_by</td>
+            <td class="col-type-cell">uuid</td>
+            <td>
+              <span class="badge badge-fk">FK</span>
+              <span class="fk-ref">→ auth.users(id)</span>
+            </td>
+            <td>등록한 사용자. null 허용 (사용자 탈퇴 시 SET NULL)</td>
+          </tr>
+          <tr>
+            <td class="col-name-cell">created_at</td>
+            <td class="col-type-cell">timestamptz</td>
+            <td><span class="badge badge-def">DEFAULT now()</span></td>
+            <td>옷 등록 시각</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="rls-section">
+        <div class="rls-title">Row Level Security 정책</div>
+        <div class="rls-list">
+          <div class="rls-item">
+            <span class="rls-op select">SELECT</span>
+            <div>
+              <span class="rls-desc">clothes_select — 조직 멤버만 조회 가능</span>
+              <span class="rls-code">USING (is_org_member(org_id))</span>
+            </div>
+          </div>
+          <div class="rls-item">
+            <span class="rls-op all">ALL</span>
+            <div>
+              <span class="rls-desc">clothes_all — 조직 멤버면 INSERT / UPDATE / DELETE 모두 허용</span>
+              <span class="rls-code">USING (is_org_member(org_id))</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="index-section">
+        <div class="index-title">인덱스</div>
+        <div class="index-list">
+          <span class="index-item">PK: id</span>
+          <span class="index-item">IDX: org_id (FK 자동)</span>
+          <span class="index-item">IDX: storage_id (FK 자동)</span>
+          <span class="index-item">IDX: created_by (FK 자동)</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- tags -->
+<section class="section" id="t-tags">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-number">06 · Lookup</div>
+      <h2>tags</h2>
+      <p>옷 분류에 사용되는 태그 마스터 테이블. AI 자동 태깅과 사용자 수동 태깅 모두 이 테이블을 참조합니다.</p>
+    </div>
+
+    <div class="table-section">
+      <div class="table-section-header">
+        <div class="table-icon" style="background:var(--accent); color:white;">T</div>
+        <div>
+          <div class="table-title">tags</div>
+          <div class="table-desc">태그 마스터. 색상/종류/계절/브랜드/커스텀 카테고리. name 은 전역 유일</div>
+          <div class="table-badges">
+            <span class="tbadge tbadge-migration" style="background:var(--gray-100); color:var(--gray-700);">001_schema.sql</span>
+          </div>
+        </div>
+      </div>
+      <table class="schema-table">
+        <thead>
+          <tr>
+            <th style="width:180px;">컬럼명</th>
+            <th style="width:140px;">타입</th>
+            <th style="width:200px;">제약조건</th>
+            <th>설명</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="col-name-cell">id</td>
+            <td class="col-type-cell">uuid</td>
+            <td><span class="badge badge-pk">PK</span> <span class="badge badge-def">DEFAULT gen_random_uuid()</span></td>
+            <td>태그 고유 식별자</td>
+          </tr>
+          <tr>
+            <td class="col-name-cell">name</td>
+            <td class="col-type-cell">text</td>
+            <td><span class="badge badge-nn">NOT NULL</span> <span class="badge badge-uk">UNIQUE</span></td>
+            <td>태그명 (예: "빨간색", "니트", "여름", "Nike"). 전역 유일</td>
+          </tr>
+          <tr>
+            <td class="col-name-cell">category</td>
+            <td class="col-type-cell">text</td>
+            <td>
+              <span class="badge badge-nn">NOT NULL</span>
+              <span class="badge badge-chk">CHECK</span>
+            </td>
+            <td>'color' | 'type' | 'season' | 'brand' | 'custom'</td>
+          </tr>
+        </tbody>
+      </table>
+      <div style="padding:14px 28px; border-top:1px solid var(--gray-100); background:var(--gray-50);">
+        <div style="font-size:12px; font-weight:700; color:var(--gray-500); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:8px;">category CHECK 허용값</div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <span style="background:#FEE2E2; color:#991B1B; font-size:12px; font-weight:600; padding:3px 10px; border-radius:4px;">color</span>
+          <span style="background:#DBEAFE; color:#1E40AF; font-size:12px; font-weight:600; padding:3px 10px; border-radius:4px;">type</span>
+          <span style="background:#DCFCE7; color:#166534; font-size:12px; font-weight:600; padding:3px 10px; border-radius:4px;">season</span>
+          <span style="background:#FEF3C7; color:#92400E; font-size:12px; font-weight:600; padding:3px 10px; border-radius:4px;">brand</span>
+          <span style="background:var(--gray-100); color:var(--gray-600); font-size:12px; font-weight:600; padding:3px 10px; border-radius:4px;">custom</span>
+        </div>
+      </div>
+      <div class="index-section">
+        <div class="index-title">인덱스</div>
+        <div class="index-list">
+          <span class="index-item">PK: id</span>
+          <span class="index-item">UNIQUE: name</span>
+          <span class="index-item">IDX: category (검색 최적화 권장)</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- clothes_tags -->
+<section class="section" id="t-clothes-tags">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-number">07 · Bridge</div>
+      <h2>clothes_tags</h2>
+      <p>clothes 와 tags 간의 N:M 관계를 중재하는 연결 테이블. AI 자동 생성 여부를 별도 컬럼으로 추적합니다.</p>
+    </div>
+
+    <div class="table-section">
+      <div class="table-section-header">
+        <div class="table-icon" style="background:var(--accent); color:white;">CT</div>
+        <div>
+          <div class="table-title">clothes_tags</div>
+          <div class="table-desc">옷-태그 N:M 연결 테이블. ai_generated 로 AI 태그와 사용자 태그 구분</div>
+          <div class="table-badges">
+            <span class="tbadge tbadge-rls">RLS 적용</span>
+            <span class="tbadge tbadge-migration" style="background:var(--gray-100); color:var(--gray-700);">001_schema.sql</span>
+          </div>
+        </div>
+      </div>
+      <table class="schema-table">
+        <thead>
+          <tr>
+            <th style="width:180px;">컬럼명</th>
+            <th style="width:140px;">타입</th>
+            <th style="width:200px;">제약조건</th>
+            <th>설명</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="col-name-cell">id</td>
+            <td class="col-type-cell">uuid</td>
+            <td><span class="badge badge-pk">PK</span> <span class="badge badge-def">DEFAULT gen_random_uuid()</span></td>
+            <td>연결 레코드 고유 식별자</td>
+          </tr>
+          <tr>
+            <td class="col-name-cell">cloth_id</td>
+            <td class="col-type-cell">uuid</td>
+            <td>
+              <span class="badge badge-fk">FK</span> <span class="badge badge-nn">NOT NULL</span>
+              <span class="fk-ref">→ clothes(id) ON DELETE CASCADE</span>
+            </td>
+            <td>옷 ID. 옷 삭제 시 연결 태그도 함께 삭제</td>
+          </tr>
+          <tr>
+            <td class="col-name-cell">tag_id</td>
+            <td class="col-type-cell">uuid</td>
+            <td>
+              <span class="badge badge-fk">FK</span> <span class="badge badge-nn">NOT NULL</span>
+              <span class="fk-ref">→ tags(id) ON DELETE CASCADE</span>
+            </td>
+            <td>태그 ID. 태그 삭제 시 연결도 함께 삭제</td>
+          </tr>
+          <tr>
+            <td class="col-name-cell">ai_generated</td>
+            <td class="col-type-cell">boolean</td>
+            <td><span class="badge badge-def">DEFAULT false</span></td>
+            <td>true = AI 가 자동 부여한 태그 / false = 사용자 직접 추가</td>
+          </tr>
+          <tr>
+            <td colspan="4" style="background:#FFFBEB; font-size:12px; color:#92400E; padding:8px 16px;">
+              UNIQUE(cloth_id, tag_id) — 동일 옷에 동일 태그 중복 연결 방지
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="rls-section">
+        <div class="rls-title">Row Level Security 정책</div>
+        <div style="font-size:13px; color:var(--gray-500); margin-bottom:8px;">cloth_id → clothes.org_id 체인을 통해 조직 멤버십 확인</div>
+        <div class="rls-list">
+          <div class="rls-item">
+            <span class="rls-op select">SELECT</span>
+            <div>
+              <span class="rls-desc">clothes_tags_select — cloth_id 를 통해 조직 멤버십 확인</span>
+              <span class="rls-code">USING (cloth_id IN (SELECT id FROM clothes WHERE is_org_member(org_id)))</span>
+            </div>
+          </div>
+          <div class="rls-item">
+            <span class="rls-op all">ALL</span>
+            <div>
+              <span class="rls-desc">clothes_tags_all — 조직 멤버면 INSERT / UPDATE / DELETE 모두 허용</span>
+              <span class="rls-code">USING (cloth_id IN (SELECT id FROM clothes WHERE is_org_member(org_id)))</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="index-section">
+        <div class="index-title">인덱스</div>
+        <div class="index-list">
+          <span class="index-item">PK: id</span>
+          <span class="index-item">UNIQUE: (cloth_id, tag_id)</span>
+          <span class="index-item">IDX: cloth_id (FK 자동)</span>
+          <span class="index-item">IDX: tag_id (FK 자동)</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- subscriptions -->
+<section class="section" id="t-subscriptions">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-number">08 · Billing</div>
+      <h2>subscriptions</h2>
+      <p>사용자별 구독 플랜 정보. RevenueCat 과 연동하여 인앱 결제를 관리합니다. 사용자당 1건만 존재합니다 (1:1).</p>
+    </div>
+
+    <div class="table-section">
+      <div class="table-section-header">
+        <div class="table-icon" style="background:var(--accent); color:white;">$</div>
+        <div>
+          <div class="table-title">subscriptions</div>
+          <div class="table-desc">구독 플랜 관리. user_id UNIQUE 로 1:1 관계. RevenueCat ID 저장</div>
+          <div class="table-badges">
+            <span class="tbadge tbadge-rls">RLS 적용</span>
+            <span class="tbadge tbadge-migration" style="background:var(--gray-100); color:var(--gray-700);">003_subscriptions.sql</span>
+          </div>
+        </div>
+      </div>
+      <table class="schema-table">
+        <thead>
+          <tr>
+            <th style="width:180px;">컬럼명</th>
+            <th style="width:140px;">타입</th>
+            <th style="width:200px;">제약조건</th>
+            <th>설명</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="col-name-cell">id</td>
+            <td class="col-type-cell">uuid</td>
+            <td><span class="badge badge-pk">PK</span> <span class="badge badge-def">DEFAULT gen_random_uuid()</span></td>
+            <td>구독 레코드 고유 식별자</td>
+          </tr>
+          <tr>
+            <td class="col-name-cell">user_id</td>
+            <td class="col-type-cell">uuid</td>
+            <td>
+              <span class="badge badge-fk">FK</span> <span class="badge badge-nn">NOT NULL</span> <span class="badge badge-uk">UNIQUE</span>
+              <span class="fk-ref">→ auth.users(id)</span>
+            </td>
+            <td>구독 사용자. UNIQUE 로 1:1 관계 보장</td>
+          </tr>
+          <tr>
+            <td class="col-name-cell">plan</td>
+            <td class="col-type-cell">text</td>
+            <td>
+              <span class="badge badge-nn">NOT NULL</span>
+              <span class="badge badge-chk">CHECK</span>
+              <span class="badge badge-def">DEFAULT 'free'</span>
+            </td>
+            <td>'free' | 'ad_free' | 'basic' | 'ai_voice'</td>
+          </tr>
+          <tr>
+            <td class="col-name-cell">billing_cycle</td>
+            <td class="col-type-cell">text</td>
+            <td><span class="badge badge-chk">CHECK</span></td>
+            <td>'monthly' | 'yearly'. free 플랜은 null</td>
+          </tr>
+          <tr>
+            <td class="col-name-cell">status</td>
+            <td class="col-type-cell">text</td>
+            <td>
+              <span class="badge badge-nn">NOT NULL</span>
+              <span class="badge badge-chk">CHECK</span>
+              <span class="badge badge-def">DEFAULT 'active'</span>
+            </td>
+            <td>'active' | 'cancelled' | 'expired'</td>
+          </tr>
+          <tr>
+            <td class="col-name-cell">started_at</td>
+            <td class="col-type-cell">timestamptz</td>
+            <td><span class="badge badge-def">DEFAULT now()</span></td>
+            <td>구독 시작 시각</td>
+          </tr>
+          <tr>
+            <td class="col-name-cell">expires_at</td>
+            <td class="col-type-cell">timestamptz</td>
+            <td></td>
+            <td>구독 만료 시각. free 는 null (무제한)</td>
+          </tr>
+          <tr>
+            <td class="col-name-cell">revenuecat_id</td>
+            <td class="col-type-cell">text</td>
+            <td></td>
+            <td>RevenueCat 구독 ID. 결제 웹훅 연동용</td>
+          </tr>
+        </tbody>
+      </table>
+      <div style="padding:14px 28px; border-top:1px solid var(--gray-100); background:var(--gray-50);">
+        <div style="font-size:12px; font-weight:700; color:var(--gray-500); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:8px;">plan 별 기능 범위</div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <span style="background:var(--gray-100); color:var(--gray-700); font-size:12px; font-weight:600; padding:3px 10px; border-radius:4px;">free — 광고 포함, 기본 기능</span>
+          <span style="background:#DBEAFE; color:#1E40AF; font-size:12px; font-weight:600; padding:3px 10px; border-radius:4px;">ad_free — 광고 제거</span>
+          <span style="background:var(--primary-light); color:var(--primary); font-size:12px; font-weight:600; padding:3px 10px; border-radius:4px;">basic — 무제한 보관소 + 고급 필터</span>
+          <span style="background:#F3E8FF; color:#6D28D9; font-size:12px; font-weight:600; padding:3px 10px; border-radius:4px;">ai_voice — AI 태깅 + 음성 검색</span>
+        </div>
+      </div>
+      <div class="rls-section">
+        <div class="rls-title">Row Level Security 정책</div>
+        <div class="rls-list">
+          <div class="rls-item">
+            <span class="rls-op select">SELECT</span>
+            <div>
+              <span class="rls-desc">subscriptions_select — 본인 구독 정보만 조회 가능</span>
+              <span class="rls-code">USING (user_id = auth.uid())</span>
+            </div>
+          </div>
+        </div>
+        <div style="margin-top:8px; font-size:12px; color:var(--gray-500);">INSERT / UPDATE / DELETE 는 서버사이드 RevenueCat 웹훅에서만 처리. 클라이언트 직접 쓰기 차단.</div>
+      </div>
+      <div class="index-section">
+        <div class="index-title">인덱스</div>
+        <div class="index-list">
+          <span class="index-item">PK: id</span>
+          <span class="index-item">UNIQUE: user_id</span>
+          <span class="index-item">IDX: status (필터링 최적화 권장)</span>
+          <span class="index-item">IDX: expires_at (만료 배치 처리 권장)</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- admin_stats -->
+<section class="section" id="t-admin-stats">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-number">09 · View</div>
+      <h2>admin_stats</h2>
+      <p>관리자용 통계 뷰. anon / authenticated 역할의 접근을 완전 차단합니다. 서버사이드 관리 도구에서만 사용합니다.</p>
+    </div>
+
+    <div class="table-section">
+      <div class="table-section-header">
+        <div class="table-icon" style="background:var(--secondary); color:white;">V</div>
+        <div>
+          <div class="table-title">admin_stats <span class="tbadge tbadge-view" style="font-size:12px; vertical-align:middle; margin-left:6px;">VIEW</span></div>
+          <div class="table-desc">집계 통계 뷰. REVOKE ALL ON admin_stats FROM anon, authenticated — 클라이언트 접근 불가</div>
+          <div class="table-badges">
+            <span class="tbadge tbadge-migration" style="background:var(--gray-100); color:var(--gray-700);">004_admin_view.sql</span>
+          </div>
+        </div>
+      </div>
+      <table class="schema-table">
+        <thead>
+          <tr>
+            <th style="width:220px;">컬럼명 (집계값)</th>
+            <th style="width:140px;">타입</th>
+            <th>설명</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="col-name-cell">total_users</td>
+            <td class="col-type-cell">bigint</td>
+            <td>전체 가입 사용자 수 (auth.users COUNT)</td>
+          </tr>
+          <tr>
+            <td class="col-name-cell">total_orgs</td>
+            <td class="col-type-cell">bigint</td>
+            <td>전체 조직 수</td>
+          </tr>
+          <tr>
+            <td class="col-name-cell">total_storages</td>
+            <td class="col-type-cell">bigint</td>
+            <td>전체 보관소 수</td>
+          </tr>
+          <tr>
+            <td class="col-name-cell">total_clothes</td>
+            <td class="col-type-cell">bigint</td>
+            <td>전체 옷 등록 수</td>
+          </tr>
+          <tr>
+            <td class="col-name-cell">ad_free_count</td>
+            <td class="col-type-cell">bigint</td>
+            <td>ad_free 플랜 활성 구독자 수</td>
+          </tr>
+          <tr>
+            <td class="col-name-cell">basic_count</td>
+            <td class="col-type-cell">bigint</td>
+            <td>basic 플랜 활성 구독자 수</td>
+          </tr>
+          <tr>
+            <td class="col-name-cell">ai_voice_count</td>
+            <td class="col-type-cell">bigint</td>
+            <td>ai_voice 플랜 활성 구독자 수</td>
+          </tr>
+        </tbody>
+      </table>
+      <div style="padding:14px 28px; border-top:1px solid var(--gray-100); background:#FEF2F2;">
+        <div style="font-size:13px; color:#991B1B; font-weight:600;">보안 주의</div>
+        <div style="font-size:13px; color:#B91C1C; margin-top:4px;">
+          <code style="background:#FEE2E2; padding:2px 6px; border-radius:4px;">REVOKE ALL ON admin_stats FROM anon, authenticated;</code> — 클라이언트(앱/브라우저) 에서 직접 쿼리 불가. 서버사이드 Service Role Key 환경에서만 접근 가능.
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 오프라인 캐시 -->
+<section class="section" id="s-offline">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-number">10 · Offline</div>
+      <h2>오프라인 캐시 (Drift SQLite)</h2>
+      <p>Flutter Drift 패키지를 이용한 디바이스 로컬 SQLite DB. Supabase 와 직접 FK 없음 — orgId 등은 논리적 참조입니다.</p>
+    </div>
+
+    <div class="offline-grid">
+      <!-- LocalStorages -->
+      <div class="table-section">
+        <div class="table-section-header" style="padding:16px 20px;">
+          <div class="table-icon" style="background:var(--gray-400); color:white; width:34px; height:34px; font-size:14px;">LS</div>
+          <div>
+            <div class="table-title" style="font-size:16px;">LocalStorages</div>
+            <div class="table-desc" style="font-size:12px;">보관소 로컬 캐시</div>
+          </div>
+        </div>
+        <table class="schema-table">
+          <thead>
+            <tr>
+              <th>컬럼명</th>
+              <th>타입</th>
+              <th>비고</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="col-name-cell">id</td>
+              <td class="col-type-cell">String</td>
+              <td><span class="badge badge-pk">PK</span></td>
+            </tr>
+            <tr>
+              <td class="col-name-cell">orgId</td>
+              <td class="col-type-cell">String</td>
+              <td><span class="badge badge-nn">NN</span></td>
+            </tr>
+            <tr>
+              <td class="col-name-cell">name</td>
+              <td class="col-type-cell">String</td>
+              <td><span class="badge badge-nn">NN</span></td>
+            </tr>
+            <tr>
+              <td class="col-name-cell">photoUrl</td>
+              <td class="col-type-cell">String?</td>
+              <td>nullable</td>
+            </tr>
+            <tr>
+              <td class="col-name-cell">qrCode</td>
+              <td class="col-type-cell">String</td>
+              <td><span class="badge badge-nn">NN</span></td>
+            </tr>
+            <tr>
+              <td class="col-name-cell">cachedAt</td>
+              <td class="col-type-cell">DateTime</td>
+              <td>캐시 시각</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- LocalClothes -->
+      <div class="table-section">
+        <div class="table-section-header" style="padding:16px 20px;">
+          <div class="table-icon" style="background:var(--gray-400); color:white; width:34px; height:34px; font-size:14px;">LC</div>
+          <div>
+            <div class="table-title" style="font-size:16px;">LocalClothes</div>
+            <div class="table-desc" style="font-size:12px;">옷 로컬 캐시</div>
+          </div>
+        </div>
+        <table class="schema-table">
+          <thead>
+            <tr>
+              <th>컬럼명</th>
+              <th>타입</th>
+              <th>비고</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="col-name-cell">id</td>
+              <td class="col-type-cell">String</td>
+              <td><span class="badge badge-pk">PK</span></td>
+            </tr>
+            <tr>
+              <td class="col-name-cell">orgId</td>
+              <td class="col-type-cell">String</td>
+              <td><span class="badge badge-nn">NN</span></td>
+            </tr>
+            <tr>
+              <td class="col-name-cell">storageId</td>
+              <td class="col-type-cell">String?</td>
+              <td>nullable</td>
+            </tr>
+            <tr>
+              <td class="col-name-cell">photoUrl</td>
+              <td class="col-type-cell">String?</td>
+              <td>nullable</td>
+            </tr>
+            <tr>
+              <td class="col-name-cell">name</td>
+              <td class="col-type-cell">String?</td>
+              <td>nullable</td>
+            </tr>
+            <tr>
+              <td class="col-name-cell">cachedAt</td>
+              <td class="col-type-cell">DateTime</td>
+              <td>캐시 시각</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- SyncQueueItems -->
+      <div class="table-section">
+        <div class="table-section-header" style="padding:16px 20px;">
+          <div class="table-icon" style="background:var(--gray-400); color:white; width:34px; height:34px; font-size:12px;">SQ</div>
+          <div>
+            <div class="table-title" style="font-size:16px;">SyncQueueItems</div>
+            <div class="table-desc" style="font-size:12px;">오프라인 쓰기 큐</div>
+          </div>
+        </div>
+        <table class="schema-table">
+          <thead>
+            <tr>
+              <th>컬럼명</th>
+              <th>타입</th>
+              <th>비고</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="col-name-cell">id</td>
+              <td class="col-type-cell">int</td>
+              <td><span class="badge badge-pk">PK</span> AUTO</td>
+            </tr>
+            <tr>
+              <td class="col-name-cell">operation</td>
+              <td class="col-type-cell">String</td>
+              <td>INSERT/UPDATE/DELETE</td>
+            </tr>
+            <tr>
+              <td class="col-name-cell">table</td>
+              <td class="col-type-cell">String</td>
+              <td>대상 테이블명</td>
+            </tr>
+            <tr>
+              <td class="col-name-cell">payload</td>
+              <td class="col-type-cell">String</td>
+              <td>JSON 직렬화 데이터</td>
+            </tr>
+            <tr>
+              <td class="col-name-cell">createdAt</td>
+              <td class="col-type-cell">DateTime</td>
+              <td>큐 적재 시각</td>
+            </tr>
+          </tbody>
+        </table>
+        <div style="padding:12px 16px; border-top:1px solid var(--gray-100); background:var(--gray-50); font-size:11px; color:var(--gray-500);">
+          네트워크 복구 시 createdAt 순서대로 Supabase 에 순차 동기화
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 함수 / 뷰 -->
+<section class="section" id="s-functions">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-number">11 · Functions</div>
+      <h2>함수 및 뷰</h2>
+      <p>RLS 정책에서 사용하는 헬퍼 함수와 관리자 뷰를 정리합니다.</p>
+    </div>
+
+    <!-- is_org_member -->
+    <div class="func-card">
+      <div class="func-header">
+        <div>
+          <div style="display:flex; align-items:center; gap:10px; margin-bottom:4px;">
+            <span class="func-badge fn">FUNCTION</span>
+            <span class="func-name">is_org_member</span>
+          </div>
+          <div class="func-sig">is_org_member(p_org_id uuid) RETURNS boolean — SECURITY DEFINER</div>
+        </div>
+      </div>
+      <div class="func-body">
+        <div class="func-desc">
+          RLS 정책에서 반복 사용되는 멤버십 확인 헬퍼 함수. <code style="background:var(--gray-100); padding:2px 6px; border-radius:4px;">SECURITY DEFINER</code> 로 실행되어 함수 소유자 권한으로 organization_members 를 직접 조회합니다. 현재 로그인한 사용자(<code style="background:var(--gray-100); padding:2px 6px; border-radius:4px;">auth.uid()</code>)가 대상 조직의 멤버인지 boolean 으로 반환합니다.
+        </div>
+        <pre class="code-block"><span class="kw">create or replace function</span> <span class="fn-name">is_org_member</span>(p_org_id uuid)
+<span class="kw">returns</span> boolean <span class="kw">language</span> sql <span class="kw">security definer as</span> $$
+  <span class="kw">select exists</span> (
+    <span class="kw">select</span> <span class="num">1</span> <span class="kw">from</span> organization_members
+    <span class="kw">where</span> org_id = p_org_id <span class="kw">and</span> user_id = <span class="fn-name">auth.uid</span>()
+  );
+$$;</pre>
+        <div style="margin-top:16px;">
+          <div style="font-size:13px; font-weight:700; margin-bottom:8px; color:var(--gray-700);">사용처</div>
+          <div style="display:flex; flex-wrap:wrap; gap:6px; font-size:12px;">
+            <span style="background:var(--gray-100); border-radius:4px; padding:3px 8px;">organizations — 4개 정책</span>
+            <span style="background:var(--gray-100); border-radius:4px; padding:3px 8px;">organization_members — 2개 정책</span>
+            <span style="background:var(--gray-100); border-radius:4px; padding:3px 8px;">storages — 2개 정책</span>
+            <span style="background:var(--gray-100); border-radius:4px; padding:3px 8px;">clothes — 2개 정책</span>
+            <span style="background:var(--gray-100); border-radius:4px; padding:3px 8px;">clothes_tags — 2개 정책 (간접)</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- create_default_subscription -->
+    <div class="func-card">
+      <div class="func-header">
+        <div>
+          <div style="display:flex; align-items:center; gap:10px; margin-bottom:4px;">
+            <span class="func-badge fn">TRIGGER FUNCTION</span>
+            <span class="func-name">create_default_subscription</span>
+          </div>
+          <div class="func-sig">트리거: AFTER INSERT ON auth.users — 신규 가입 시 free 플랜 자동 생성</div>
+        </div>
+      </div>
+      <div class="func-body">
+        <div class="func-desc">
+          신규 사용자가 가입하면 자동으로 <code style="background:var(--gray-100); padding:2px 6px; border-radius:4px;">subscriptions</code> 테이블에 <code style="background:var(--gray-100); padding:2px 6px; border-radius:4px;">plan = 'free'</code> 레코드를 생성합니다. 앱 클라이언트에서 구독 레코드 존재 여부를 체크할 필요가 없어집니다.
+        </div>
+        <pre class="code-block"><span class="cmt">-- 003_subscriptions.sql 에 포함 (구현 예시)</span>
+<span class="kw">create or replace function</span> <span class="fn-name">create_default_subscription</span>()
+<span class="kw">returns trigger language</span> plpgsql <span class="kw">security definer as</span> $$
+<span class="kw">begin</span>
+  <span class="kw">insert into</span> <span class="fn-name">public.subscriptions</span> (user_id, plan, status)
+  <span class="kw">values</span> (NEW.id, <span class="str">'free'</span>, <span class="str">'active'</span>);
+  <span class="kw">return</span> NEW;
+<span class="kw">end</span>;
+$$;
+
+<span class="kw">create trigger</span> on_auth_user_created
+  <span class="kw">after insert on</span> auth.users
+  <span class="kw">for each row execute function</span> <span class="fn-name">create_default_subscription</span>();</pre>
+      </div>
+    </div>
+
+    <!-- admin_stats view -->
+    <div class="func-card">
+      <div class="func-header">
+        <div>
+          <div style="display:flex; align-items:center; gap:10px; margin-bottom:4px;">
+            <span class="func-badge view">VIEW</span>
+            <span class="func-name">admin_stats</span>
+          </div>
+          <div class="func-sig">004_admin_view.sql — REVOKE ALL FROM anon, authenticated</div>
+        </div>
+      </div>
+      <div class="func-body">
+        <div class="func-desc">
+          전체 서비스 통계를 단일 행으로 집계하는 관리자 전용 뷰. <code style="background:var(--gray-100); padding:2px 6px; border-radius:4px;">REVOKE ALL ON admin_stats FROM anon, authenticated</code> 으로 클라이언트 접근을 완전 차단합니다.
+        </div>
+        <pre class="code-block"><span class="kw">create or replace view</span> <span class="fn-name">admin_stats</span> <span class="kw">as</span>
+<span class="kw">select</span>
+  (<span class="kw">select</span> <span class="fn-name">count</span>(*) <span class="kw">from</span> auth.users)        <span class="kw">as</span> total_users,
+  (<span class="kw">select</span> <span class="fn-name">count</span>(*) <span class="kw">from</span> organizations)       <span class="kw">as</span> total_orgs,
+  (<span class="kw">select</span> <span class="fn-name">count</span>(*) <span class="kw">from</span> storages)            <span class="kw">as</span> total_storages,
+  (<span class="kw">select</span> <span class="fn-name">count</span>(*) <span class="kw">from</span> clothes)             <span class="kw">as</span> total_clothes,
+  (<span class="kw">select</span> <span class="fn-name">count</span>(*) <span class="kw">from</span> subscriptions
+   <span class="kw">where</span> plan = <span class="str">'ad_free'</span>  <span class="kw">and</span> status = <span class="str">'active'</span>) <span class="kw">as</span> ad_free_count,
+  (<span class="kw">select</span> <span class="fn-name">count</span>(*) <span class="kw">from</span> subscriptions
+   <span class="kw">where</span> plan = <span class="str">'basic'</span>    <span class="kw">and</span> status = <span class="str">'active'</span>) <span class="kw">as</span> basic_count,
+  (<span class="kw">select</span> <span class="fn-name">count</span>(*) <span class="kw">from</span> subscriptions
+   <span class="kw">where</span> plan = <span class="str">'ai_voice'</span> <span class="kw">and</span> status = <span class="str">'active'</span>) <span class="kw">as</span> ai_voice_count;
+
+<span class="kw">revoke all on</span> <span class="fn-name">admin_stats</span> <span class="kw">from</span> anon, authenticated;</pre>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<footer style="background:var(--gray-900); color:var(--gray-500); padding:32px 40px; font-size:13px; margin-top:40px;">
+  <div style="max-width:1100px; margin:0 auto; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+    <span>MyStorage — DB 설계서</span>
+    <div style="display:flex; gap:16px;">
+      <span>001_schema.sql</span>
+      <span>002_rls.sql</span>
+      <span>003_subscriptions.sql</span>
+      <span>004_admin_view.sql</span>
+    </div>
+    <span>2026-11-23</span>
+  </div>
+</footer>
+
+</body>
+</html>

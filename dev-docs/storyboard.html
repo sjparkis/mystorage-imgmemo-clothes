@@ -1,0 +1,1487 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MyStorage 스토리보드</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, 'Pretendard', 'Noto Sans KR', sans-serif;
+    background: #F9FAFB;
+    color: #111827;
+    line-height: 1.6;
+  }
+
+  .cover {
+    background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%);
+    color: white;
+    padding: 60px 48px;
+  }
+  .cover h1 { font-size: 42px; font-weight: 800; letter-spacing: -1px; }
+  .cover p { font-size: 18px; opacity: 0.85; margin-top: 12px; }
+  .cover .meta { font-size: 14px; opacity: 0.65; margin-top: 24px; display: flex; gap: 24px; }
+
+  .section {
+    padding: 60px 48px;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+  .section-title {
+    font-size: 28px;
+    font-weight: 700;
+    color: #111827;
+    margin-bottom: 8px;
+  }
+  .section-sub {
+    font-size: 15px;
+    color: #6B7280;
+    margin-bottom: 40px;
+  }
+
+  /* 흐름도 컨테이너 */
+  .flow-block {
+    background: white;
+    border: 1px solid #E5E7EB;
+    border-radius: 16px;
+    padding: 32px;
+    margin-bottom: 40px;
+  }
+  .flow-label {
+    font-size: 13px;
+    font-weight: 700;
+    color: #4F46E5;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .flow-label::before {
+    content: '';
+    width: 4px;
+    height: 16px;
+    background: #4F46E5;
+    border-radius: 2px;
+    display: inline-block;
+  }
+  .flow-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 0;
+    flex-wrap: wrap;
+  }
+  .flow-step {
+    display: flex;
+    align-items: center;
+    gap: 0;
+  }
+
+  /* 모바일 폰 프레임 */
+  .phone {
+    width: 160px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .phone-frame {
+    width: 140px;
+    min-height: 260px;
+    background: white;
+    border: 2.5px solid #374151;
+    border-radius: 24px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+    position: relative;
+  }
+  .phone-notch {
+    height: 20px;
+    background: #374151;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-shrink: 0;
+  }
+  .phone-notch::after {
+    content: '';
+    width: 40px;
+    height: 8px;
+    background: #1F2937;
+    border-radius: 4px;
+  }
+  .phone-screen {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: #F9FAFB;
+    min-height: 220px;
+  }
+  .phone-appbar {
+    height: 36px;
+    background: white;
+    border-bottom: 1px solid #E5E7EB;
+    display: flex;
+    align-items: center;
+    padding: 0 10px;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+  .phone-appbar-title {
+    font-size: 11px;
+    font-weight: 700;
+    color: #111827;
+    flex: 1;
+  }
+  .phone-appbar-icon {
+    width: 18px;
+    height: 18px;
+    background: #EEF2FF;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+    color: #4F46E5;
+    flex-shrink: 0;
+  }
+  .phone-body {
+    flex: 1;
+    padding: 8px;
+    overflow: hidden;
+  }
+  .phone-navbar {
+    height: 36px;
+    background: white;
+    border-top: 1px solid #E5E7EB;
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    flex-shrink: 0;
+  }
+  .nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    font-size: 7px;
+    color: #9CA3AF;
+  }
+  .nav-item.active { color: #4F46E5; }
+  .nav-icon { font-size: 12px; }
+
+  .phone-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #374151;
+    margin-top: 8px;
+    text-align: center;
+  }
+  .phone-route {
+    font-size: 9px;
+    color: #9CA3AF;
+    text-align: center;
+    margin-top: 2px;
+    font-family: monospace;
+  }
+
+  /* 화살표 */
+  .arrow {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 0 4px;
+    padding-top: 50px;
+  }
+  .arrow-line {
+    width: 32px;
+    height: 2px;
+    background: #4F46E5;
+    position: relative;
+  }
+  .arrow-line::after {
+    content: '';
+    position: absolute;
+    right: -6px;
+    top: -4px;
+    border-left: 8px solid #4F46E5;
+    border-top: 5px solid transparent;
+    border-bottom: 5px solid transparent;
+  }
+  .arrow-label {
+    font-size: 9px;
+    color: #6B7280;
+    margin-top: 6px;
+    text-align: center;
+    max-width: 48px;
+  }
+
+  /* 카드 그리드 (폰 내부) */
+  .mini-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px;
+  }
+  .mini-card {
+    background: white;
+    border-radius: 6px;
+    padding: 5px;
+    border: 1px solid #E5E7EB;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+  .mini-img {
+    width: 100%;
+    height: 32px;
+    background: linear-gradient(135deg, #EEF2FF, #C7D2FE);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+  }
+  .mini-text { font-size: 7px; color: #374151; font-weight: 600; }
+  .mini-sub { font-size: 6px; color: #9CA3AF; }
+
+  .mini-fab {
+    width: 24px;
+    height: 24px;
+    background: #4F46E5;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 14px;
+    font-weight: 300;
+    position: absolute;
+    bottom: 44px;
+    right: 10px;
+    box-shadow: 0 2px 6px rgba(79,70,229,0.4);
+  }
+
+  .mini-field {
+    background: white;
+    border: 1px solid #E5E7EB;
+    border-radius: 6px;
+    padding: 5px 7px;
+    font-size: 8px;
+    color: #9CA3AF;
+    margin-bottom: 6px;
+  }
+  .mini-btn {
+    background: #4F46E5;
+    color: white;
+    border-radius: 6px;
+    padding: 5px;
+    font-size: 8px;
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: 4px;
+  }
+  .mini-btn-outline {
+    background: white;
+    color: #4F46E5;
+    border: 1px solid #4F46E5;
+    border-radius: 6px;
+    padding: 5px;
+    font-size: 8px;
+    font-weight: 700;
+    text-align: center;
+  }
+
+  .mini-tag {
+    display: inline-block;
+    background: #EEF2FF;
+    color: #4F46E5;
+    border-radius: 10px;
+    padding: 2px 5px;
+    font-size: 7px;
+    font-weight: 600;
+  }
+  .mini-tags { display: flex; flex-wrap: wrap; gap: 2px; margin: 4px 0; }
+
+  .mini-search {
+    background: white;
+    border: 1px solid #E5E7EB;
+    border-radius: 20px;
+    padding: 5px 8px;
+    font-size: 8px;
+    color: #9CA3AF;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-bottom: 6px;
+  }
+  .mini-progress {
+    height: 3px;
+    background: #E5E7EB;
+    border-radius: 2px;
+    margin-bottom: 6px;
+    overflow: hidden;
+  }
+  .mini-progress-bar {
+    width: 60%;
+    height: 100%;
+    background: linear-gradient(90deg, #4F46E5, #7C3AED);
+    border-radius: 2px;
+  }
+  .mini-result {
+    background: white;
+    border-radius: 6px;
+    padding: 5px;
+    display: flex;
+    gap: 5px;
+    align-items: center;
+    border: 1px solid #E5E7EB;
+    margin-bottom: 3px;
+  }
+  .mini-result-img {
+    width: 24px;
+    height: 24px;
+    background: linear-gradient(135deg, #D1FAE5, #6EE7B7);
+    border-radius: 4px;
+    flex-shrink: 0;
+  }
+
+  .qr-box {
+    width: 60px;
+    height: 60px;
+    background: white;
+    border: 2px solid #111827;
+    border-radius: 4px;
+    margin: 8px auto;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    padding: 4px;
+    gap: 1px;
+  }
+  .qr-cell { background: #111827; border-radius: 1px; }
+  .qr-cell.w { background: white; }
+
+  .qr-scan-screen {
+    background: #111827;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  .qr-viewfinder {
+    width: 70px;
+    height: 70px;
+    border: 2px solid white;
+    border-radius: 8px;
+    position: relative;
+  }
+  .qr-viewfinder::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 5px;
+    right: 5px;
+    height: 1px;
+    background: rgba(79,70,229,0.8);
+    transform: translateY(-50%);
+  }
+
+  .plan-card {
+    background: white;
+    border: 1px solid #E5E7EB;
+    border-radius: 8px;
+    padding: 6px 8px;
+    margin-bottom: 4px;
+    font-size: 8px;
+  }
+  .plan-card.featured { border-color: #4F46E5; border-width: 1.5px; }
+  .plan-name { font-weight: 700; color: #111827; }
+  .plan-price { color: #4F46E5; font-weight: 600; font-size: 7px; }
+
+  .stat-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 3px;
+  }
+  .stat-card {
+    background: white;
+    border: 1px solid #E5E7EB;
+    border-radius: 6px;
+    padding: 5px 4px;
+    text-align: center;
+  }
+  .stat-num { font-size: 12px; font-weight: 800; color: #4F46E5; }
+  .stat-lbl { font-size: 6px; color: #9CA3AF; }
+
+  /* 화면 흐름 경로 표시 */
+  .route-badge {
+    display: inline-block;
+    background: #1F2937;
+    color: #E5E7EB;
+    font-family: monospace;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    margin: 2px;
+  }
+
+  /* 흐름 설명 테이블 */
+  .flow-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+    margin-top: 32px;
+  }
+  .flow-table th {
+    background: #F3F4F6;
+    padding: 10px 16px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 13px;
+    color: #374151;
+    border-bottom: 2px solid #E5E7EB;
+  }
+  .flow-table td {
+    padding: 10px 16px;
+    border-bottom: 1px solid #F3F4F6;
+    vertical-align: top;
+  }
+  .flow-table tr:hover td { background: #FAFAFA; }
+
+  .tag {
+    display: inline-block;
+    background: #EEF2FF;
+    color: #4F46E5;
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-size: 11px;
+    font-weight: 600;
+    margin: 1px;
+  }
+  .tag.green { background: #D1FAE5; color: #065F46; }
+  .tag.amber { background: #FEF3C7; color: #92400E; }
+  .tag.red { background: #FEE2E2; color: #991B1B; }
+
+  .divider {
+    border: none;
+    border-top: 1px solid #E5E7EB;
+    margin: 48px 0 0;
+  }
+
+  .info-box {
+    background: #EEF2FF;
+    border: 1px solid #C7D2FE;
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin-bottom: 24px;
+    font-size: 14px;
+    color: #3730A3;
+  }
+  .info-box strong { font-weight: 700; }
+
+  /* 앱 시작 흐름 */
+  .start-flow {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .flow-node {
+    background: white;
+    border: 2px solid #E5E7EB;
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #374151;
+    text-align: center;
+    min-width: 100px;
+  }
+  .flow-node.start {
+    background: #4F46E5;
+    border-color: #4F46E5;
+    color: white;
+  }
+  .flow-node.decision {
+    background: #FEF3C7;
+    border-color: #F59E0B;
+    color: #92400E;
+    border-radius: 50%;
+    width: 90px;
+    height: 90px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+  }
+  .flow-node.end {
+    background: #D1FAE5;
+    border-color: #10B981;
+    color: #065F46;
+  }
+  .flow-arrow-h {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+  .h-line {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+  }
+  .h-line .line { width: 28px; height: 2px; background: #6B7280; }
+  .h-line .tip {
+    border-left: 7px solid #6B7280;
+    border-top: 4px solid transparent;
+    border-bottom: 4px solid transparent;
+  }
+  .h-label { font-size: 10px; color: #9CA3AF; }
+
+  .branch-box {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  footer {
+    background: #1F2937;
+    color: #9CA3AF;
+    padding: 24px 48px;
+    font-size: 13px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  footer strong { color: white; }
+</style>
+</head>
+<body>
+
+<!-- 커버 -->
+<header class="cover">
+  <h1>MyStorage 스토리보드</h1>
+  <p>화면 흐름 및 사용자 여정 (User Flow Diagram)</p>
+  <div class="meta">
+    <span>버전 1.0</span>
+    <span>Flutter · GoRouter · Supabase · BLoC</span>
+    <span>2026-11-23</span>
+  </div>
+</header>
+
+<!-- 라우트 개요 -->
+<section class="section">
+  <h2 class="section-title">라우트 구조 개요</h2>
+  <p class="section-sub">GoRouter 기반 선언적 라우팅. /login 외 모든 경로는 세션 인증 필수.</p>
+
+  <div class="flow-block">
+    <div class="flow-label">전체 라우트 맵</div>
+    <div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center;">
+      <span class="route-badge">/login</span>
+      <span class="route-badge">/</span>
+      <span class="route-badge">/storage/add</span>
+      <span class="route-badge">/storage/:id</span>
+      <span class="route-badge">/cloth/add/:storageId</span>
+      <span class="route-badge">/cloth/:id</span>
+      <span class="route-badge">/search</span>
+      <span class="route-badge">/qr-scan</span>
+      <span class="route-badge">/qr-sticker</span>
+      <span class="route-badge">/pricing</span>
+      <span class="route-badge">/admin</span>
+    </div>
+    <div style="margin-top: 20px;">
+      <div class="info-box">
+        <strong>인증 리디렉션:</strong> GoRouter redirect 훅에서 Supabase <code>auth.currentSession</code>을 검사합니다.
+        미인증 상태에서 모든 경로 접근 시 <code>/login</code>으로 이동하며, 인증 완료 후 <code>/login</code> 접근 시 <code>/</code>로 이동합니다.
+      </div>
+    </div>
+  </div>
+
+  <!-- 앱 시작 흐름 -->
+  <div class="flow-block">
+    <div class="flow-label">1. 앱 시작 흐름</div>
+    <div class="start-flow">
+      <div class="flow-node start">앱 실행</div>
+      <div class="flow-arrow-h">
+        <div class="h-line"><div class="line"></div><div class="tip"></div></div>
+      </div>
+      <div class="flow-node decision">세션<br>있음?</div>
+      <div style="display: flex; flex-direction: column; gap: 12px; margin-left: 8px;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="font-size: 11px; color: #EF4444; font-weight: 700;">NO</span>
+          <div class="flow-arrow-h"><div class="h-line"><div class="line"></div><div class="tip"></div></div></div>
+          <div class="flow-node">/login<br><span style="font-size:11px;font-weight:400;color:#9CA3AF">LoginScreen</span></div>
+          <div class="flow-arrow-h"><div class="h-line"><div class="line"></div><div class="tip"></div></div></div>
+          <div class="flow-node end">로그인 성공<br><span style="font-size:11px;font-weight:400;color:#065F46">→ /</span></div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="font-size: 11px; color: #10B981; font-weight: 700;">YES</span>
+          <div class="flow-arrow-h"><div class="h-line"><div class="line"></div><div class="tip"></div></div></div>
+          <div class="flow-node end">/ (HomeScreen)</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 플로우 1: 보관함 관리 -->
+<section class="section" style="padding-top: 0;">
+  <h2 class="section-title">화면 흐름 시각화</h2>
+  <p class="section-sub">주요 사용자 여정을 모바일 폰 프레임으로 표현합니다.</p>
+
+  <!-- 흐름 2: 보관함 관리 -->
+  <div class="flow-block">
+    <div class="flow-label">2. 보관함 관리 흐름</div>
+    <div class="flow-row">
+
+      <!-- HomeScreen -->
+      <div class="flow-step">
+        <div class="phone">
+          <div class="phone-frame" style="min-height: 280px;">
+            <div class="phone-notch"></div>
+            <div class="phone-screen">
+              <div class="phone-appbar">
+                <div class="phone-appbar-title">MyStorage</div>
+                <div class="phone-appbar-icon">+</div>
+              </div>
+              <div class="phone-body">
+                <div class="mini-grid">
+                  <div class="mini-card">
+                    <div class="mini-img">🗂️</div>
+                    <div class="mini-text">겨울 보관함</div>
+                    <div class="mini-sub">옷 12벌</div>
+                  </div>
+                  <div class="mini-card">
+                    <div class="mini-img">👔</div>
+                    <div class="mini-text">여름 보관함</div>
+                    <div class="mini-sub">옷 8벌</div>
+                  </div>
+                  <div class="mini-card" style="border-style:dashed; background: #FAFAFA;">
+                    <div class="mini-img" style="background: #F3F4F6; font-size:16px;">+</div>
+                    <div class="mini-sub" style="text-align:center;">추가</div>
+                  </div>
+                </div>
+              </div>
+              <div style="position: relative; height: 0;">
+                <div class="mini-fab">+</div>
+              </div>
+              <div class="phone-navbar">
+                <div class="nav-item active"><div class="nav-icon">🏠</div><div>홈</div></div>
+                <div class="nav-item"><div class="nav-icon">🔍</div><div>검색</div></div>
+                <div class="nav-item"><div class="nav-icon">📷</div><div>QR</div></div>
+                <div class="nav-item"><div class="nav-icon">👤</div><div>나의</div></div>
+              </div>
+            </div>
+          </div>
+          <div class="phone-label">홈 화면</div>
+          <div class="phone-route">/</div>
+        </div>
+      </div>
+
+      <div class="arrow">
+        <div class="arrow-line"></div>
+        <div class="arrow-label">FAB 탭</div>
+      </div>
+
+      <!-- AddStorageScreen -->
+      <div class="flow-step">
+        <div class="phone">
+          <div class="phone-frame" style="min-height: 280px;">
+            <div class="phone-notch"></div>
+            <div class="phone-screen">
+              <div class="phone-appbar">
+                <div style="font-size:9px; color:#4F46E5; margin-right:4px;">←</div>
+                <div class="phone-appbar-title">보관함 추가</div>
+              </div>
+              <div class="phone-body">
+                <div style="width:100%; height:60px; background: linear-gradient(135deg,#EEF2FF,#C7D2FE); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:20px; margin-bottom:8px;">📷</div>
+                <div style="font-size:7px; color:#9CA3AF; margin-bottom:3px;">카메라 / 갤러리</div>
+                <div class="mini-field">보관함 이름 입력...</div>
+                <div class="mini-btn">저장</div>
+              </div>
+            </div>
+          </div>
+          <div class="phone-label">보관함 추가</div>
+          <div class="phone-route">/storage/add</div>
+        </div>
+      </div>
+
+      <div class="arrow">
+        <div class="arrow-line"></div>
+        <div class="arrow-label">저장 완료</div>
+      </div>
+
+      <!-- HomeScreen (복귀) -->
+      <div class="flow-step">
+        <div class="phone">
+          <div class="phone-frame" style="min-height: 280px;">
+            <div class="phone-notch"></div>
+            <div class="phone-screen">
+              <div class="phone-appbar">
+                <div class="phone-appbar-title">MyStorage</div>
+              </div>
+              <div class="phone-body">
+                <div class="mini-grid">
+                  <div class="mini-card">
+                    <div class="mini-img">🗂️</div>
+                    <div class="mini-text">겨울 보관함</div>
+                  </div>
+                  <div class="mini-card">
+                    <div class="mini-img">👔</div>
+                    <div class="mini-text">여름 보관함</div>
+                  </div>
+                  <div class="mini-card" style="border-color:#10B981; background:#F0FDF4;">
+                    <div class="mini-img" style="background:linear-gradient(135deg,#D1FAE5,#6EE7B7);">🆕</div>
+                    <div class="mini-text" style="color:#065F46;">새 보관함</div>
+                  </div>
+                </div>
+              </div>
+              <div class="phone-navbar">
+                <div class="nav-item active"><div class="nav-icon">🏠</div><div>홈</div></div>
+                <div class="nav-item"><div class="nav-icon">🔍</div><div>검색</div></div>
+                <div class="nav-item"><div class="nav-icon">📷</div><div>QR</div></div>
+                <div class="nav-item"><div class="nav-icon">👤</div><div>나의</div></div>
+              </div>
+            </div>
+          </div>
+          <div class="phone-label">홈 복귀</div>
+          <div class="phone-route">/ (갱신)</div>
+        </div>
+      </div>
+
+      <div class="arrow">
+        <div class="arrow-line"></div>
+        <div class="arrow-label">카드 탭</div>
+      </div>
+
+      <!-- StorageDetailScreen -->
+      <div class="flow-step">
+        <div class="phone">
+          <div class="phone-frame" style="min-height: 280px;">
+            <div class="phone-notch"></div>
+            <div class="phone-screen">
+              <div class="phone-appbar">
+                <div style="font-size:9px; color:#4F46E5; margin-right:4px;">←</div>
+                <div class="phone-appbar-title">겨울 보관함</div>
+                <div class="phone-appbar-icon">▣</div>
+              </div>
+              <div class="phone-body">
+                <div class="mini-grid">
+                  <div class="mini-card">
+                    <div class="mini-img" style="background:linear-gradient(135deg,#FEF3C7,#FDE68A);">🧥</div>
+                    <div class="mini-text">패딩 점퍼</div>
+                  </div>
+                  <div class="mini-card">
+                    <div class="mini-img" style="background:linear-gradient(135deg,#FCE7F3,#FBCFE8);">🧣</div>
+                    <div class="mini-text">머플러</div>
+                  </div>
+                </div>
+              </div>
+              <div style="position: relative; height: 0;">
+                <div class="mini-fab">+</div>
+              </div>
+              <div class="phone-navbar">
+                <div class="nav-item active"><div class="nav-icon">🏠</div><div>홈</div></div>
+                <div class="nav-item"><div class="nav-icon">🔍</div><div>검색</div></div>
+                <div class="nav-item"><div class="nav-icon">📷</div><div>QR</div></div>
+                <div class="nav-item"><div class="nav-icon">👤</div><div>나의</div></div>
+              </div>
+            </div>
+          </div>
+          <div class="phone-label">보관함 상세</div>
+          <div class="phone-route">/storage/:id</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- 흐름 3: 옷 관리 -->
+  <div class="flow-block">
+    <div class="flow-label">3. 옷 추가 흐름 (AI 분석 포함)</div>
+    <div class="flow-row">
+
+      <!-- StorageDetailScreen -->
+      <div class="flow-step">
+        <div class="phone">
+          <div class="phone-frame" style="min-height: 280px;">
+            <div class="phone-notch"></div>
+            <div class="phone-screen">
+              <div class="phone-appbar">
+                <div style="font-size:9px; color:#4F46E5; margin-right:4px;">←</div>
+                <div class="phone-appbar-title">겨울 보관함</div>
+                <div class="phone-appbar-icon">▣</div>
+              </div>
+              <div class="phone-body">
+                <div class="mini-grid">
+                  <div class="mini-card">
+                    <div class="mini-img" style="background:linear-gradient(135deg,#FEF3C7,#FDE68A);">🧥</div>
+                    <div class="mini-text">패딩 점퍼</div>
+                  </div>
+                </div>
+              </div>
+              <div style="position: relative; height: 0;">
+                <div class="mini-fab" style="box-shadow: 0 0 0 3px rgba(79,70,229,0.3);">+</div>
+              </div>
+              <div class="phone-navbar">
+                <div class="nav-item active"><div class="nav-icon">🏠</div><div>홈</div></div>
+                <div class="nav-item"><div class="nav-icon">🔍</div><div>검색</div></div>
+                <div class="nav-item"><div class="nav-icon">📷</div><div>QR</div></div>
+                <div class="nav-item"><div class="nav-icon">👤</div><div>나의</div></div>
+              </div>
+            </div>
+          </div>
+          <div class="phone-label">보관함 상세</div>
+          <div class="phone-route">/storage/:id</div>
+        </div>
+      </div>
+
+      <div class="arrow">
+        <div class="arrow-line"></div>
+        <div class="arrow-label">FAB 탭</div>
+      </div>
+
+      <!-- AddClothScreen (사진 선택) -->
+      <div class="flow-step">
+        <div class="phone">
+          <div class="phone-frame" style="min-height: 280px;">
+            <div class="phone-notch"></div>
+            <div class="phone-screen">
+              <div class="phone-appbar">
+                <div style="font-size:9px; color:#4F46E5; margin-right:4px;">←</div>
+                <div class="phone-appbar-title">옷 추가</div>
+              </div>
+              <div class="phone-body">
+                <div style="width:100%; height:60px; background: linear-gradient(135deg,#FEF3C7,#FDE68A); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:24px; margin-bottom:6px;">🧥</div>
+                <div class="mini-btn" style="background:#6B7280; margin-bottom:6px;">AI 분석</div>
+                <div class="mini-field">옷 이름 입력...</div>
+                <div class="mini-btn" style="opacity:0.4;">저장</div>
+              </div>
+            </div>
+          </div>
+          <div class="phone-label">옷 추가 (전)</div>
+          <div class="phone-route">/cloth/add/:id</div>
+        </div>
+      </div>
+
+      <div class="arrow">
+        <div class="arrow-line"></div>
+        <div class="arrow-label">AI 분석</div>
+      </div>
+
+      <!-- AddClothScreen (AI 완료) -->
+      <div class="flow-step">
+        <div class="phone">
+          <div class="phone-frame" style="min-height: 280px;">
+            <div class="phone-notch"></div>
+            <div class="phone-screen">
+              <div class="phone-appbar">
+                <div style="font-size:9px; color:#4F46E5; margin-right:4px;">←</div>
+                <div class="phone-appbar-title">옷 추가</div>
+              </div>
+              <div class="phone-body">
+                <div style="width:100%; height:60px; background: linear-gradient(135deg,#FEF3C7,#FDE68A); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:24px; margin-bottom:6px;">🧥</div>
+                <div class="mini-tags">
+                  <span class="mini-tag">패딩</span>
+                  <span class="mini-tag">아우터</span>
+                  <span class="mini-tag">겨울</span>
+                  <span class="mini-tag">블랙</span>
+                </div>
+                <div class="mini-field" style="color:#111827; border-color:#4F46E5;">패딩 점퍼</div>
+                <div class="mini-btn">저장</div>
+              </div>
+            </div>
+          </div>
+          <div class="phone-label">AI 태그 완료</div>
+          <div class="phone-route">/cloth/add/:id</div>
+        </div>
+      </div>
+
+      <div class="arrow">
+        <div class="arrow-line"></div>
+        <div class="arrow-label">저장</div>
+      </div>
+
+      <!-- ClothDetailScreen -->
+      <div class="flow-step">
+        <div class="phone">
+          <div class="phone-frame" style="min-height: 280px;">
+            <div class="phone-notch"></div>
+            <div class="phone-screen">
+              <div class="phone-appbar">
+                <div style="font-size:9px; color:#4F46E5; margin-right:4px;">←</div>
+                <div class="phone-appbar-title">패딩 점퍼</div>
+                <div class="phone-appbar-icon">✏️</div>
+              </div>
+              <div class="phone-body">
+                <div style="width:100%; height:70px; background: linear-gradient(135deg,#FEF3C7,#FDE68A); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:28px; margin-bottom:8px;">🧥</div>
+                <div class="mini-tags">
+                  <span class="mini-tag">패딩</span>
+                  <span class="mini-tag">아우터</span>
+                  <span class="mini-tag">겨울</span>
+                  <span class="mini-tag">블랙</span>
+                </div>
+                <div style="font-size:7px; color:#9CA3AF; margin-top:6px;">겨울 보관함</div>
+              </div>
+            </div>
+          </div>
+          <div class="phone-label">옷 상세</div>
+          <div class="phone-route">/cloth/:id</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- 흐름 4: QR 흐름 -->
+  <div class="flow-block">
+    <div class="flow-label">4. QR 흐름</div>
+    <div class="flow-row">
+
+      <!-- StorageDetailScreen -->
+      <div class="flow-step">
+        <div class="phone">
+          <div class="phone-frame" style="min-height: 280px;">
+            <div class="phone-notch"></div>
+            <div class="phone-screen">
+              <div class="phone-appbar">
+                <div style="font-size:9px; color:#4F46E5; margin-right:4px;">←</div>
+                <div class="phone-appbar-title">겨울 보관함</div>
+                <div class="phone-appbar-icon" style="box-shadow: 0 0 0 2px #4F46E5;">▣</div>
+              </div>
+              <div class="phone-body">
+                <div class="mini-grid">
+                  <div class="mini-card"><div class="mini-img">🧥</div><div class="mini-text">패딩</div></div>
+                  <div class="mini-card"><div class="mini-img">🧣</div><div class="mini-text">머플러</div></div>
+                </div>
+              </div>
+              <div class="phone-navbar">
+                <div class="nav-item active"><div class="nav-icon">🏠</div><div>홈</div></div>
+                <div class="nav-item"><div class="nav-icon">🔍</div><div>검색</div></div>
+                <div class="nav-item"><div class="nav-icon">📷</div><div>QR</div></div>
+                <div class="nav-item"><div class="nav-icon">👤</div><div>나의</div></div>
+              </div>
+            </div>
+          </div>
+          <div class="phone-label">보관함 상세</div>
+          <div class="phone-route">/storage/:id</div>
+        </div>
+      </div>
+
+      <div class="arrow">
+        <div class="arrow-line"></div>
+        <div class="arrow-label">QR 버튼</div>
+      </div>
+
+      <!-- QrStickerScreen -->
+      <div class="flow-step">
+        <div class="phone">
+          <div class="phone-frame" style="min-height: 280px;">
+            <div class="phone-notch"></div>
+            <div class="phone-screen">
+              <div class="phone-appbar">
+                <div style="font-size:9px; color:#4F46E5; margin-right:4px;">←</div>
+                <div class="phone-appbar-title">QR 스티커</div>
+                <div class="phone-appbar-icon">🖨</div>
+              </div>
+              <div class="phone-body" style="display:flex; flex-direction:column; align-items:center;">
+                <div style="font-size:8px; color:#6B7280; margin-bottom:4px;">겨울 보관함</div>
+                <div class="qr-box">
+                  <div class="qr-cell"></div><div class="qr-cell"></div><div class="qr-cell"></div><div class="qr-cell w"></div><div class="qr-cell"></div>
+                  <div class="qr-cell"></div><div class="qr-cell w"></div><div class="qr-cell"></div><div class="qr-cell"></div><div class="qr-cell w"></div>
+                  <div class="qr-cell"></div><div class="qr-cell"></div><div class="qr-cell w"></div><div class="qr-cell"></div><div class="qr-cell"></div>
+                  <div class="qr-cell w"></div><div class="qr-cell"></div><div class="qr-cell"></div><div class="qr-cell w"></div><div class="qr-cell"></div>
+                  <div class="qr-cell"></div><div class="qr-cell w"></div><div class="qr-cell"></div><div class="qr-cell"></div><div class="qr-cell"></div>
+                </div>
+                <div class="mini-btn" style="width:80px; margin-top:6px;">스티커 출력</div>
+              </div>
+            </div>
+          </div>
+          <div class="phone-label">QR 스티커</div>
+          <div class="phone-route">/qr-sticker</div>
+        </div>
+      </div>
+
+      <div class="arrow" style="padding-top: 100px;">
+        <div style="display:flex; flex-direction:column; align-items:center; gap:4px;">
+          <div style="font-size:9px; color:#9CA3AF; text-align:center; max-width:60px;">NavBar QR 탭 경로</div>
+        </div>
+      </div>
+
+      <!-- QrScanScreen -->
+      <div class="flow-step">
+        <div class="phone">
+          <div class="phone-frame" style="min-height: 280px;">
+            <div class="phone-notch" style="background:#111827;"></div>
+            <div class="qr-scan-screen">
+              <div style="font-size:9px; color:rgba(255,255,255,0.6);">카메라 스캔 중...</div>
+              <div class="qr-viewfinder"></div>
+              <div style="font-size:8px; color:rgba(255,255,255,0.5);">QR 코드를 프레임에 맞춰 주세요</div>
+            </div>
+          </div>
+          <div class="phone-label">QR 스캔</div>
+          <div class="phone-route">/qr-scan</div>
+        </div>
+      </div>
+
+      <div class="arrow">
+        <div class="arrow-line"></div>
+        <div class="arrow-label">스캔 성공</div>
+      </div>
+
+      <!-- StorageDetailScreen -->
+      <div class="flow-step">
+        <div class="phone">
+          <div class="phone-frame" style="min-height: 280px;">
+            <div class="phone-notch"></div>
+            <div class="phone-screen">
+              <div class="phone-appbar">
+                <div style="font-size:9px; color:#4F46E5; margin-right:4px;">←</div>
+                <div class="phone-appbar-title">겨울 보관함</div>
+                <div class="phone-appbar-icon">▣</div>
+              </div>
+              <div class="phone-body">
+                <div style="background:#D1FAE5; border-radius:4px; padding:4px 6px; font-size:7px; color:#065F46; margin-bottom:6px;">QR 스캔으로 이동됨</div>
+                <div class="mini-grid">
+                  <div class="mini-card"><div class="mini-img">🧥</div><div class="mini-text">패딩</div></div>
+                  <div class="mini-card"><div class="mini-img">🧣</div><div class="mini-text">머플러</div></div>
+                </div>
+              </div>
+              <div class="phone-navbar">
+                <div class="nav-item"><div class="nav-icon">🏠</div><div>홈</div></div>
+                <div class="nav-item"><div class="nav-icon">🔍</div><div>검색</div></div>
+                <div class="nav-item active"><div class="nav-icon">📷</div><div>QR</div></div>
+                <div class="nav-item"><div class="nav-icon">👤</div><div>나의</div></div>
+              </div>
+            </div>
+          </div>
+          <div class="phone-label">보관함 상세</div>
+          <div class="phone-route">/storage/:id</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- 흐름 5: 검색 -->
+  <div class="flow-block">
+    <div class="flow-label">5. 검색 흐름 (텍스트 + AI 음성)</div>
+    <div class="flow-row">
+
+      <!-- HomeScreen -->
+      <div class="flow-step">
+        <div class="phone">
+          <div class="phone-frame" style="min-height: 280px;">
+            <div class="phone-notch"></div>
+            <div class="phone-screen">
+              <div class="phone-appbar">
+                <div class="phone-appbar-title">MyStorage</div>
+              </div>
+              <div class="phone-body"></div>
+              <div class="phone-navbar">
+                <div class="nav-item"><div class="nav-icon">🏠</div><div>홈</div></div>
+                <div class="nav-item" style="color:#4F46E5; background:#EEF2FF; border-radius:8px; padding:2px 6px;"><div class="nav-icon">🔍</div><div>검색</div></div>
+                <div class="nav-item"><div class="nav-icon">📷</div><div>QR</div></div>
+                <div class="nav-item"><div class="nav-icon">👤</div><div>나의</div></div>
+              </div>
+            </div>
+          </div>
+          <div class="phone-label">홈 화면</div>
+          <div class="phone-route">/</div>
+        </div>
+      </div>
+
+      <div class="arrow">
+        <div class="arrow-line"></div>
+        <div class="arrow-label">검색 탭</div>
+      </div>
+
+      <!-- SearchScreen (입력) -->
+      <div class="flow-step">
+        <div class="phone">
+          <div class="phone-frame" style="min-height: 280px;">
+            <div class="phone-notch"></div>
+            <div class="phone-screen">
+              <div class="phone-appbar">
+                <div class="phone-appbar-title">검색</div>
+              </div>
+              <div class="phone-body">
+                <div class="mini-search">
+                  <span>🔍</span>
+                  <span style="flex:1;">검색어 입력...</span>
+                  <span>→</span>
+                  <span style="background:#4F46E5; color:white; border-radius:50%; width:12px; height:12px; display:flex; align-items:center; justify-content:center; font-size:7px;">🎙</span>
+                </div>
+                <div style="font-size:8px; color:#9CA3AF; text-align:center; margin-top:16px;">검색어를 입력하거나<br>마이크를 길게 눌러 음성 검색</div>
+              </div>
+              <div class="phone-navbar">
+                <div class="nav-item"><div class="nav-icon">🏠</div><div>홈</div></div>
+                <div class="nav-item active"><div class="nav-icon">🔍</div><div>검색</div></div>
+                <div class="nav-item"><div class="nav-icon">📷</div><div>QR</div></div>
+                <div class="nav-item"><div class="nav-icon">👤</div><div>나의</div></div>
+              </div>
+            </div>
+          </div>
+          <div class="phone-label">검색 화면</div>
+          <div class="phone-route">/search</div>
+        </div>
+      </div>
+
+      <div class="arrow">
+        <div class="arrow-line"></div>
+        <div class="arrow-label">검색 실행</div>
+      </div>
+
+      <!-- SearchScreen (결과) -->
+      <div class="flow-step">
+        <div class="phone">
+          <div class="phone-frame" style="min-height: 280px;">
+            <div class="phone-notch"></div>
+            <div class="phone-screen">
+              <div class="phone-appbar">
+                <div class="phone-appbar-title">검색</div>
+              </div>
+              <div class="phone-body">
+                <div class="mini-search" style="border-color:#4F46E5;">
+                  <span>🔍</span>
+                  <span style="flex:1; color:#111827;">패딩</span>
+                  <span>→</span>
+                </div>
+                <div class="mini-progress"><div class="mini-progress-bar"></div></div>
+                <div class="mini-result">
+                  <div class="mini-result-img" style="background:linear-gradient(135deg,#FEF3C7,#FDE68A);"></div>
+                  <div>
+                    <div style="font-size:8px; font-weight:700;">패딩 점퍼</div>
+                    <div class="mini-tags"><span class="mini-tag">아우터</span><span class="mini-tag">겨울</span></div>
+                  </div>
+                </div>
+                <div class="mini-result">
+                  <div class="mini-result-img" style="background:linear-gradient(135deg,#E0E7FF,#C7D2FE);"></div>
+                  <div>
+                    <div style="font-size:8px; font-weight:700;">경량 패딩</div>
+                    <div class="mini-tags"><span class="mini-tag">아우터</span></div>
+                  </div>
+                </div>
+              </div>
+              <div class="phone-navbar">
+                <div class="nav-item"><div class="nav-icon">🏠</div><div>홈</div></div>
+                <div class="nav-item active"><div class="nav-icon">🔍</div><div>검색</div></div>
+                <div class="nav-item"><div class="nav-icon">📷</div><div>QR</div></div>
+                <div class="nav-item"><div class="nav-icon">👤</div><div>나의</div></div>
+              </div>
+            </div>
+          </div>
+          <div class="phone-label">검색 결과</div>
+          <div class="phone-route">/search</div>
+        </div>
+      </div>
+
+      <div class="arrow">
+        <div class="arrow-line"></div>
+        <div class="arrow-label">결과 탭</div>
+      </div>
+
+      <!-- ClothDetailScreen -->
+      <div class="flow-step">
+        <div class="phone">
+          <div class="phone-frame" style="min-height: 280px;">
+            <div class="phone-notch"></div>
+            <div class="phone-screen">
+              <div class="phone-appbar">
+                <div style="font-size:9px; color:#4F46E5; margin-right:4px;">←</div>
+                <div class="phone-appbar-title">패딩 점퍼</div>
+                <div class="phone-appbar-icon">✏️</div>
+              </div>
+              <div class="phone-body">
+                <div style="width:100%; height:70px; background: linear-gradient(135deg,#FEF3C7,#FDE68A); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:28px; margin-bottom:8px;">🧥</div>
+                <div class="mini-tags">
+                  <span class="mini-tag">패딩</span>
+                  <span class="mini-tag">아우터</span>
+                  <span class="mini-tag">겨울</span>
+                  <span class="mini-tag">블랙</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="phone-label">옷 상세</div>
+          <div class="phone-route">/cloth/:id</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- 흐름 6, 7: 구독 + Admin -->
+  <div class="flow-block">
+    <div class="flow-label">6. 구독 플랜 흐름</div>
+    <div class="flow-row">
+
+      <!-- 나의 탭 -->
+      <div class="flow-step">
+        <div class="phone">
+          <div class="phone-frame" style="min-height: 280px;">
+            <div class="phone-notch"></div>
+            <div class="phone-screen">
+              <div class="phone-appbar">
+                <div class="phone-appbar-title">나의</div>
+              </div>
+              <div class="phone-body">
+                <div style="text-align:center; padding-top:8px;">
+                  <div style="font-size:28px;">👤</div>
+                  <div style="font-size:9px; font-weight:700; margin-top:4px;">사용자명</div>
+                  <div style="font-size:7px; color:#9CA3AF;">무료 플랜</div>
+                </div>
+                <div style="margin-top:12px;">
+                  <div class="mini-btn">구독 플랜</div>
+                </div>
+              </div>
+              <div class="phone-navbar">
+                <div class="nav-item"><div class="nav-icon">🏠</div><div>홈</div></div>
+                <div class="nav-item"><div class="nav-icon">🔍</div><div>검색</div></div>
+                <div class="nav-item"><div class="nav-icon">📷</div><div>QR</div></div>
+                <div class="nav-item active"><div class="nav-icon">👤</div><div>나의</div></div>
+              </div>
+            </div>
+          </div>
+          <div class="phone-label">나의 탭</div>
+          <div class="phone-route">/</div>
+        </div>
+      </div>
+
+      <div class="arrow">
+        <div class="arrow-line"></div>
+        <div class="arrow-label">구독 탭</div>
+      </div>
+
+      <!-- PricingScreen -->
+      <div class="flow-step">
+        <div class="phone">
+          <div class="phone-frame" style="min-height: 280px;">
+            <div class="phone-notch"></div>
+            <div class="phone-screen">
+              <div class="phone-appbar">
+                <div style="font-size:9px; color:#4F46E5; margin-right:4px;">←</div>
+                <div class="phone-appbar-title">구독 플랜</div>
+              </div>
+              <div class="phone-body">
+                <div style="display:flex; align-items:center; justify-content:center; gap:4px; margin-bottom:6px; font-size:7px; font-weight:600;">
+                  <span>월</span>
+                  <div style="width:20px; height:10px; background:#4F46E5; border-radius:5px;"></div>
+                  <span>연</span>
+                  <span style="background:#10B981; color:white; border-radius:4px; padding:1px 3px; font-size:6px;">32%↓</span>
+                </div>
+                <div class="plan-card">
+                  <div class="plan-name">광고제거</div>
+                  <div class="plan-price">1,990원/월</div>
+                </div>
+                <div class="plan-card featured">
+                  <div class="plan-name">기본 ★</div>
+                  <div class="plan-price">3,900원/월</div>
+                </div>
+                <div class="plan-card">
+                  <div class="plan-name">AI 음성</div>
+                  <div class="plan-price">5,900원/월</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="phone-label">구독 플랜</div>
+          <div class="phone-route">/pricing</div>
+        </div>
+      </div>
+
+      <div class="arrow">
+        <div class="arrow-line"></div>
+        <div class="arrow-label">시작하기</div>
+      </div>
+
+      <!-- RevenueCat -->
+      <div class="flow-step">
+        <div class="phone">
+          <div class="phone-frame" style="min-height: 280px;">
+            <div class="phone-notch"></div>
+            <div class="phone-screen" style="background:#1C1C1E;">
+              <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; padding:16px;">
+                <div style="color:white; font-size:10px; font-weight:700;">App Store 결제</div>
+                <div style="color:rgba(255,255,255,0.6); font-size:8px; text-align:center;">RevenueCat SDK를 통한<br>인앱 결제</div>
+                <div style="background:#4F46E5; color:white; border-radius:8px; padding:6px 16px; font-size:9px; font-weight:700; margin-top:8px;">구독 완료</div>
+              </div>
+            </div>
+          </div>
+          <div class="phone-label">결제 (OS 네이티브)</div>
+          <div class="phone-route">RevenueCat SDK</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Admin 흐름 -->
+  <div class="flow-block">
+    <div class="flow-label">7. Admin 대시보드</div>
+    <div class="flow-row">
+      <div class="flow-step">
+        <div class="phone">
+          <div class="phone-frame" style="min-height: 280px;">
+            <div class="phone-notch"></div>
+            <div class="phone-screen">
+              <div class="phone-appbar">
+                <div class="phone-appbar-title">Admin</div>
+              </div>
+              <div class="phone-body">
+                <div class="stat-grid">
+                  <div class="stat-card"><div class="stat-num">247</div><div class="stat-lbl">전체 사용자</div></div>
+                  <div class="stat-card"><div class="stat-num">12</div><div class="stat-lbl">전체 조직</div></div>
+                  <div class="stat-card"><div class="stat-num">1,342</div><div class="stat-lbl">전체 보관함</div></div>
+                  <div class="stat-card"><div class="stat-num">8,901</div><div class="stat-lbl">전체 옷</div></div>
+                  <div class="stat-card"><div class="stat-num">48</div><div class="stat-lbl">광고제거</div></div>
+                  <div class="stat-card"><div class="stat-num">31</div><div class="stat-lbl">기본 구독</div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="phone-label">Admin 대시보드</div>
+          <div class="phone-route">/admin</div>
+        </div>
+      </div>
+      <div style="padding: 60px 32px; color: #6B7280; font-size: 14px; max-width: 320px;">
+        <strong style="color:#111827; display:block; margin-bottom:8px;">직접 URL 접근</strong>
+        Supabase admin_stats 뷰에서 집계 데이터를 조회합니다. 2열 GridView로 7개 통계 카드를 렌더링합니다.
+        <br><br>
+        <span class="tag">total_users</span>
+        <span class="tag">total_orgs</span>
+        <span class="tag">total_storages</span>
+        <span class="tag">total_clothes</span>
+        <span class="tag">ad_free_count</span>
+        <span class="tag">basic_count</span>
+        <span class="tag">ai_voice_count</span>
+      </div>
+    </div>
+  </div>
+
+</section>
+
+<!-- 화면 전환 요약 테이블 -->
+<section class="section" style="padding-top: 0;">
+  <hr class="divider">
+  <div style="padding-top: 48px;">
+    <h2 class="section-title">화면 전환 요약</h2>
+    <p class="section-sub">모든 라우트 경로, 진입 조건, 이동 목적지를 정리합니다.</p>
+    <table class="flow-table">
+      <thead>
+        <tr>
+          <th>출발 화면</th>
+          <th>진입 조건</th>
+          <th>목적지</th>
+          <th>비고</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>앱 시작</td>
+          <td>세션 없음</td>
+          <td><span class="route-badge">/login</span></td>
+          <td>GoRouter redirect</td>
+        </tr>
+        <tr>
+          <td>앱 시작</td>
+          <td>세션 있음</td>
+          <td><span class="route-badge">/</span></td>
+          <td>GoRouter redirect</td>
+        </tr>
+        <tr>
+          <td>LoginScreen</td>
+          <td>로그인 성공 (BLoC)</td>
+          <td><span class="route-badge">/</span></td>
+          <td>AuthBloc emit → GoRouter</td>
+        </tr>
+        <tr>
+          <td>HomeScreen</td>
+          <td>FAB 탭</td>
+          <td><span class="route-badge">/storage/add</span></td>
+          <td></td>
+        </tr>
+        <tr>
+          <td>HomeScreen</td>
+          <td>보관함 카드 탭</td>
+          <td><span class="route-badge">/storage/:id</span></td>
+          <td>id = StorageLocation.id</td>
+        </tr>
+        <tr>
+          <td>StorageDetailScreen</td>
+          <td>FAB 탭</td>
+          <td><span class="route-badge">/cloth/add/:storageId</span></td>
+          <td></td>
+        </tr>
+        <tr>
+          <td>StorageDetailScreen</td>
+          <td>옷 카드 탭</td>
+          <td><span class="route-badge">/cloth/:id</span></td>
+          <td></td>
+        </tr>
+        <tr>
+          <td>StorageDetailScreen</td>
+          <td>AppBar QR 아이콘</td>
+          <td><span class="route-badge">/qr-sticker</span></td>
+          <td>extra: StorageLocation 전달</td>
+        </tr>
+        <tr>
+          <td>NavigationBar</td>
+          <td>QR 탭</td>
+          <td><span class="route-badge">/qr-scan</span></td>
+          <td></td>
+        </tr>
+        <tr>
+          <td>QrScanScreen</td>
+          <td>QR 스캔 성공</td>
+          <td><span class="route-badge">/storage/:id</span></td>
+          <td>미등록 QR → SnackBar 오류</td>
+        </tr>
+        <tr>
+          <td>NavigationBar</td>
+          <td>검색 탭</td>
+          <td><span class="route-badge">/search</span></td>
+          <td></td>
+        </tr>
+        <tr>
+          <td>SearchScreen</td>
+          <td>결과 항목 탭</td>
+          <td><span class="route-badge">/cloth/:id</span></td>
+          <td></td>
+        </tr>
+        <tr>
+          <td>나의 탭</td>
+          <td>구독 플랜 버튼</td>
+          <td><span class="route-badge">/pricing</span></td>
+          <td></td>
+        </tr>
+        <tr>
+          <td>PricingScreen</td>
+          <td>시작하기 버튼</td>
+          <td>RevenueCat SDK</td>
+          <td>OS 네이티브 결제 UI</td>
+        </tr>
+        <tr>
+          <td>직접 URL</td>
+          <td>—</td>
+          <td><span class="route-badge">/admin</span></td>
+          <td>별도 인증 미구현</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<footer>
+  <div><strong>MyStorage</strong> 스토리보드 v1.0</div>
+  <div>Flutter · GoRouter · Supabase · BLoC</div>
+</footer>
+
+</body>
+</html>

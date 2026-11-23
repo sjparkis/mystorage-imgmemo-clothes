@@ -1,0 +1,1714 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MyStorage - 구현 계획서</title>
+  <style>
+    :root {
+      --primary: #4F46E5;
+      --primary-light: #EEF2FF;
+      --secondary: #10B981;
+      --secondary-light: #ECFDF5;
+      --accent: #F59E0B;
+      --accent-light: #FFFBEB;
+      --phase1: #4F46E5;
+      --phase1-light: #EEF2FF;
+      --phase2: #10B981;
+      --phase2-light: #ECFDF5;
+      --phase3: #F59E0B;
+      --phase3-light: #FFFBEB;
+      --gray-50: #F9FAFB;
+      --gray-100: #F3F4F6;
+      --gray-200: #E5E7EB;
+      --gray-500: #6B7280;
+      --gray-700: #374151;
+      --gray-900: #111827;
+      --radius: 12px;
+      --radius-sm: 8px;
+      --shadow: 0 1px 3px rgba(0,0,0,0.1);
+      --shadow-md: 0 4px 6px rgba(0,0,0,0.07);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Pretendard', 'Noto Sans KR', sans-serif;
+      color: var(--gray-900);
+      background: var(--gray-50);
+      line-height: 1.6;
+    }
+
+    /* ── 커버 ── */
+    .cover {
+      background: linear-gradient(135deg, #1E1B4B 0%, #4F46E5 100%);
+      color: white;
+      padding: 72px 48px 56px;
+      position: relative;
+      overflow: hidden;
+    }
+    .cover::before {
+      content: '';
+      position: absolute;
+      top: -60px; right: -60px;
+      width: 320px; height: 320px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 50%;
+    }
+    .cover-badge {
+      display: inline-block;
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.3);
+      border-radius: 20px;
+      padding: 4px 14px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 16px;
+    }
+    .cover h1 { font-size: 44px; font-weight: 800; letter-spacing: -1px; margin-bottom: 10px; }
+    .cover .subtitle { font-size: 18px; opacity: 0.8; margin-bottom: 28px; }
+    .cover-meta { display: flex; gap: 28px; font-size: 13px; opacity: 0.65; flex-wrap: wrap; }
+
+    /* ── TOC ── */
+    .toc {
+      background: white;
+      border-bottom: 1px solid var(--gray-200);
+      padding: 20px 0;
+      position: sticky; top: 0; z-index: 100;
+      box-shadow: var(--shadow);
+    }
+    .toc-inner {
+      max-width: 1100px; margin: 0 auto; padding: 0 32px;
+      display: flex; gap: 6px; flex-wrap: wrap; align-items: center;
+    }
+    .toc-label { font-size: 11px; font-weight: 700; color: var(--gray-500); text-transform: uppercase; letter-spacing: 0.5px; margin-right: 8px; }
+    .toc a {
+      font-size: 12px; font-weight: 500; color: var(--gray-700);
+      text-decoration: none; padding: 4px 10px; border-radius: 20px; transition: all 0.15s; white-space: nowrap;
+    }
+    .toc a:hover { background: var(--primary-light); color: var(--primary); }
+
+    /* ── 레이아웃 ── */
+    .container { max-width: 1100px; margin: 0 auto; padding: 0 32px; }
+    .section { padding: 56px 0; }
+    .section + .section { border-top: 1px solid var(--gray-200); }
+
+    .section-header { margin-bottom: 36px; }
+    .section-number {
+      display: inline-block;
+      background: var(--primary);
+      color: white;
+      font-size: 10px; font-weight: 700;
+      padding: 3px 10px; border-radius: 20px; margin-bottom: 10px;
+      letter-spacing: 0.5px; text-transform: uppercase;
+    }
+    .section-header h2 { font-size: 28px; font-weight: 800; letter-spacing: -0.5px; }
+    .section-header p { margin-top: 8px; font-size: 15px; color: var(--gray-500); }
+
+    /* ── 카드 ── */
+    .card {
+      background: white;
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius);
+      padding: 24px;
+      box-shadow: var(--shadow);
+    }
+    .card-title { font-size: 14px; font-weight: 700; margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid var(--gray-100); }
+
+    /* ── 파일 구조 ── */
+    .file-tree {
+      background: #0F172A;
+      color: #E2E8F0;
+      border-radius: var(--radius);
+      padding: 28px;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 13px;
+      line-height: 1.8;
+      overflow-x: auto;
+      white-space: pre;
+    }
+    .file-tree .dir { color: #93C5FD; font-weight: 600; }
+    .file-tree .file { color: #E2E8F0; }
+    .file-tree .comment { color: #64748B; font-style: italic; }
+
+    /* ── 페이즈 탭 ── */
+    .phase-tabs { display: flex; gap: 12px; margin-bottom: 32px; }
+    .phase-tab {
+      padding: 10px 20px;
+      border-radius: var(--radius-sm);
+      font-size: 14px; font-weight: 700;
+      cursor: pointer;
+      border: 2px solid transparent;
+    }
+    .phase-tab-1 { background: var(--phase1-light); color: var(--phase1); border-color: var(--phase1); }
+    .phase-tab-2 { background: var(--phase2-light); color: var(--phase2); border-color: var(--phase2); }
+    .phase-tab-3 { background: var(--phase3-light); color: #92400E; border-color: var(--phase3); }
+
+    /* ── 태스크 카드 ── */
+    .tasks-list { display: flex; flex-direction: column; gap: 24px; }
+    .task-card {
+      background: white;
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: var(--shadow);
+    }
+    .task-header {
+      padding: 18px 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .task-header:hover { background: var(--gray-50); }
+    .task-number {
+      width: 36px; height: 36px;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; font-weight: 800;
+      flex-shrink: 0;
+    }
+    .task-title { font-size: 16px; font-weight: 700; flex: 1; }
+    .task-files-preview { font-size: 12px; color: var(--gray-500); margin-top: 2px; }
+    .task-toggle { color: var(--gray-400); font-size: 18px; transition: transform 0.2s; }
+    .task-toggle.open { transform: rotate(180deg); }
+
+    .task-body { padding: 0 24px 24px; border-top: 1px solid var(--gray-100); display: none; }
+    .task-body.open { display: block; }
+
+    /* ── 파일 목록 ── */
+    .files-section { margin: 16px 0; }
+    .files-section-title { font-size: 12px; font-weight: 700; color: var(--gray-500); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+    .file-tag {
+      display: inline-block;
+      font-size: 11px; font-weight: 600;
+      padding: 3px 10px; border-radius: 4px; margin: 2px;
+      font-family: 'SF Mono', monospace;
+    }
+    .file-create { background: var(--secondary-light); color: #065F46; }
+    .file-modify { background: var(--accent-light); color: #92400E; }
+
+    /* ── 스텝 ── */
+    .steps { margin-top: 20px; }
+    .step {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 20px;
+      position: relative;
+    }
+    .step:not(:last-child)::before {
+      content: '';
+      position: absolute;
+      left: 15px; top: 36px;
+      width: 2px;
+      height: calc(100% - 8px);
+      background: var(--gray-200);
+    }
+    .step-check {
+      width: 32px; height: 32px;
+      border: 2px solid var(--gray-300);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      background: white;
+      position: relative; z-index: 1;
+      cursor: pointer;
+    }
+    .step-check.done { border-color: var(--secondary); background: var(--secondary); color: white; }
+    .step-content { flex: 1; padding-top: 4px; }
+    .step-title { font-size: 14px; font-weight: 700; margin-bottom: 8px; color: var(--gray-900); }
+    .step-title.done { text-decoration: line-through; color: var(--gray-400); }
+
+    /* ── 코드 블록 ── */
+    pre {
+      background: #0F172A;
+      color: #E2E8F0;
+      border-radius: var(--radius-sm);
+      padding: 20px;
+      overflow-x: auto;
+      font-size: 12px;
+      line-height: 1.7;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      margin: 10px 0;
+      white-space: pre;
+    }
+    .code-label {
+      font-size: 11px; font-weight: 700;
+      color: var(--gray-500);
+      font-family: monospace;
+      margin-bottom: 4px;
+      display: block;
+    }
+    .cmd {
+      background: #1E293B;
+      color: #7DD3FC;
+      border-radius: var(--radius-sm);
+      padding: 10px 16px;
+      font-size: 12px;
+      font-family: 'SF Mono', monospace;
+      margin: 8px 0;
+    }
+    .cmd::before { content: '$ '; color: #64748B; }
+    .expected {
+      background: #F0FDF4;
+      border-left: 3px solid var(--secondary);
+      padding: 8px 14px;
+      font-size: 12px;
+      color: #166534;
+      border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+      margin: 6px 0;
+    }
+
+    /* ── syntax highlight colors ── */
+    .kw { color: #C084FC; }
+    .fn { color: #60A5FA; }
+    .str { color: #86EFAC; }
+    .cm { color: #64748B; font-style: italic; }
+    .ty { color: #FCD34D; }
+    .num { color: #FB923C; }
+
+    /* ── 요약 테이블 ── */
+    .summary-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: var(--shadow);
+    }
+    .summary-table th {
+      background: var(--gray-50);
+      padding: 10px 16px;
+      font-size: 12px; font-weight: 700;
+      text-align: left; color: var(--gray-500);
+      text-transform: uppercase; letter-spacing: 0.5px;
+      border-bottom: 1px solid var(--gray-200);
+    }
+    .summary-table td {
+      padding: 10px 16px;
+      font-size: 13px;
+      border-bottom: 1px solid var(--gray-100);
+    }
+    .summary-table tr:last-child td { border-bottom: none; }
+
+    .badge {
+      display: inline-block; font-size: 11px; font-weight: 600;
+      padding: 2px 8px; border-radius: 4px;
+    }
+    .badge-blue { background: var(--primary-light); color: var(--primary); }
+    .badge-green { background: var(--secondary-light); color: var(--secondary); }
+    .badge-yellow { background: var(--accent-light); color: #92400E; }
+
+    /* ── 주의사항 ── */
+    /* ── 제반사항 테이블 ── */
+    .req-table { width: 100%; border-collapse: collapse; margin-bottom: 32px; }
+    .req-table th {
+      background: var(--gray-100); font-size: 11px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.5px; color: var(--gray-500);
+      padding: 10px 14px; text-align: left; border-bottom: 2px solid var(--gray-200);
+    }
+    .req-table td {
+      padding: 12px 14px; font-size: 13px; border-bottom: 1px solid var(--gray-100);
+      vertical-align: top;
+    }
+    .req-table tr:last-child td { border-bottom: none; }
+    .req-table code { background: var(--gray-100); padding: 2px 6px; border-radius: 4px; font-size: 12px; }
+    .req-table .badge-free { background: #DCFCE7; color: #166534; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 20px; }
+    .req-table .badge-paid { background: #FEF3C7; color: #92400E; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 20px; }
+    .req-table .badge-req  { background: #FEE2E2; color: #991B1B; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 20px; }
+
+    /* ── 배포 그리드 ── */
+    .deploy-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 32px; }
+    .deploy-card {
+      border: 1px solid var(--gray-200); border-radius: var(--radius); overflow: hidden;
+    }
+    .deploy-card-header {
+      padding: 14px 18px; font-size: 13px; font-weight: 700;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .deploy-card-body { padding: 14px 18px; font-size: 12px; color: var(--gray-700); line-height: 1.7; }
+    .deploy-card-body code { background: var(--gray-100); padding: 2px 6px; border-radius: 4px; font-size: 11px; }
+    .deploy-card-body pre {
+      background: #0F172A; color: #E2E8F0; padding: 12px 14px; border-radius: 6px;
+      font-size: 11px; margin-top: 10px; overflow-x: auto; white-space: pre;
+    }
+
+    /* ── 제약사항 카드 ── */
+    .constraint-card {
+      border-left: 4px solid var(--accent); background: var(--accent-light);
+      border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+      padding: 16px 20px; margin-bottom: 14px;
+    }
+    .constraint-card.danger { border-left-color: #EF4444; background: #FEF2F2; }
+    .constraint-card.info   { border-left-color: var(--primary); background: var(--primary-light); }
+    .constraint-title { font-size: 13px; font-weight: 700; margin-bottom: 6px; }
+    .constraint-desc  { font-size: 12px; color: var(--gray-700); line-height: 1.6; }
+
+    .warning-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .warning-item {
+      background: white;
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius-sm);
+      padding: 16px;
+      display: flex; gap: 12px; align-items: flex-start;
+    }
+    .warning-icon { font-size: 20px; flex-shrink: 0; margin-top: 2px; }
+    .warning-title { font-size: 13px; font-weight: 700; margin-bottom: 4px; }
+    .warning-desc { font-size: 12px; color: var(--gray-500); line-height: 1.5; }
+
+    /* ── 푸터 ── */
+    .footer {
+      background: #0F172A;
+      color: #64748B;
+      padding: 32px;
+      text-align: center;
+      font-size: 13px;
+    }
+    .footer strong { color: #E2E8F0; }
+
+    @media (max-width: 768px) {
+      .cover h1 { font-size: 28px; }
+      .warning-grid { grid-template-columns: 1fr; }
+      .phase-tabs { flex-wrap: wrap; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- 커버 -->
+<div class="cover">
+  <div class="container">
+    <div class="cover-badge">구현 계획서 v1.0</div>
+    <h1>MyStorage</h1>
+    <p class="subtitle">Flutter + Supabase 올인원 구현 계획 — Phase 1 · 2 · 3</p>
+    <div class="cover-meta">
+      <span>작성일: 2026-11-23</span>
+      <span>총 태스크: 14개</span>
+      <span>Tech: Flutter · Supabase · OpenAI · RevenueCat</span>
+    </div>
+  </div>
+</div>
+
+<!-- TOC -->
+<nav class="toc">
+  <div class="toc-inner">
+    <span class="toc-label">목차</span>
+    <a href="#overview">개요</a>
+    <a href="#filestructure">파일 구조</a>
+    <a href="#phase1">Phase 1 — Foundation</a>
+    <a href="#phase2">Phase 2 — 핵심 기능</a>
+    <a href="#phase3">Phase 3 — 결제 & Admin</a>
+    <a href="#checklist">주의사항</a>
+    <a href="#prerequisites">제반 사항</a>
+    <a href="#deployment">배포 가이드</a>
+  </div>
+</nav>
+
+<!-- 개요 -->
+<section id="overview" class="section">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-number">Overview</div>
+      <h2>구현 개요</h2>
+      <p>설계서 기반 단계별 구현 계획 — TDD · DRY · YAGNI · 잦은 커밋</p>
+    </div>
+
+    <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:20px; margin-bottom:32px;">
+      <div class="card" style="border-top:3px solid var(--phase1);">
+        <div style="font-size:24px; margin-bottom:10px;">🏗️</div>
+        <div style="font-size:15px; font-weight:800; color:var(--phase1); margin-bottom:8px;">Phase 1 — Foundation</div>
+        <div style="font-size:13px; color:var(--gray-500); line-height:1.6;">Supabase 셋업, Flutter 초기화, 인증, 보관함/옷 CRUD, 기본 검색</div>
+        <div style="margin-top:12px; font-size:12px; font-weight:700; color:var(--phase1);">Tasks 1-7</div>
+      </div>
+      <div class="card" style="border-top:3px solid var(--phase2);">
+        <div style="font-size:24px; margin-bottom:10px;">⚡</div>
+        <div style="font-size:15px; font-weight:800; color:var(--phase2); margin-bottom:8px;">Phase 2 — 핵심 기능</div>
+        <div style="font-size:13px; color:var(--gray-500); line-height:1.6;">AI 이미지 태그, QR 코드, AI 음성 검색, 오프라인 Drift 동기화</div>
+        <div style="margin-top:12px; font-size:12px; font-weight:700; color:var(--phase2);">Tasks 8-13</div>
+      </div>
+      <div class="card" style="border-top:3px solid var(--phase3);">
+        <div style="font-size:24px; margin-bottom:10px;">💳</div>
+        <div style="font-size:15px; font-weight:800; color:#92400E; margin-bottom:8px;">Phase 3 — 결제 & Admin</div>
+        <div style="font-size:13px; color:var(--gray-500); line-height:1.6;">RevenueCat 인앱 구독, 플랜별 기능 제한, Admin 대시보드</div>
+        <div style="margin-top:12px; font-size:12px; font-weight:700; color:#92400E;">Tasks 14-16 (예정)</div>
+      </div>
+    </div>
+
+    <table class="summary-table">
+      <thead>
+        <tr><th>항목</th><th>내용</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Goal</strong></td><td>Flutter + Supabase 올인원으로 옷 보관 위치 관리 앱 전체 구현</td></tr>
+        <tr><td><strong>Architecture</strong></td><td>Flutter 단일 코드베이스(iOS·Android·PWA), Supabase(DB+Auth+Storage+Edge Functions), Drift(오프라인 SQLite)</td></tr>
+        <tr><td><strong>AI</strong></td><td>OpenAI Vision (이미지 태그) + GPT-4o-mini (자연어 파싱) — 모두 Supabase Edge Functions 경유</td></tr>
+        <tr><td><strong>Payment</strong></td><td>RevenueCat (iOS/Android 인앱) + Toss Payments (웹) + Webhook으로 Supabase 동기화</td></tr>
+        <tr><td><strong>Test</strong></td><td>flutter_test + mockito — 각 태스크 TDD 방식, 테스트 먼저 작성 후 구현</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- 파일 구조 -->
+<section id="filestructure" class="section">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-number">Structure</div>
+      <h2>파일 구조</h2>
+      <p>각 파일의 단일 책임 원칙 — 기능별로 분리, 레이어별로 묶음</p>
+    </div>
+    <div class="file-tree">
+<span class="dir">mystorage/</span>
+├── <span class="dir">supabase/</span>
+│   ├── <span class="dir">functions/</span>
+│   │   ├── <span class="dir">analyze-clothing/</span>
+│   │   │   └── <span class="file">index.ts</span>        <span class="comment"># 옷 이미지 → AI 태그 (OpenAI Vision)</span>
+│   │   ├── <span class="dir">parse-voice-query/</span>
+│   │   │   └── <span class="file">index.ts</span>        <span class="comment"># 자연어 → 검색 필터 (GPT-4o-mini)</span>
+│   │   └── <span class="dir">subscription-webhook/</span>
+│   │       └── <span class="file">index.ts</span>        <span class="comment"># RevenueCat webhook → Supabase 플랜 동기화</span>
+│   └── <span class="dir">migrations/</span>
+│       ├── <span class="file">001_schema.sql</span>          <span class="comment"># organizations, storages, clothes, tags 테이블</span>
+│       ├── <span class="file">002_rls.sql</span>             <span class="comment"># Row Level Security 정책 (is_org_member 함수)</span>
+│       └── <span class="file">003_subscriptions.sql</span>   <span class="comment"># subscriptions 테이블 + 신규 유저 트리거</span>
+├── <span class="dir">lib/</span>
+│   ├── <span class="file">main.dart</span>               <span class="comment"># Supabase 초기화 + runApp</span>
+│   ├── <span class="file">app.dart</span>                <span class="comment"># MaterialApp.router</span>
+│   ├── <span class="dir">core/</span>
+│   │   ├── <span class="file">constants.dart</span>          <span class="comment"># Supabase URL/Key, 플랜 제한값</span>
+│   │   ├── <span class="file">router.dart</span>             <span class="comment"># go_router 전체 라우트 정의</span>
+│   │   └── <span class="file">theme.dart</span>              <span class="comment"># AppTheme (Material 3)</span>
+│   ├── <span class="dir">data/</span>
+│   │   ├── <span class="dir">models/</span>
+│   │   │   ├── <span class="file">organization.dart</span>
+│   │   │   ├── <span class="file">storage_location.dart</span>
+│   │   │   ├── <span class="file">cloth.dart</span>
+│   │   │   ├── <span class="file">tag.dart</span>
+│   │   │   └── <span class="file">subscription.dart</span>
+│   │   ├── <span class="dir">repositories/</span>
+│   │   │   ├── <span class="file">auth_repository.dart</span>    <span class="comment"># signIn / signUp / signOut</span>
+│   │   │   ├── <span class="file">storage_repository.dart</span> <span class="comment"># CRUD + QR 조회 + org 자동 생성</span>
+│   │   │   ├── <span class="file">cloth_repository.dart</span>   <span class="comment"># CRUD + 태그 저장 + 검색</span>
+│   │   │   └── <span class="file">subscription_repository.dart</span>
+│   │   └── <span class="dir">local/</span>
+│   │       ├── <span class="file">app_database.dart</span>       <span class="comment"># Drift 스키마 정의</span>
+│   │       └── <span class="file">sync_queue.dart</span>         <span class="comment"># 오프라인 쓰기 큐</span>
+│   ├── <span class="dir">services/</span>
+│   │   ├── <span class="file">ai_tag_service.dart</span>     <span class="comment"># Edge Function 호출 → Tag 리스트 반환</span>
+│   │   ├── <span class="file">voice_search_service.dart</span> <span class="comment"># STT + 자연어 파싱 Edge Function</span>
+│   │   └── <span class="file">subscription_service.dart</span> <span class="comment"># RevenueCat SDK + 플랜 제한 체크</span>
+│   └── <span class="dir">features/</span>
+│       ├── <span class="dir">auth/</span>           <span class="comment"># login_screen, auth_bloc</span>
+│       ├── <span class="dir">home/</span>           <span class="comment"># home_screen, storage_card</span>
+│       ├── <span class="dir">storage/</span>        <span class="comment"># storage_detail_screen, add_storage_screen</span>
+│       ├── <span class="dir">cloth/</span>          <span class="comment"># add_cloth_screen, cloth_detail_screen, tag_chip</span>
+│       ├── <span class="dir">search/</span>         <span class="comment"># search_screen, voice_search_button</span>
+│       ├── <span class="dir">qr/</span>             <span class="comment"># qr_scan_screen, qr_sticker_screen</span>
+│       ├── <span class="dir">subscription/</span>   <span class="comment"># pricing_screen</span>
+│       └── <span class="dir">admin/</span>          <span class="comment"># admin_dashboard</span>
+└── <span class="dir">test/</span>
+    ├── <span class="dir">repositories/</span>
+    └── <span class="dir">services/</span>
+    </div>
+  </div>
+</section>
+
+<!-- Phase 1 -->
+<section id="phase1" class="section">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-number" style="background:var(--phase1);">Phase 1</div>
+      <h2>Foundation</h2>
+      <p>Supabase 셋업 → Flutter 초기화 → 인증 → 보관함/옷 CRUD → 기본 텍스트 검색</p>
+    </div>
+
+    <div class="tasks-list">
+
+      <!-- Task 1 -->
+      <div class="task-card">
+        <div class="task-header" onclick="toggle(this)">
+          <div class="task-number" style="background:var(--phase1-light); color:var(--phase1);">1</div>
+          <div>
+            <div class="task-title">Supabase 프로젝트 초기화 & 스키마 마이그레이션</div>
+            <div class="task-files-preview">migrations/001_schema.sql · 002_rls.sql · 003_subscriptions.sql</div>
+          </div>
+          <div class="task-toggle">▼</div>
+        </div>
+        <div class="task-body">
+          <div class="files-section">
+            <div class="files-section-title">생성 파일</div>
+            <span class="file-tag file-create">supabase/migrations/001_schema.sql</span>
+            <span class="file-tag file-create">supabase/migrations/002_rls.sql</span>
+            <span class="file-tag file-create">supabase/migrations/003_subscriptions.sql</span>
+          </div>
+          <div class="steps">
+
+            <div class="step">
+              <div class="step-check" onclick="checkStep(this)">✓</div>
+              <div class="step-content">
+                <div class="step-title">Supabase CLI 설치 및 로컬 초기화</div>
+                <div class="cmd">npm install -g supabase && supabase init && supabase start</div>
+                <div class="expected">Expected: http://localhost:54323 대시보드 접근 가능</div>
+              </div>
+            </div>
+
+            <div class="step">
+              <div class="step-check" onclick="checkStep(this)">✓</div>
+              <div class="step-content">
+                <div class="step-title">001_schema.sql — 테이블 정의</div>
+<pre><span class="kw">create table</span> organizations (
+  id uuid <span class="kw">primary key default</span> gen_random_uuid(),
+  name text <span class="kw">not null</span>,
+  owner_id uuid <span class="kw">references</span> auth.users(id) <span class="kw">not null</span>,
+  created_at timestamptz <span class="kw">default</span> now()
+);
+
+<span class="kw">create table</span> storages (
+  id uuid <span class="kw">primary key default</span> gen_random_uuid(),
+  org_id uuid <span class="kw">references</span> organizations(id) <span class="kw">on delete cascade not null</span>,
+  name text <span class="kw">not null</span>,
+  photo_url text,
+  qr_code uuid <span class="kw">default</span> gen_random_uuid() <span class="kw">not null unique</span>,
+  description text,
+  created_at timestamptz <span class="kw">default</span> now()
+);
+
+<span class="kw">create table</span> clothes (
+  id uuid <span class="kw">primary key default</span> gen_random_uuid(),
+  org_id uuid <span class="kw">references</span> organizations(id) <span class="kw">on delete cascade not null</span>,
+  storage_id uuid <span class="kw">references</span> storages(id) <span class="kw">on delete set null</span>,
+  photo_url text, name text,
+  created_by uuid <span class="kw">references</span> auth.users(id),
+  created_at timestamptz <span class="kw">default</span> now()
+);
+
+<span class="kw">create table</span> tags (
+  id uuid <span class="kw">primary key default</span> gen_random_uuid(),
+  name text <span class="kw">not null unique</span>,
+  category text <span class="kw">check</span> (category <span class="kw">in</span> (<span class="str">'color'</span>,<span class="str">'type'</span>,<span class="str">'season'</span>,<span class="str">'brand'</span>,<span class="str">'custom'</span>)) <span class="kw">not null</span>
+);
+
+<span class="kw">create table</span> clothes_tags (
+  id uuid <span class="kw">primary key default</span> gen_random_uuid(),
+  cloth_id uuid <span class="kw">references</span> clothes(id) <span class="kw">on delete cascade not null</span>,
+  tag_id uuid <span class="kw">references</span> tags(id) <span class="kw">on delete cascade not null</span>,
+  ai_generated boolean <span class="kw">default false</span>,
+  <span class="kw">unique</span>(cloth_id, tag_id)
+);</pre>
+              </div>
+            </div>
+
+            <div class="step">
+              <div class="step-check" onclick="checkStep(this)">✓</div>
+              <div class="step-content">
+                <div class="step-title">002_rls.sql — Row Level Security 정책</div>
+<pre><span class="kw">alter table</span> organizations <span class="kw">enable row level security</span>;
+<span class="kw">alter table</span> storages <span class="kw">enable row level security</span>;
+<span class="kw">alter table</span> clothes <span class="kw">enable row level security</span>;
+
+<span class="kw">create or replace function</span> <span class="fn">is_org_member</span>(p_org_id uuid)
+<span class="kw">returns</span> boolean language sql security definer <span class="kw">as</span> $$
+  <span class="kw">select exists</span> (
+    <span class="kw">select</span> 1 <span class="kw">from</span> organization_members
+    <span class="kw">where</span> org_id = p_org_id <span class="kw">and</span> user_id = auth.uid()
+  );
+$$;
+
+<span class="kw">create policy</span> <span class="str">"storages_all"</span> <span class="kw">on</span> storages
+  <span class="kw">for all using</span> (<span class="fn">is_org_member</span>(org_id));
+
+<span class="kw">create policy</span> <span class="str">"clothes_all"</span> <span class="kw">on</span> clothes
+  <span class="kw">for all using</span> (<span class="fn">is_org_member</span>(org_id));</pre>
+              </div>
+            </div>
+
+            <div class="step">
+              <div class="step-check" onclick="checkStep(this)">✓</div>
+              <div class="step-content">
+                <div class="step-title">003_subscriptions.sql — 구독 테이블 + 신규 유저 트리거</div>
+<pre><span class="kw">create table</span> subscriptions (
+  id uuid <span class="kw">primary key default</span> gen_random_uuid(),
+  user_id uuid <span class="kw">references</span> auth.users(id) <span class="kw">not null unique</span>,
+  plan text <span class="kw">check</span> (plan <span class="kw">in</span> (<span class="str">'free'</span>,<span class="str">'ad_free'</span>,<span class="str">'basic'</span>,<span class="str">'ai_voice'</span>)) <span class="kw">default</span> <span class="str">'free'</span>,
+  billing_cycle text,
+  status text <span class="kw">default</span> <span class="str">'active'</span>,
+  expires_at timestamptz,
+  revenuecat_id text
+);
+
+<span class="kw">create or replace function</span> <span class="fn">create_default_subscription</span>()
+<span class="kw">returns trigger</span> language plpgsql security definer <span class="kw">as</span> $$
+<span class="kw">begin</span>
+  <span class="kw">insert into</span> subscriptions(user_id) <span class="kw">values</span> (new.id);
+  <span class="kw">return</span> new;
+<span class="kw">end</span>; $$;
+
+<span class="kw">create trigger</span> on_auth_user_created
+  <span class="kw">after insert on</span> auth.users
+  <span class="kw">for each row execute function</span> <span class="fn">create_default_subscription</span>();</pre>
+              </div>
+            </div>
+
+            <div class="step">
+              <div class="step-check" onclick="checkStep(this)">✓</div>
+              <div class="step-content">
+                <div class="step-title">마이그레이션 적용 + Storage 버킷 생성</div>
+                <div class="cmd">supabase db push</div>
+                <div style="margin-top:8px; font-size:13px; color:var(--gray-700);">Supabase 대시보드 → Storage → New bucket: <code>clothes-photos</code> (public), <code>storage-photos</code> (public)</div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- Task 2 -->
+      <div class="task-card">
+        <div class="task-header" onclick="toggle(this)">
+          <div class="task-number" style="background:var(--phase1-light); color:var(--phase1);">2</div>
+          <div>
+            <div class="task-title">Flutter 프로젝트 초기화 & 패키지 설치</div>
+            <div class="task-files-preview">pubspec.yaml · lib/main.dart · lib/core/constants.dart</div>
+          </div>
+          <div class="task-toggle">▼</div>
+        </div>
+        <div class="task-body">
+          <div class="files-section">
+            <div class="files-section-title">생성 파일</div>
+            <span class="file-tag file-create">pubspec.yaml</span>
+            <span class="file-tag file-create">lib/main.dart</span>
+            <span class="file-tag file-create">lib/core/constants.dart</span>
+          </div>
+          <div class="steps">
+
+            <div class="step">
+              <div class="step-check" onclick="checkStep(this)">✓</div>
+              <div class="step-content">
+                <div class="step-title">Flutter 프로젝트 생성</div>
+                <div class="cmd">flutter create mystorage --org com.mystorage --platforms ios,android,web</div>
+              </div>
+            </div>
+
+            <div class="step">
+              <div class="step-check" onclick="checkStep(this)">✓</div>
+              <div class="step-content">
+                <div class="step-title">pubspec.yaml 패키지 추가</div>
+<pre>dependencies:
+  supabase_flutter: ^<span class="num">2.3.0</span>
+  flutter_bloc: ^<span class="num">8.1.0</span>
+  go_router: ^<span class="num">13.0.0</span>
+  drift: ^<span class="num">2.14.0</span>
+  sqlite3_flutter_libs: ^<span class="num">0.5.0</span>
+  image_picker: ^<span class="num">1.0.7</span>
+  cached_network_image: ^<span class="num">3.3.0</span>
+  mobile_scanner: ^<span class="num">5.0.0</span>
+  qr_flutter: ^<span class="num">4.1.0</span>
+  printing: ^<span class="num">5.12.0</span>
+  speech_to_text: ^<span class="num">6.6.0</span>
+  purchases_flutter: ^<span class="num">6.25.0</span>
+  permission_handler: ^<span class="num">11.3.0</span>
+  connectivity_plus: ^<span class="num">6.0.0</span>
+
+dev_dependencies:
+  mockito: ^<span class="num">5.4.0</span>
+  build_runner: ^<span class="num">2.4.0</span>
+  drift_dev: ^<span class="num">2.14.0</span></pre>
+                <div class="cmd">flutter pub get</div>
+              </div>
+            </div>
+
+            <div class="step">
+              <div class="step-check" onclick="checkStep(this)">✓</div>
+              <div class="step-content">
+                <div class="step-title">lib/core/constants.dart — Supabase 설정 + 플랜 제한값</div>
+<pre><span class="kw">class</span> <span class="ty">AppConstants</span> {
+  <span class="kw">static const</span> supabaseUrl = <span class="str">'YOUR_SUPABASE_URL'</span>;
+  <span class="kw">static const</span> supabaseAnonKey = <span class="str">'YOUR_SUPABASE_ANON_KEY'</span>;
+
+  <span class="kw">static const</span> planLimits = {
+    <span class="str">'free'</span>:     {<span class="str">'storages'</span>: <span class="num">3</span>,  <span class="str">'clothes'</span>: <span class="num">15</span>},
+    <span class="str">'ad_free'</span>:  {<span class="str">'storages'</span>: <span class="num">3</span>,  <span class="str">'clothes'</span>: <span class="num">15</span>},
+    <span class="str">'basic'</span>:    {<span class="str">'storages'</span>: <span class="num">20</span>, <span class="str">'clothes'</span>: <span class="num">70</span>},
+    <span class="str">'ai_voice'</span>: {<span class="str">'storages'</span>: <span class="num">-1</span>, <span class="str">'clothes'</span>: <span class="num">-1</span>},
+  };
+}</pre>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- Task 3 -->
+      <div class="task-card">
+        <div class="task-header" onclick="toggle(this)">
+          <div class="task-number" style="background:var(--phase1-light); color:var(--phase1);">3</div>
+          <div>
+            <div class="task-title">라우터 & 테마 & App 진입점</div>
+            <div class="task-files-preview">lib/core/router.dart · lib/core/theme.dart · lib/app.dart · lib/main.dart</div>
+          </div>
+          <div class="task-toggle">▼</div>
+        </div>
+        <div class="task-body">
+          <div class="steps">
+
+            <div class="step">
+              <div class="step-check" onclick="checkStep(this)">✓</div>
+              <div class="step-content">
+                <div class="step-title">lib/main.dart — Supabase 초기화</div>
+<pre><span class="kw">Future</span>&lt;<span class="ty">void</span>&gt; <span class="fn">main</span>() <span class="kw">async</span> {
+  WidgetsFlutterBinding.<span class="fn">ensureInitialized</span>();
+  <span class="kw">await</span> Supabase.<span class="fn">initialize</span>(
+    url: AppConstants.supabaseUrl,
+    anonKey: AppConstants.supabaseAnonKey,
+  );
+  <span class="fn">runApp</span>(<span class="kw">const</span> <span class="ty">MyStorageApp</span>());
+}</pre>
+              </div>
+            </div>
+
+            <div class="step">
+              <div class="step-check" onclick="checkStep(this)">✓</div>
+              <div class="step-content">
+                <div class="step-title">lib/core/router.dart — go_router 라우트 (인증 가드 포함)</div>
+<pre><span class="kw">final</span> appRouter = GoRouter(
+  redirect: (context, state) {
+    <span class="kw">final</span> isAuth = Supabase.instance.client.auth.currentSession != <span class="kw">null</span>;
+    <span class="kw">if</span> (!isAuth && state.matchedLocation != <span class="str">'/login'</span>) <span class="kw">return</span> <span class="str">'/login'</span>;
+    <span class="kw">if</span> (isAuth && state.matchedLocation == <span class="str">'/login'</span>) <span class="kw">return</span> <span class="str">'/'</span>;
+    <span class="kw">return null</span>;
+  },
+  routes: [
+    GoRoute(path: <span class="str">'/login'</span>, builder: (_, __) => <span class="kw">const</span> <span class="ty">LoginScreen</span>()),
+    GoRoute(path: <span class="str">'/'</span>, builder: (_, __) => <span class="kw">const</span> <span class="ty">HomeScreen</span>()),
+    GoRoute(path: <span class="str">'/storage/:id'</span>, builder: (_, s) => <span class="ty">StorageDetailScreen</span>(storageId: s.pathParameters[<span class="str">'id'</span>]!)),
+    GoRoute(path: <span class="str">'/storage/add'</span>, builder: (_, __) => <span class="kw">const</span> <span class="ty">AddStorageScreen</span>()),
+    GoRoute(path: <span class="str">'/cloth/add/:storageId'</span>, builder: (_, s) => <span class="ty">AddClothScreen</span>(storageId: s.pathParameters[<span class="str">'storageId'</span>]!)),
+    GoRoute(path: <span class="str">'/search'</span>, builder: (_, __) => <span class="kw">const</span> <span class="ty">SearchScreen</span>()),
+    GoRoute(path: <span class="str">'/qr-scan'</span>, builder: (_, __) => <span class="kw">const</span> <span class="ty">QrScanScreen</span>()),
+    GoRoute(path: <span class="str">'/pricing'</span>, builder: (_, __) => <span class="kw">const</span> <span class="ty">PricingScreen</span>()),
+  ],
+);</pre>
+              </div>
+            </div>
+
+            <div class="step">
+              <div class="step-check" onclick="checkStep(this)">✓</div>
+              <div class="step-content">
+                <div class="step-title">빌드 확인</div>
+                <div class="cmd">flutter run -d chrome</div>
+                <div class="expected">Expected: 로그인 화면으로 리다이렉트</div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- Task 4 -->
+      <div class="task-card">
+        <div class="task-header" onclick="toggle(this)">
+          <div class="task-number" style="background:var(--phase1-light); color:var(--phase1);">4</div>
+          <div>
+            <div class="task-title">인증 — AuthRepository + AuthBloc + 로그인 화면</div>
+            <div class="task-files-preview">data/repositories/auth_repository.dart · features/auth/auth_bloc.dart · login_screen.dart</div>
+          </div>
+          <div class="task-toggle">▼</div>
+        </div>
+        <div class="task-body">
+          <div class="steps">
+
+            <div class="step">
+              <div class="step-check" onclick="checkStep(this)">✓</div>
+              <div class="step-content">
+                <div class="step-title">테스트 먼저 작성 (TDD)</div>
+<pre><span class="cm">// test/repositories/auth_repository_test.dart</span>
+<span class="kw">void</span> <span class="fn">main</span>() {
+  <span class="fn">group</span>(<span class="str">'AuthRepository'</span>, () {
+    <span class="fn">test</span>(<span class="str">'signIn calls Supabase with email and password'</span>, () <span class="kw">async</span> {
+      <span class="fn">when</span>(mockAuth.<span class="fn">signInWithPassword</span>(
+        email: <span class="fn">anyNamed</span>(<span class="str">'email'</span>),
+        password: <span class="fn">anyNamed</span>(<span class="str">'password'</span>),
+      )).<span class="fn">thenAnswer</span>((_) <span class="kw">async</span> => <span class="ty">AuthResponse</span>(session: <span class="kw">null</span>, user: <span class="kw">null</span>));
+
+      <span class="kw">await</span> repo.<span class="fn">signIn</span>(email: <span class="str">'test@test.com'</span>, password: <span class="str">'123456'</span>);
+      <span class="fn">verify</span>(mockAuth.<span class="fn">signInWithPassword</span>(email: <span class="str">'test@test.com'</span>, password: <span class="str">'123456'</span>)).<span class="fn">called</span>(<span class="num">1</span>);
+    });
+  });
+}</pre>
+                <div class="cmd">flutter test test/repositories/auth_repository_test.dart</div>
+                <div class="expected">Expected: FAIL — AuthRepository 없음</div>
+              </div>
+            </div>
+
+            <div class="step">
+              <div class="step-check" onclick="checkStep(this)">✓</div>
+              <div class="step-content">
+                <div class="step-title">data/repositories/auth_repository.dart 구현</div>
+<pre><span class="kw">class</span> <span class="ty">AuthRepository</span> {
+  <span class="kw">final</span> <span class="ty">GoTrueClient</span> _auth;
+  <span class="ty">AuthRepository</span>({<span class="ty">GoTrueClient</span>? auth})
+      : _auth = auth ?? Supabase.instance.client.auth;
+
+  <span class="ty">Future</span>&lt;<span class="ty">void</span>&gt; <span class="fn">signIn</span>({<span class="kw">required</span> <span class="ty">String</span> email, <span class="kw">required</span> <span class="ty">String</span> password}) <span class="kw">async</span> {
+    <span class="kw">await</span> _auth.<span class="fn">signInWithPassword</span>(email: email, password: password);
+  }
+
+  <span class="ty">Future</span>&lt;<span class="ty">void</span>&gt; <span class="fn">signUp</span>({<span class="kw">required</span> <span class="ty">String</span> email, <span class="kw">required</span> <span class="ty">String</span> password}) <span class="kw">async</span> {
+    <span class="kw">await</span> _auth.<span class="fn">signUp</span>(email: email, password: password);
+  }
+
+  <span class="ty">Future</span>&lt;<span class="ty">void</span>&gt; <span class="fn">signOut</span>() <span class="kw">async</span> => _auth.<span class="fn">signOut</span>();
+}</pre>
+              </div>
+            </div>
+
+            <div class="step">
+              <div class="step-check" onclick="checkStep(this)">✓</div>
+              <div class="step-content">
+                <div class="step-title">테스트 재실행 — 통과 확인</div>
+                <div class="cmd">flutter test test/repositories/auth_repository_test.dart</div>
+                <div class="expected">Expected: PASS</div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- Task 5-7 간략 카드 -->
+      <div class="task-card">
+        <div class="task-header" onclick="toggle(this)">
+          <div class="task-number" style="background:var(--phase1-light); color:var(--phase1);">5</div>
+          <div>
+            <div class="task-title">보관함(Storage) Repository + 홈/상세/추가 화면</div>
+            <div class="task-files-preview">storage_repository.dart · home_screen.dart · storage_detail_screen.dart · add_storage_screen.dart</div>
+          </div>
+          <div class="task-toggle">▼</div>
+        </div>
+        <div class="task-body">
+          <div class="steps">
+            <div class="step">
+              <div class="step-check" onclick="checkStep(this)">✓</div>
+              <div class="step-content">
+                <div class="step-title">StorageRepository — getOrCreateOrgId + CRUD + fetchByQrCode</div>
+                <p style="font-size:13px; color:var(--gray-500);">신규 유저 최초 접속 시 조직 + 멤버십 자동 생성. <code>storages</code> 테이블 CRUD. QR UUID로 보관함 조회.</p>
+              </div>
+            </div>
+            <div class="step">
+              <div class="step-check" onclick="checkStep(this)">✓</div>
+              <div class="step-content">
+                <div class="step-title">HomeScreen — 보관함 목록 + NavigationBar</div>
+                <p style="font-size:13px; color:var(--gray-500);">FutureBuilder로 보관함 목록 렌더. 하단 탭: 홈/검색/QR/나의. FAB로 보관함 추가 이동.</p>
+              </div>
+            </div>
+            <div class="step">
+              <div class="step-check" onclick="checkStep(this)">✓</div>
+              <div class="step-content">
+                <div class="step-title">AddStorageScreen — 카메라 촬영 + Supabase Storage 업로드 + 저장</div>
+                <p style="font-size:13px; color:var(--gray-500);">image_picker로 카메라 촬영 → <code>storage-photos</code> 버킷 업로드 → 공개 URL → DB 저장.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="task-card">
+        <div class="task-header" onclick="toggle(this)">
+          <div class="task-number" style="background:var(--phase1-light); color:var(--phase1);">6</div>
+          <div>
+            <div class="task-title">옷(Cloth) + 태그 Repository + 추가 화면</div>
+            <div class="task-files-preview">cloth_repository.dart · models/cloth.dart · models/tag.dart · add_cloth_screen.dart</div>
+          </div>
+          <div class="task-toggle">▼</div>
+        </div>
+        <div class="task-body">
+          <div class="steps">
+            <div class="step">
+              <div class="step-check" onclick="checkStep(this)">✓</div>
+              <div class="step-content">
+                <div class="step-title">Cloth · Tag 모델 — fromMap + toInsertMap</div>
+                <p style="font-size:13px; color:var(--gray-500);"><code>clothes_tags</code> JOIN 결과를 파싱. <code>ai_generated</code> 플래그 포함.</p>
+              </div>
+            </div>
+            <div class="step">
+              <div class="step-check" onclick="checkStep(this)">✓</div>
+              <div class="step-content">
+                <div class="step-title">ClothRepository — fetchByStorage + create (태그 포함) + search</div>
+                <p style="font-size:13px; color:var(--gray-500);">태그 upsert → clothes_tags 연결. <code>ilike</code>로 이름 검색.</p>
+              </div>
+            </div>
+            <div class="step">
+              <div class="step-check" onclick="checkStep(this)">✓</div>
+              <div class="step-content">
+                <div class="step-title">AddClothScreen — 사진 촬영 + AI 분석 중 UI + 태그 편집 + 저장</div>
+                <p style="font-size:13px; color:var(--gray-500);">사진 업로드 직후 AiTagService 호출. 로딩 표시 → 태그 Chip 렌더 → 수정 가능.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- Phase 2 -->
+<section id="phase2" class="section">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-number" style="background:var(--phase2);">Phase 2</div>
+      <h2>핵심 기능</h2>
+      <p>AI 이미지 태그 → QR 코드 → 음성 검색 → 오프라인 동기화</p>
+    </div>
+
+    <div class="tasks-list">
+
+      <!-- Task 7 -->
+      <div class="task-card">
+        <div class="task-header" onclick="toggle(this)">
+          <div class="task-number" style="background:var(--phase2-light); color:var(--phase2);">7</div>
+          <div>
+            <div class="task-title">AI 이미지 태그 — Edge Function (OpenAI Vision)</div>
+            <div class="task-files-preview">supabase/functions/analyze-clothing/index.ts · lib/services/ai_tag_service.dart</div>
+          </div>
+          <div class="task-toggle">▼</div>
+        </div>
+        <div class="task-body">
+          <div class="steps">
+
+            <div class="step">
+              <div class="step-check" onclick="checkStep(this)">✓</div>
+              <div class="step-content">
+                <div class="step-title">Edge Function — analyze-clothing/index.ts</div>
+<pre><span class="kw">import</span> OpenAI <span class="kw">from</span> <span class="str">"https://esm.sh/openai@4.47.1"</span>;
+
+<span class="kw">const</span> openai = <span class="kw">new</span> <span class="ty">OpenAI</span>({ apiKey: Deno.env.<span class="fn">get</span>(<span class="str">"OPENAI_API_KEY"</span>)! });
+
+serve(<span class="kw">async</span> (req) => {
+  <span class="kw">const</span> { imageUrl } = <span class="kw">await</span> req.<span class="fn">json</span>();
+  <span class="kw">const</span> response = <span class="kw">await</span> openai.chat.completions.<span class="fn">create</span>({
+    model: <span class="str">"gpt-4o-mini"</span>,
+    messages: [{ role: <span class="str">"user"</span>, content: [
+      { type: <span class="str">"image_url"</span>, image_url: { url: imageUrl, detail: <span class="str">"low"</span> }},
+      { type: <span class="str">"text"</span>, text: <span class="str">"색상·종류·계절을 JSON으로: {\"tags\":[{\"name\":\"string\",\"category\":\"color|type|season|brand\"}]}"</span>}
+    ]}],
+    max_tokens: <span class="num">200</span>, response_format: { type: <span class="str">"json_object"</span> },
+  });
+  <span class="kw">return new</span> <span class="ty">Response</span>(response.choices[<span class="num">0</span>].message.content, {
+    headers: { <span class="str">"Content-Type"</span>: <span class="str">"application/json"</span> }
+  });
+});</pre>
+              </div>
+            </div>
+
+            <div class="step">
+              <div class="step-check" onclick="checkStep(this)">✓</div>
+              <div class="step-content">
+                <div class="step-title">로컬 테스트 → 배포</div>
+                <div class="cmd">supabase functions serve analyze-clothing --env-file .env.local</div>
+                <div class="cmd">supabase functions deploy analyze-clothing --no-verify-jwt</div>
+                <div class="cmd">supabase secrets set OPENAI_API_KEY=sk-...</div>
+              </div>
+            </div>
+
+            <div class="step">
+              <div class="step-check" onclick="checkStep(this)">✓</div>
+              <div class="step-content">
+                <div class="step-title">lib/services/ai_tag_service.dart</div>
+<pre><span class="kw">class</span> <span class="ty">AiTagService</span> {
+  <span class="ty">Future</span>&lt;<span class="ty">List</span>&lt;<span class="ty">Tag</span>&gt;&gt; <span class="fn">analyze</span>(<span class="ty">String</span> imageUrl) <span class="kw">async</span> {
+    <span class="kw">final</span> res = <span class="kw">await</span> Supabase.instance.client.functions.<span class="fn">invoke</span>(
+      <span class="str">'analyze-clothing'</span>, body: {<span class="str">'imageUrl'</span>: imageUrl},
+    );
+    <span class="kw">return</span> (res.data[<span class="str">'tags'</span>] <span class="kw">as</span> <span class="ty">List</span>).<span class="fn">map</span>((t) => <span class="ty">Tag</span>(
+      id: <span class="str">''</span>, name: t[<span class="str">'name'</span>], category: t[<span class="str">'category'</span>], aiGenerated: <span class="kw">true</span>,
+    )).<span class="fn">toList</span>();
+  }
+}</pre>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- Task 8 -->
+      <div class="task-card">
+        <div class="task-header" onclick="toggle(this)">
+          <div class="task-number" style="background:var(--phase2-light); color:var(--phase2);">8</div>
+          <div>
+            <div class="task-title">QR 코드 생성 + 스캔 + PDF 출력</div>
+            <div class="task-files-preview">features/qr/qr_scan_screen.dart · qr_sticker_screen.dart</div>
+          </div>
+          <div class="task-toggle">▼</div>
+        </div>
+        <div class="task-body">
+          <div class="steps">
+
+            <div class="step">
+              <div class="step-check" onclick="checkStep(this)">✓</div>
+              <div class="step-content">
+                <div class="step-title">QrScanScreen — MobileScanner → fetchByQrCode → 보관함 이동</div>
+<pre><span class="ty">MobileScanner</span>(onDetect: (capture) <span class="kw">async</span> {
+  <span class="kw">final</span> value = capture.barcodes.first.rawValue;
+  <span class="kw">if</span> (value == <span class="kw">null</span>) <span class="kw">return</span>;
+  <span class="kw">final</span> storage = <span class="kw">await</span> _repo.<span class="fn">fetchByQrCode</span>(value);
+  <span class="kw">if</span> (storage == <span class="kw">null</span>) { <span class="cm">/* 등록되지 않은 QR 안내 */</span> <span class="kw">return</span>; }
+  context.<span class="fn">pushReplacement</span>(<span class="str">'/storage/${storage.id}'</span>);
+})</pre>
+              </div>
+            </div>
+
+            <div class="step">
+              <div class="step-check" onclick="checkStep(this)">✓</div>
+              <div class="step-content">
+                <div class="step-title">QrStickerScreen — qr_flutter + printing으로 PDF 출력</div>
+<pre><span class="ty">QrImageView</span>(data: storage.qrCode, size: <span class="num">240</span>)
+<span class="cm">// PDF 출력</span>
+<span class="kw">await</span> Printing.<span class="fn">layoutPdf</span>(onLayout: (_) {
+  <span class="kw">final</span> doc = pw.<span class="ty">Document</span>();
+  doc.<span class="fn">addPage</span>(pw.<span class="ty">Page</span>(build: (_) => pw.<span class="ty">Column</span>(children: [
+    pw.<span class="ty">BarcodeWidget</span>(barcode: pw.Barcode.<span class="fn">qrCode</span>(), data: storage.qrCode),
+    pw.<span class="ty">Text</span>(storage.name),
+  ])));
+  <span class="kw">return</span> doc.<span class="fn">save</span>();
+});</pre>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- Task 9 -->
+      <div class="task-card">
+        <div class="task-header" onclick="toggle(this)">
+          <div class="task-number" style="background:var(--phase2-light); color:var(--phase2);">9</div>
+          <div>
+            <div class="task-title">AI 음성 검색 — STT + GPT 자연어 파싱</div>
+            <div class="task-files-preview">functions/parse-voice-query/index.ts · services/voice_search_service.dart · features/search/voice_search_button.dart</div>
+          </div>
+          <div class="task-toggle">▼</div>
+        </div>
+        <div class="task-body">
+          <div class="steps">
+
+            <div class="step">
+              <div class="step-check" onclick="checkStep(this)">✓</div>
+              <div class="step-content">
+                <div class="step-title">parse-voice-query Edge Function — GPT-4o-mini로 자연어 → 필터 JSON</div>
+<pre>serve(<span class="kw">async</span> (req) => {
+  <span class="kw">const</span> { query } = <span class="kw">await</span> req.<span class="fn">json</span>();
+  <span class="kw">const</span> response = <span class="kw">await</span> openai.chat.completions.<span class="fn">create</span>({
+    model: <span class="str">"gpt-4o-mini"</span>,
+    messages: [
+      { role: <span class="str">"system"</span>, content: <span class="str">"옷 쿼리에서 JSON 필터 추출: {filters:{type,season,color,keywords}}"</span> },
+      { role: <span class="str">"user"</span>, content: query }
+    ],
+    response_format: { type: <span class="str">"json_object"</span> },
+  });
+  <span class="kw">return new</span> <span class="ty">Response</span>(response.choices[<span class="num">0</span>].message.content);
+});</pre>
+              </div>
+            </div>
+
+            <div class="step">
+              <div class="step-check" onclick="checkStep(this)">✓</div>
+              <div class="step-content">
+                <div class="step-title">VoiceSearchService — speech_to_text + Edge Function 파싱</div>
+<pre><span class="kw">class</span> <span class="ty">VoiceSearchService</span> {
+  <span class="kw">final</span> _stt = <span class="ty">SpeechToText</span>();
+
+  <span class="ty">Future</span>&lt;<span class="ty">String</span>?&gt; <span class="fn">listen</span>() <span class="kw">async</span> {
+    <span class="kw">await</span> _stt.<span class="fn">initialize</span>();
+    <span class="ty">String</span>? result;
+    <span class="kw">await</span> _stt.<span class="fn">listen</span>(
+      onResult: (r) { <span class="kw">if</span> (r.finalResult) result = r.recognizedWords; },
+      listenFor: <span class="kw">const</span> <span class="ty">Duration</span>(seconds: <span class="num">10</span>),
+      localeId: <span class="str">'ko_KR'</span>,
+    );
+    <span class="kw">return</span> result;
+  }
+
+  <span class="ty">Future</span>&lt;<span class="ty">Map</span>&lt;<span class="ty">String</span>, <span class="kw">dynamic</span>&gt;&gt; <span class="fn">parseQuery</span>(<span class="ty">String</span> text) <span class="kw">async</span> {
+    <span class="kw">final</span> res = <span class="kw">await</span> Supabase.instance.client.functions
+        .<span class="fn">invoke</span>(<span class="str">'parse-voice-query'</span>, body: {<span class="str">'query'</span>: text});
+    <span class="kw">return</span> res.data <span class="kw">as</span> <span class="ty">Map</span>&lt;<span class="ty">String</span>, <span class="kw">dynamic</span>&gt;;
+  }
+}</pre>
+              </div>
+            </div>
+
+            <div class="step">
+              <div class="step-check" onclick="checkStep(this)">✓</div>
+              <div class="step-content">
+                <div class="step-title">VoiceSearchButton 위젯 — 길게 눌러서 녹음, 떼면 중지</div>
+                <p style="font-size:13px; color:var(--gray-500);">GestureDetector로 onLongPressStart/End 처리. 녹음 중 빨간 원 애니메이션.</p>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- Task 10 -->
+      <div class="task-card">
+        <div class="task-header" onclick="toggle(this)">
+          <div class="task-number" style="background:var(--phase2-light); color:var(--phase2);">10</div>
+          <div>
+            <div class="task-title">오프라인 지원 — Drift SQLite + 동기화 큐</div>
+            <div class="task-files-preview">lib/data/local/app_database.dart · sync_queue.dart</div>
+          </div>
+          <div class="task-toggle">▼</div>
+        </div>
+        <div class="task-body">
+          <div class="steps">
+
+            <div class="step">
+              <div class="step-check" onclick="checkStep(this)">✓</div>
+              <div class="step-content">
+                <div class="step-title">Drift 스키마 — LocalStorages · LocalClothes · SyncQueueItems 테이블</div>
+<pre><span class="kw">@DriftDatabase</span>(tables: [LocalStorages, LocalClothes, SyncQueueItems])
+<span class="kw">class</span> <span class="ty">AppDatabase</span> <span class="kw">extends</span> _$AppDatabase {
+  <span class="ty">AppDatabase</span>() : <span class="kw">super</span>(_openConnection());
+  <span class="kw">@override int get</span> schemaVersion => <span class="num">1</span>;
+}</pre>
+              </div>
+            </div>
+
+            <div class="step">
+              <div class="step-check" onclick="checkStep(this)">✓</div>
+              <div class="step-content">
+                <div class="step-title">build_runner로 Drift 코드 생성</div>
+                <div class="cmd">dart run build_runner build --delete-conflicting-outputs</div>
+                <div class="expected">Expected: app_database.g.dart 생성</div>
+              </div>
+            </div>
+
+            <div class="step">
+              <div class="step-check" onclick="checkStep(this)">✓</div>
+              <div class="step-content">
+                <div class="step-title">SyncQueue — 오프라인 쓰기 큐 + connectivity_plus 감지 후 플러시</div>
+                <p style="font-size:13px; color:var(--gray-500);">Connectivity().onConnectivityChanged 스트림으로 온라인 복귀 감지 → 큐 순차 처리.</p>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- Phase 3 -->
+<section id="phase3" class="section">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-number" style="background:var(--phase3); color:#92400E;">Phase 3</div>
+      <h2>결제 & Admin</h2>
+      <p>RevenueCat 인앱 구독 → Supabase Webhook → 플랜별 기능 제한 → Admin 대시보드</p>
+    </div>
+
+    <div class="tasks-list">
+
+      <!-- Task 11 -->
+      <div class="task-card">
+        <div class="task-header" onclick="toggle(this)">
+          <div class="task-number" style="background:var(--phase3-light); color:#92400E;">11</div>
+          <div>
+            <div class="task-title">결제 — RevenueCat + Toss Payments + Webhook</div>
+            <div class="task-files-preview">functions/subscription-webhook/index.ts · services/subscription_service.dart</div>
+          </div>
+          <div class="task-toggle">▼</div>
+        </div>
+        <div class="task-body">
+          <div class="steps">
+
+            <div class="step">
+              <div class="step-check" onclick="checkStep(this)">✓</div>
+              <div class="step-content">
+                <div class="step-title">subscription-webhook Edge Function — RevenueCat 이벤트 → subscriptions 테이블 업데이트</div>
+<pre>serve(<span class="kw">async</span> (req) => {
+  <span class="kw">const</span> { event, app_user_id, subscriber } = <span class="kw">await</span> req.<span class="fn">json</span>();
+  <span class="kw">const</span> entitlements = subscriber?.entitlements ?? {};
+  <span class="kw">let</span> plan = <span class="str">"free"</span>;
+  <span class="kw">if</span> (entitlements[<span class="str">"ai_voice"</span>]?.is_active) plan = <span class="str">"ai_voice"</span>;
+  <span class="kw">else if</span> (entitlements[<span class="str">"basic"</span>]?.is_active) plan = <span class="str">"basic"</span>;
+  <span class="kw">else if</span> (entitlements[<span class="str">"ad_free"</span>]?.is_active) plan = <span class="str">"ad_free"</span>;
+
+  <span class="kw">await</span> supabase.<span class="fn">from</span>(<span class="str">"subscriptions"</span>).<span class="fn">upsert</span>(
+    { user_id: app_user_id, plan, status: plan === <span class="str">"free"</span> ? <span class="str">"expired"</span> : <span class="str">"active"</span> },
+    { onConflict: <span class="str">"user_id"</span> }
+  );
+  <span class="kw">return new</span> <span class="ty">Response</span>(<span class="str">"ok"</span>);
+});</pre>
+              </div>
+            </div>
+
+            <div class="step">
+              <div class="step-check" onclick="checkStep(this)">✓</div>
+              <div class="step-content">
+                <div class="step-title">SubscriptionService — 플랜 조회 + 한도 체크 + 구매</div>
+<pre><span class="kw">class</span> <span class="ty">SubscriptionService</span> {
+  <span class="ty">Future</span>&lt;<span class="ty">bool</span>&gt; <span class="fn">canAddStorage</span>(<span class="ty">int</span> current) <span class="kw">async</span> {
+    <span class="kw">final</span> plan = <span class="kw">await</span> <span class="fn">getCurrentPlan</span>();
+    <span class="kw">final</span> limit = AppConstants.planLimits[plan]![<span class="str">'storages'</span>]!;
+    <span class="kw">return</span> limit == -<span class="num">1</span> || current &lt; limit;
+  }
+
+  <span class="ty">Future</span>&lt;<span class="ty">bool</span>&gt; <span class="fn">hasVoiceSearch</span>() <span class="kw">async</span> =>
+      (<span class="kw">await</span> <span class="fn">getCurrentPlan</span>()) == <span class="str">'ai_voice'</span>;
+
+  <span class="ty">Future</span>&lt;<span class="ty">void</span>&gt; <span class="fn">purchase</span>(<span class="ty">String</span> productId) <span class="kw">async</span> {
+    <span class="kw">final</span> offerings = <span class="kw">await</span> Purchases.<span class="fn">getOfferings</span>();
+    <span class="kw">final</span> pkg = offerings.current?.availablePackages
+        .<span class="fn">firstWhere</span>((p) => p.storeProduct.identifier == productId);
+    <span class="kw">if</span> (pkg != <span class="kw">null</span>) <span class="kw">await</span> Purchases.<span class="fn">purchasePackage</span>(pkg);
+  }
+}</pre>
+              </div>
+            </div>
+
+            <div class="step">
+              <div class="step-check" onclick="checkStep(this)">✓</div>
+              <div class="step-content">
+                <div class="step-title">PricingScreen — 플랜 카드 (월/연 토글) + RevenueCat 구매</div>
+                <p style="font-size:13px; color:var(--gray-500);">광고제거 1,990원 · 기본 3,900원 · AI 음성 5,900원. 연 구독 시 최대 33% 할인.</p>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- Task 12 -->
+      <div class="task-card">
+        <div class="task-header" onclick="toggle(this)">
+          <div class="task-number" style="background:var(--phase3-light); color:#92400E;">12</div>
+          <div>
+            <div class="task-title">플랜별 기능 제한 적용</div>
+            <div class="task-files-preview">add_storage_screen.dart · add_cloth_screen.dart · search_screen.dart 수정</div>
+          </div>
+          <div class="task-toggle">▼</div>
+        </div>
+        <div class="task-body">
+          <div class="steps">
+            <div class="step">
+              <div class="step-check" onclick="checkStep(this)">✓</div>
+              <div class="step-content">
+                <div class="step-title">AddStorageScreen — 저장 전 canAddStorage 체크</div>
+<pre><span class="kw">final</span> canAdd = <span class="kw">await</span> SubscriptionService().<span class="fn">canAddStorage</span>(currentCount);
+<span class="kw">if</span> (!canAdd) {
+  context.<span class="fn">push</span>(<span class="str">'/pricing'</span>);  <span class="cm">// 플랜 업그레이드 유도</span>
+  <span class="kw">return</span>;
+}</pre>
+              </div>
+            </div>
+            <div class="step">
+              <div class="step-check" onclick="checkStep(this)">✓</div>
+              <div class="step-content">
+                <div class="step-title">SearchScreen — hasVoiceSearch() false면 VoiceSearchButton 비활성화</div>
+<pre><span class="kw">final</span> hasVoice = <span class="kw">await</span> SubscriptionService().<span class="fn">hasVoiceSearch</span>();
+<span class="cm">// hasVoice가 false면 버튼 탭 시 '/pricing'으로 이동</span></pre>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Task 13 -->
+      <div class="task-card">
+        <div class="task-header" onclick="toggle(this)">
+          <div class="task-number" style="background:var(--phase3-light); color:#92400E;">13</div>
+          <div>
+            <div class="task-title">Admin 대시보드</div>
+            <div class="task-files-preview">migrations/004_admin_view.sql · features/admin/admin_dashboard.dart</div>
+          </div>
+          <div class="task-toggle">▼</div>
+        </div>
+        <div class="task-body">
+          <div class="steps">
+            <div class="step">
+              <div class="step-check" onclick="checkStep(this)">✓</div>
+              <div class="step-content">
+                <div class="step-title">004_admin_view.sql — 집계 뷰</div>
+<pre><span class="kw">create or replace view</span> admin_stats <span class="kw">as</span>
+<span class="kw">select</span>
+  (<span class="kw">select count</span>(*) <span class="kw">from</span> auth.users) <span class="kw">as</span> total_users,
+  (<span class="kw">select count</span>(*) <span class="kw">from</span> storages) <span class="kw">as</span> total_storages,
+  (<span class="kw">select count</span>(*) <span class="kw">from</span> clothes) <span class="kw">as</span> total_clothes,
+  (<span class="kw">select count</span>(*) <span class="kw">from</span> subscriptions <span class="kw">where</span> plan = <span class="str">'basic'</span> <span class="kw">and</span> status = <span class="str">'active'</span>) <span class="kw">as</span> basic_count,
+  (<span class="kw">select count</span>(*) <span class="kw">from</span> subscriptions <span class="kw">where</span> plan = <span class="str">'ai_voice'</span> <span class="kw">and</span> status = <span class="str">'active'</span>) <span class="kw">as</span> ai_voice_count;</pre>
+              </div>
+            </div>
+            <div class="step">
+              <div class="step-check" onclick="checkStep(this)">✓</div>
+              <div class="step-content">
+                <div class="step-title">AdminDashboard — admin_stats 뷰 조회 → 통계 카드 그리드</div>
+                <p style="font-size:13px; color:var(--gray-500);">총 사용자 / 보관함 / 옷 / 플랜별 구독자 수 표시. Service Role Key로만 접근 가능.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- 주의사항 -->
+<section id="checklist" class="section">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-number">Checklist</div>
+      <h2>주의사항 & 환경설정</h2>
+      <p>빌드 전 반드시 확인해야 할 항목들</p>
+    </div>
+
+    <div class="warning-grid">
+      <div class="warning-item">
+        <div class="warning-icon">🔑</div>
+        <div>
+          <div class="warning-title">API Key 관리</div>
+          <div class="warning-desc"><code>.env.local</code>에 <code>OPENAI_API_KEY</code> 저장. <code>.gitignore</code>에 반드시 추가. <code>constants.dart</code>의 Supabase URL/Key는 CI 환경변수로 주입.</div>
+        </div>
+      </div>
+      <div class="warning-item">
+        <div class="warning-icon">📱</div>
+        <div>
+          <div class="warning-title">iOS Info.plist 권한</div>
+          <div class="warning-desc"><code>NSCameraUsageDescription</code>, <code>NSMicrophoneUsageDescription</code>, <code>NSPhotoLibraryUsageDescription</code> 필수. 없으면 앱 심사 거절.</div>
+        </div>
+      </div>
+      <div class="warning-item">
+        <div class="warning-icon">🤖</div>
+        <div>
+          <div class="warning-title">Android 권한</div>
+          <div class="warning-desc"><code>AndroidManifest.xml</code>에 <code>CAMERA</code>, <code>RECORD_AUDIO</code>, <code>INTERNET</code> 추가. permission_handler로 런타임 요청.</div>
+        </div>
+      </div>
+      <div class="warning-item">
+        <div class="warning-icon">💳</div>
+        <div>
+          <div class="warning-title">RevenueCat 초기화</div>
+          <div class="warning-desc"><code>SubscriptionService.init()</code>을 <code>main()</code>에서 Supabase 초기화 직후 호출. <code>appUserID</code>를 Supabase UID로 설정해야 Webhook이 매핑됨.</div>
+        </div>
+      </div>
+      <div class="warning-item">
+        <div class="warning-icon">🗄️</div>
+        <div>
+          <div class="warning-title">Supabase Storage CORS</div>
+          <div class="warning-desc"><code>clothes-photos</code>, <code>storage-photos</code> 버킷을 public으로 설정. 웹에서 이미지 로드 시 CORS 오류 방지.</div>
+        </div>
+      </div>
+      <div class="warning-item">
+        <div class="warning-icon">🔒</div>
+        <div>
+          <div class="warning-title">Admin 뷰 접근 제한</div>
+          <div class="warning-desc"><code>admin_stats</code> 뷰는 Service Role Key로만 접근. <code>admin_dashboard.dart</code>는 별도 Admin 웹 빌드 타겟에서만 포함.</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- 제반 사항 -->
+<section id="prerequisites" class="section">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-number">Prerequisites</div>
+      <h2>제반 사항 — 계정 & API 키</h2>
+      <p>개발 시작 전 발급받아야 할 계정과 키 목록</p>
+    </div>
+
+    <table class="req-table">
+      <thead>
+        <tr>
+          <th>서비스</th>
+          <th>용도</th>
+          <th>발급 키</th>
+          <th>비용</th>
+          <th>비고</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Supabase</strong></td>
+          <td>DB · Auth · Storage · Edge Functions</td>
+          <td><code>SUPABASE_URL</code><br><code>SUPABASE_ANON_KEY</code><br><code>SUPABASE_SERVICE_ROLE_KEY</code></td>
+          <td><span class="badge-free">Free $0</span><br><small>Pro $25/월</small></td>
+          <td>supabase.com<br>GitHub 계정으로 가입</td>
+        </tr>
+        <tr>
+          <td><strong>OpenAI</strong></td>
+          <td>이미지 태깅 (Vision)<br>음성 쿼리 파싱</td>
+          <td><code>OPENAI_API_KEY</code></td>
+          <td><span class="badge-paid">선불 충전</span><br><small>이미지 ~$0.01/장<br>텍스트 ~$0.001/건</small></td>
+          <td>platform.openai.com<br>신용카드 필수<br>초기 $20 충전 권장</td>
+        </tr>
+        <tr>
+          <td><strong>RevenueCat</strong></td>
+          <td>iOS/Android 구독 관리<br>Webhook 연동</td>
+          <td><code>REVENUECAT_IOS_KEY</code><br><code>REVENUECAT_ANDROID_KEY</code></td>
+          <td><span class="badge-free">Free</span><br><small>MTR $2,500 이하</small></td>
+          <td>revenuecat.com<br>앱 등록 후 iOS/Android<br>키 각각 발급</td>
+        </tr>
+        <tr>
+          <td><strong>Toss Payments</strong></td>
+          <td>Web/PWA 구독 결제</td>
+          <td><code>TOSS_CLIENT_KEY</code><br><code>TOSS_SECRET_KEY</code></td>
+          <td><span class="badge-req">수수료 2~3%</span><br><small>카드 2.2~3.3%</small></td>
+          <td>developers.tosspayments.com<br><strong>사업자 등록 필수</strong><br>심사 1~2주 소요</td>
+        </tr>
+        <tr>
+          <td><strong>Apple Developer</strong></td>
+          <td>iOS 배포 · App Store · TestFlight</td>
+          <td>인증서 & 프로파일</td>
+          <td><span class="badge-paid">$99/년</span><br><small>약 14만원</small></td>
+          <td>developer.apple.com<br>개인/법인 구분 가입</td>
+        </tr>
+        <tr>
+          <td><strong>Google Play</strong></td>
+          <td>Android 배포 · Play Store</td>
+          <td>서비스 계정 JSON</td>
+          <td><span class="badge-paid">$25 일회</span><br><small>약 3.5만원</small></td>
+          <td>play.google.com/console<br>신용카드 필요</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3 style="font-size:16px; font-weight:700; margin-bottom:16px;">월간 운영 비용 추정</h3>
+    <table class="req-table">
+      <thead>
+        <tr><th>단계</th><th>Supabase</th><th>OpenAI</th><th>RevenueCat</th><th>합계</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>베타</strong><br><small>유저 ~100명</small></td>
+          <td>$0 (Free)</td>
+          <td>~$10~15</td>
+          <td>$0 (Free)</td>
+          <td><strong>~$15/월</strong></td>
+        </tr>
+        <tr>
+          <td><strong>성장기</strong><br><small>유저 ~1,000명</small></td>
+          <td>$25 (Pro)</td>
+          <td>~$50~100</td>
+          <td>$0 (Free)</td>
+          <td><strong>~$75~125/월</strong></td>
+        </tr>
+        <tr>
+          <td><strong>스케일업</strong><br><small>월매출 300만원↑</small></td>
+          <td>$25 (Pro)</td>
+          <td>~$100↑</td>
+          <td>$99 (Starter)</td>
+          <td><strong>~$225↑/월</strong></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3 style="font-size:16px; font-weight:700; margin:28px 0 16px;">환경변수 관리</h3>
+    <div class="constraint-card info">
+      <div class="constraint-title">키 보관 위치</div>
+      <div class="constraint-desc">
+        <strong>Supabase Edge Functions:</strong> Supabase 대시보드 → Settings → Edge Functions Secrets 에 <code>OPENAI_API_KEY</code> 등록<br>
+        <strong>Flutter 앱:</strong> <code>lib/core/constants.dart</code>의 URL/Key는 CI 환경변수(<code>--dart-define</code>)로 주입. <code>.gitignore</code>에 <code>.env</code> 추가 필수<br>
+        <strong>RevenueCat Key:</strong> <code>constants.dart</code>에 플랫폼별 분기(<code>Platform.isIOS</code>)로 주입
+      </div>
+    </div>
+
+    <h3 style="font-size:16px; font-weight:700; margin:28px 0 16px;">준비 순서</h3>
+    <div style="display:flex; flex-direction:column; gap:10px;">
+      <div style="display:flex; align-items:flex-start; gap:14px;">
+        <div style="min-width:28px; height:28px; background:var(--primary); color:white; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700;">1</div>
+        <div style="font-size:13px; padding-top:4px;"><strong>Supabase</strong> 계정 생성 → 프로젝트 생성 → URL/Key 복사 → <code>.env</code>에 저장</div>
+      </div>
+      <div style="display:flex; align-items:flex-start; gap:14px;">
+        <div style="min-width:28px; height:28px; background:var(--primary); color:white; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700;">2</div>
+        <div style="font-size:13px; padding-top:4px;"><strong>OpenAI</strong> 계정 생성 → 크레딧 $20 충전 → API Key 발급 → Supabase Secrets에 등록</div>
+      </div>
+      <div style="display:flex; align-items:flex-start; gap:14px;">
+        <div style="min-width:28px; height:28px; background:var(--primary); color:white; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700;">3</div>
+        <div style="font-size:13px; padding-top:4px;"><strong>RevenueCat</strong> 계정 생성 → 앱 등록 → iOS/Android Key 발급</div>
+      </div>
+      <div style="display:flex; align-items:flex-start; gap:14px;">
+        <div style="min-width:28px; height:28px; background:var(--primary); color:white; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700;">4</div>
+        <div style="font-size:13px; padding-top:4px;"><strong>Toss Payments</strong> 사업자 등록 후 심사 신청 (가장 오래 걸림 — 개발 시작 직후 신청 권장)</div>
+      </div>
+      <div style="display:flex; align-items:flex-start; gap:14px;">
+        <div style="min-width:28px; height:28px; background:var(--primary); color:white; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700;">5</div>
+        <div style="font-size:13px; padding-top:4px;"><strong>Apple / Google</strong> 개발자 계정 (배포 준비 단계, Phase 3 완료 후)</div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- 배포 가이드 -->
+<section id="deployment" class="section">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-number">Deployment</div>
+      <h2>배포 가이드 & 플랫폼 제약사항</h2>
+      <p>플랫폼별 빌드 명령어, 배포 절차, 주의해야 할 제약</p>
+    </div>
+
+    <h3 style="font-size:16px; font-weight:700; margin-bottom:16px;">플랫폼별 배포</h3>
+    <div class="deploy-grid">
+      <div class="deploy-card">
+        <div class="deploy-card-header" style="background:#F0FDF4; color:#166534;">
+          <span style="font-size:20px;">🍎</span> iOS — App Store
+        </div>
+        <div class="deploy-card-body">
+          심사 기간: <strong>1~7일</strong> (평균 2~3일)<br>
+          베타: TestFlight으로 100명까지 무료<br>
+          <pre>flutter build ipa --release \
+  --dart-define=SUPABASE_URL=$URL \
+  --dart-define=SUPABASE_KEY=$KEY
+# → Xcode → Product → Archive → Distribute</pre>
+        </div>
+      </div>
+      <div class="deploy-card">
+        <div class="deploy-card-header" style="background:#F0FDF4; color:#166534;">
+          <span style="font-size:20px;">🤖</span> Android — Google Play
+        </div>
+        <div class="deploy-card-body">
+          심사: 초기 <strong>7~14일</strong>, 이후 1~2일<br>
+          내부 테스트 트랙으로 베타 배포 가능<br>
+          <pre>flutter build appbundle --release \
+  --dart-define=SUPABASE_URL=$URL \
+  --dart-define=SUPABASE_KEY=$KEY
+# → Play Console → 프로덕션 트랙 업로드</pre>
+        </div>
+      </div>
+      <div class="deploy-card">
+        <div class="deploy-card-header" style="background:#EEF2FF; color:#3730A3;">
+          <span style="font-size:20px;">🌐</span> Web PWA — Vercel
+        </div>
+        <div class="deploy-card-body">
+          무료 플랜으로 충분, 커스텀 도메인 무료<br>
+          자동 HTTPS, GitHub push 시 자동 배포<br>
+          <pre>flutter build web --release \
+  --pwa-background-color=#1E1B4B \
+  --dart-define=SUPABASE_URL=$URL \
+  --dart-define=SUPABASE_KEY=$KEY
+vercel deploy ./build/web --prod</pre>
+        </div>
+      </div>
+      <div class="deploy-card">
+        <div class="deploy-card-header" style="background:#FFFBEB; color:#92400E;">
+          <span style="font-size:20px;">⚡</span> Edge Functions — Supabase CLI
+        </div>
+        <div class="deploy-card-body">
+          Deno 런타임, 별도 서버 불필요<br>
+          Secrets는 대시보드에서 별도 등록<br>
+          <pre>supabase functions deploy analyze-clothing
+supabase functions deploy parse-voice-query
+supabase functions deploy subscription-webhook
+# Secrets 등록:
+supabase secrets set OPENAI_API_KEY=sk-...</pre>
+        </div>
+      </div>
+    </div>
+
+    <h3 style="font-size:16px; font-weight:700; margin:28px 0 16px;">핵심 제약사항</h3>
+
+    <div class="constraint-card danger">
+      <div class="constraint-title">Apple 인앱결제 강제 & 외부 결제 유도 금지</div>
+      <div class="constraint-desc">
+        iOS 앱 내 디지털 상품 결제는 반드시 Apple In-App Purchase 사용 필수. 앱 내에서 "웹에서 더 저렴하게 구매" 같은 외부 결제 유도 문구는 앱 심사 거절 사유. <strong>iOS · Android · Web 모두 동일 가격 표시</strong>가 원칙.<br>
+        수수료: App Store 30% (구독 1년 이후 15%) / Google Play 15%
+      </div>
+    </div>
+
+    <div class="constraint-card danger">
+      <div class="constraint-title">SQLite(Drift) 오프라인 캐시는 Web에서 작동 안 함</div>
+      <div class="constraint-desc">
+        Flutter Web은 SQLite를 기본 지원하지 않음. 현재 설계의 Drift 오프라인 레이어는 <strong>iOS/Android 전용</strong>으로 처리.<br>
+        Web PWA는 오프라인 지원 제외 (서비스 워커로 앱 쉘만 캐시). 웹 오프라인이 필요하면 별도로 <code>sqlite3_web</code>(WASM) 도입 검토.
+      </div>
+    </div>
+
+    <div class="constraint-card">
+      <div class="constraint-title">Supabase Free 플랜 — 7일 비활성 시 프로젝트 자동 정지</div>
+      <div class="constraint-desc">
+        1주일간 요청이 없으면 프로젝트가 일시정지됨. 베타 운영 중 갑자기 서비스가 멈출 수 있음.<br>
+        유료 사용자가 생기면 즉시 Pro($25/월) 전환 필요. Pro 전환 시 정지 없음.
+      </div>
+    </div>
+
+    <div class="constraint-card info">
+      <div class="constraint-title">Flutter Web 초기 로딩 — 번들 크기 주의</div>
+      <div class="constraint-desc">
+        Flutter Web(CanvasKit 렌더러) 초기 번들 약 2~5MB. 첫 방문 시 3G 환경에서 5~10초 소요.<br>
+        PWA 설치 후 재방문은 빠름. <code>--web-renderer html</code> 옵션으로 번들 크기 절반 가능하나 렌더링 품질 저하.
+      </div>
+    </div>
+
+    <div class="constraint-card info">
+      <div class="constraint-title">Admin Web — 별도 Vercel 프로젝트로 분리 권장</div>
+      <div class="constraint-desc">
+        일반 사용자 앱과 Admin을 같은 빌드에 포함하면 Admin 코드가 클라이언트에 노출됨.<br>
+        Admin 전용 Flutter 빌드 타겟을 별도 Vercel 프로젝트로 배포하고, Supabase RLS + Service Role Key로 접근 제한.
+      </div>
+    </div>
+
+    <h3 style="font-size:16px; font-weight:700; margin:28px 0 16px;">단계별 배포 타임라인</h3>
+    <table class="req-table">
+      <thead>
+        <tr><th>단계</th><th>환경</th><th>조건</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>개발 중</strong></td>
+          <td>localhost + Supabase Free</td>
+          <td>Phase 1~3 개발 기간</td>
+        </tr>
+        <tr>
+          <td><strong>내부 테스트</strong></td>
+          <td>TestFlight + Play 내부 트랙 + Vercel Preview</td>
+          <td>Phase 3 완료 후</td>
+        </tr>
+        <tr>
+          <td><strong>베타 출시</strong></td>
+          <td>App Store + Play Store + Vercel 도메인</td>
+          <td>심사 통과 후 (Toss 심사 완료 필수)</td>
+        </tr>
+        <tr>
+          <td><strong>유료화 시작</strong></td>
+          <td>Supabase Pro 전환</td>
+          <td>첫 유료 사용자 발생 즉시</td>
+        </tr>
+        <tr>
+          <td><strong>스케일업</strong></td>
+          <td>RevenueCat Starter 전환</td>
+          <td>월 매출 약 300만원 초과 시</td>
+        </tr>
+      </tbody>
+    </table>
+
+  </div>
+</section>
+
+<div class="footer">
+  <strong>MyStorage</strong> — 구현 계획서 v1.0 · Flutter + Supabase 올인원 · 2026-11-23
+</div>
+
+<script>
+  function toggle(header) {
+    const body = header.nextElementSibling;
+    const toggle = header.querySelector('.task-toggle');
+    body.classList.toggle('open');
+    toggle.classList.toggle('open');
+  }
+
+  function checkStep(el) {
+    el.classList.toggle('done');
+    const title = el.nextElementSibling.querySelector('.step-title');
+    if (title) title.classList.toggle('done');
+  }
+</script>
+</body>
+</html>

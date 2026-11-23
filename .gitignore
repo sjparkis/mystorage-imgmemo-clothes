@@ -1,0 +1,17 @@
+docs/
+
+# 환경변수 / 시크릿
+.env
+.env.local
+.env.*.local
+
+# Flutter 빌드 산출물 (mystorage/.gitignore가 커버하지만 루트에서도 명시)
+mystorage/build/
+mystorage/.dart_tool/
+mystorage/.flutter-plugins
+mystorage/.flutter-plugins-dependencies
+mystorage/.pub-cache/
+
+# macOS
+.DS_Store
+**/.DS_Store

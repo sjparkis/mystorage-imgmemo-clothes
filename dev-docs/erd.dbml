@@ -1,0 +1,75 @@
+// MyStorage ERD
+// https://dbdiagram.io 에서 Import DBML로 붙여넣으세요
+
+Table users {
+  id uuid [pk, note: "Supabase auth.users"]
+  email text [not null]
+  created_at timestamptz [default: `now()`]
+}
+
+Table organizations {
+  id uuid [pk, default: `gen_random_uuid()`]
+  name text [not null]
+  owner_id uuid [not null, ref: > users.id]
+  created_at timestamptz [default: `now()`]
+}
+
+Table organization_members {
+  id uuid [pk, default: `gen_random_uuid()`]
+  org_id uuid [not null, ref: > organizations.id]
+  user_id uuid [not null, ref: > users.id]
+  role text [not null, default: 'member', note: "owner | member"]
+  joined_at timestamptz [default: `now()`]
+
+  indexes {
+    (org_id, user_id) [unique]
+  }
+}
+
+Table storages {
+  id uuid [pk, default: `gen_random_uuid()`]
+  org_id uuid [not null, ref: > organizations.id]
+  name text [not null]
+  photo_url text
+  qr_code uuid [unique, not null, default: `gen_random_uuid()`]
+  description text
+  created_at timestamptz [default: `now()`]
+}
+
+Table clothes {
+  id uuid [pk, default: `gen_random_uuid()`]
+  org_id uuid [not null, ref: > organizations.id]
+  storage_id uuid [ref: > storages.id, note: "ON DELETE SET NULL"]
+  photo_url text
+  name text
+  created_by uuid [ref: > users.id]
+  created_at timestamptz [default: `now()`]
+}
+
+Table tags {
+  id uuid [pk, default: `gen_random_uuid()`]
+  name text [unique, not null]
+  category text [not null, note: "color | type | season | brand | custom"]
+}
+
+Table clothes_tags {
+  id uuid [pk, default: `gen_random_uuid()`]
+  cloth_id uuid [not null, ref: > clothes.id]
+  tag_id uuid [not null, ref: > tags.id]
+  ai_generated boolean [default: false]
+
+  indexes {
+    (cloth_id, tag_id) [unique]
+  }
+}
+
+Table subscriptions {
+  id uuid [pk, default: `gen_random_uuid()`]
+  user_id uuid [unique, not null, ref: > users.id]
+  plan text [not null, default: 'free', note: "free | ad_free | basic | ai_voice"]
+  billing_cycle text [note: "monthly | yearly"]
+  status text [not null, default: 'active', note: "active | cancelled | expired"]
+  started_at timestamptz [default: `now()`]
+  expires_at timestamptz
+  revenuecat_id text
+}

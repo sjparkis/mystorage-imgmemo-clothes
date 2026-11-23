@@ -1,0 +1,1176 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MyStorage — ERD (Entity Relationship Diagram)</title>
+  <style>
+    :root {
+      --primary: #4F46E5;
+      --primary-light: #EEF2FF;
+      --secondary: #10B981;
+      --secondary-light: #ECFDF5;
+      --accent: #F59E0B;
+      --accent-light: #FFFBEB;
+      --danger: #EF4444;
+      --gray-50: #F9FAFB;
+      --gray-100: #F3F4F6;
+      --gray-200: #E5E7EB;
+      --gray-300: #D1D5DB;
+      --gray-500: #6B7280;
+      --gray-700: #374151;
+      --gray-900: #111827;
+      --radius: 12px;
+      --radius-sm: 8px;
+      --shadow: 0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06);
+      --shadow-md: 0 4px 6px rgba(0,0,0,0.07), 0 2px 4px rgba(0,0,0,0.06);
+      --shadow-lg: 0 10px 15px rgba(0,0,0,0.08), 0 4px 6px rgba(0,0,0,0.05);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Pretendard', 'Noto Sans KR', sans-serif;
+      color: var(--gray-900);
+      background: var(--gray-50);
+      line-height: 1.6;
+    }
+
+    .cover {
+      background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%);
+      color: white;
+      padding: 60px 48px;
+      position: relative;
+      overflow: hidden;
+    }
+    .cover::before {
+      content: '';
+      position: absolute;
+      top: -60px; right: -60px;
+      width: 320px; height: 320px;
+      background: rgba(255,255,255,0.06);
+      border-radius: 50%;
+    }
+    .cover::after {
+      content: '';
+      position: absolute;
+      bottom: -80px; left: -40px;
+      width: 240px; height: 240px;
+      background: rgba(255,255,255,0.04);
+      border-radius: 50%;
+    }
+    .cover-badge {
+      display: inline-block;
+      background: rgba(255,255,255,0.2);
+      border: 1px solid rgba(255,255,255,0.3);
+      border-radius: 20px;
+      padding: 4px 14px;
+      font-size: 13px;
+      font-weight: 500;
+      margin-bottom: 20px;
+    }
+    .cover h1 {
+      font-size: 42px;
+      font-weight: 800;
+      letter-spacing: -1px;
+      margin-bottom: 10px;
+    }
+    .cover .subtitle {
+      font-size: 18px;
+      opacity: 0.85;
+      margin-bottom: 28px;
+    }
+    .cover-meta {
+      display: flex;
+      gap: 32px;
+      font-size: 14px;
+      opacity: 0.75;
+    }
+    .cover-meta span { display: flex; align-items: center; gap: 6px; }
+
+    .container { max-width: 1200px; margin: 0 auto; padding: 0 40px; }
+
+    .toc {
+      background: white;
+      border-bottom: 1px solid var(--gray-200);
+      padding: 20px 0;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: var(--shadow);
+    }
+    .toc-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 40px;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .toc-label { font-size: 12px; font-weight: 600; color: var(--gray-500); text-transform: uppercase; letter-spacing: 0.5px; margin-right: 8px; }
+    .toc a {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--gray-700);
+      text-decoration: none;
+      padding: 5px 12px;
+      border-radius: 20px;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+    .toc a:hover { background: var(--primary-light); color: var(--primary); }
+
+    .section { padding: 56px 0; }
+    .section + .section { border-top: 1px solid var(--gray-200); }
+
+    .section-header { margin-bottom: 36px; }
+    .section-number {
+      display: inline-block;
+      background: var(--primary);
+      color: white;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 20px;
+      margin-bottom: 10px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+    .section-header h2 {
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      color: var(--gray-900);
+    }
+    .section-header p {
+      margin-top: 8px;
+      font-size: 15px;
+      color: var(--gray-500);
+    }
+
+    /* ERD 다이어그램 영역 */
+    .erd-wrapper {
+      background: white;
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius);
+      padding: 40px;
+      box-shadow: var(--shadow-md);
+      overflow-x: auto;
+    }
+
+    .erd-svg-container {
+      min-width: 900px;
+    }
+
+    /* 테이블 카드 스타일 */
+    .table-card {
+      background: white;
+      border: 2px solid var(--gray-200);
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      transition: box-shadow 0.2s;
+    }
+    .table-card:hover { box-shadow: var(--shadow-md); }
+
+    .table-header {
+      padding: 10px 16px;
+      font-weight: 700;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .table-header .table-icon {
+      width: 20px; height: 20px;
+      border-radius: 5px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px;
+    }
+    .table-body { padding: 0; }
+    .col-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 16px;
+      font-size: 12px;
+      border-top: 1px solid var(--gray-100);
+    }
+    .col-row:first-child { border-top: none; }
+    .col-name { font-weight: 600; color: var(--gray-900); min-width: 120px; }
+    .col-type { color: var(--gray-500); font-size: 11px; min-width: 80px; }
+    .badge {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+    .badge-pk { background: #FEF3C7; color: #92400E; }
+    .badge-fk { background: #DBEAFE; color: #1E40AF; }
+    .badge-uk { background: #F3E8FF; color: #6D28D9; }
+    .badge-nn { background: var(--gray-100); color: var(--gray-500); }
+
+    /* ERD 레이아웃 */
+    .erd-grid {
+      display: grid;
+      gap: 24px;
+      position: relative;
+    }
+
+    /* 관계선 범례 */
+    .legend {
+      display: flex;
+      gap: 24px;
+      flex-wrap: wrap;
+      margin-top: 24px;
+      padding: 16px 20px;
+      background: var(--gray-50);
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--gray-200);
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--gray-700);
+    }
+    .legend-line {
+      width: 32px;
+      height: 2px;
+    }
+    .legend-line.one-to-many { background: var(--primary); }
+    .legend-line.many-to-many { background: var(--accent); }
+    .legend-line.external { background: var(--secondary); border-top: 2px dashed var(--secondary); background: none; }
+
+    /* 관계 다이어그램 (텍스트 기반) */
+    .relation-diagram {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .relation-row {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      flex-wrap: wrap;
+    }
+    .rel-node {
+      background: white;
+      border: 2px solid var(--gray-200);
+      border-radius: 8px;
+      padding: 8px 16px;
+      font-size: 13px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .rel-node.external { border-color: var(--secondary); color: var(--secondary); }
+    .rel-node.core { border-color: var(--primary); color: var(--primary); }
+    .rel-node.bridge { border-color: var(--accent); color: #92400E; }
+    .rel-node.cache { border-color: var(--gray-300); color: var(--gray-500); }
+    .rel-arrow {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 0 8px;
+      font-size: 11px;
+      color: var(--gray-500);
+      white-space: nowrap;
+    }
+    .rel-arrow .arrow-line {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+    }
+    .rel-arrow .arrow-label {
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--gray-500);
+      margin-bottom: 2px;
+    }
+
+    /* 관계 표 */
+    .relation-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    .relation-table thead tr {
+      background: var(--primary);
+      color: white;
+    }
+    .relation-table thead th {
+      padding: 12px 16px;
+      text-align: left;
+      font-weight: 600;
+      font-size: 13px;
+    }
+    .relation-table thead th:first-child { border-radius: 8px 0 0 0; }
+    .relation-table thead th:last-child { border-radius: 0 8px 0 0; }
+    .relation-table tbody tr {
+      border-bottom: 1px solid var(--gray-100);
+      transition: background 0.1s;
+    }
+    .relation-table tbody tr:hover { background: var(--gray-50); }
+    .relation-table tbody td {
+      padding: 11px 16px;
+      vertical-align: middle;
+    }
+    .relation-table tbody td:first-child { font-weight: 600; }
+    .cardinality {
+      display: inline-block;
+      background: var(--primary-light);
+      color: var(--primary);
+      font-size: 12px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+    .cardinality.nm {
+      background: var(--accent-light);
+      color: #92400E;
+    }
+
+    /* 오프라인 섹션 */
+    .cache-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 16px;
+    }
+    .cache-card {
+      background: white;
+      border: 2px solid var(--gray-200);
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: var(--shadow);
+    }
+    .cache-header {
+      background: var(--gray-100);
+      padding: 10px 16px;
+      font-weight: 700;
+      font-size: 13px;
+      color: var(--gray-700);
+      border-bottom: 1px solid var(--gray-200);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .cache-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--gray-400);
+    }
+    .cache-body { padding: 4px 0; }
+    .cache-col {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 16px;
+      font-size: 12px;
+      border-top: 1px solid var(--gray-100);
+    }
+    .cache-col:first-child { border-top: none; }
+    .cache-col-name { font-weight: 600; min-width: 110px; }
+    .cache-col-type { color: var(--gray-500); font-size: 11px; }
+
+    /* 뷰 카드 */
+    .view-badge {
+      display: inline-block;
+      background: #F0FDF4;
+      color: #166534;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 4px;
+      text-transform: uppercase;
+    }
+
+    @media (max-width: 768px) {
+      .cover { padding: 40px 24px; }
+      .cover h1 { font-size: 28px; }
+      .container { padding: 0 20px; }
+      .cache-grid { grid-template-columns: 1fr; }
+      .erd-wrapper { padding: 20px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- 커버 -->
+<div class="cover">
+  <div style="max-width:1200px; margin:0 auto; position:relative; z-index:1;">
+    <div class="cover-badge">Database Design</div>
+    <h1>MyStorage — ERD</h1>
+    <p class="subtitle">Entity Relationship Diagram · Supabase PostgreSQL + Drift SQLite</p>
+    <div class="cover-meta">
+      <span>버전 1.0</span>
+      <span>2026-11-23</span>
+      <span>migrations/001–004</span>
+    </div>
+  </div>
+</div>
+
+<!-- 목차 -->
+<nav class="toc">
+  <div class="toc-inner">
+    <span class="toc-label">목차</span>
+    <a href="#erd-main">전체 ERD</a>
+    <a href="#erd-diagram">관계 다이어그램</a>
+    <a href="#relations">관계 목록</a>
+    <a href="#offline">오프라인 캐시</a>
+  </div>
+</nav>
+
+<!-- 1. 전체 ERD -->
+<section class="section" id="erd-main">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-number">01 · ERD</div>
+      <h2>전체 테이블 구조</h2>
+      <p>Supabase PostgreSQL의 8개 테이블과 auth.users 외부 참조를 나타냅니다.</p>
+    </div>
+
+    <div class="erd-wrapper">
+      <!-- 범례 -->
+      <div class="legend" style="margin-bottom:32px;">
+        <div class="legend-item">
+          <span class="badge badge-pk">PK</span> Primary Key
+        </div>
+        <div class="legend-item">
+          <span class="badge badge-fk">FK</span> Foreign Key
+        </div>
+        <div class="legend-item">
+          <span class="badge badge-uk">UK</span> Unique
+        </div>
+        <div class="legend-item">
+          <span class="badge badge-nn">NN</span> Not Null
+        </div>
+        <div class="legend-item" style="margin-left:auto;">
+          <span style="color:var(--secondary); font-weight:600; font-size:12px;">초록 테두리</span> = auth.users (Supabase 내장)
+        </div>
+        <div class="legend-item">
+          <span style="color:var(--accent); font-weight:600; font-size:12px;">노란 테두리</span> = 연결 테이블 (N:M)
+        </div>
+      </div>
+
+      <!-- ERD 레이아웃 -->
+      <div style="display:grid; grid-template-columns: 220px 1fr; gap:32px; align-items:start;">
+
+        <!-- 왼쪽: auth.users -->
+        <div>
+          <div class="table-card" style="border-color: var(--secondary);">
+            <div class="table-header" style="background:#ECFDF5; color:#065F46;">
+              <div class="table-icon" style="background:#10B981; color:white;">U</div>
+              auth.users
+              <span style="font-size:10px; font-weight:500; opacity:0.7; margin-left:auto;">Supabase</span>
+            </div>
+            <div class="table-body">
+              <div class="col-row">
+                <span class="col-name">id</span>
+                <span class="col-type">uuid</span>
+                <span class="badge badge-pk">PK</span>
+              </div>
+              <div class="col-row">
+                <span class="col-name">email</span>
+                <span class="col-type">text</span>
+                <span class="badge badge-uk">UK</span>
+              </div>
+              <div class="col-row">
+                <span class="col-name">created_at</span>
+                <span class="col-type">timestamptz</span>
+              </div>
+              <div class="col-row" style="background:var(--gray-50); font-style:italic; color:var(--gray-500); font-size:11px; justify-content:center;">
+                (Supabase 관리 — 직접 조작 불가)
+              </div>
+            </div>
+          </div>
+
+          <div style="text-align:center; padding:12px 0; color:var(--gray-400); font-size:20px;">↓</div>
+          <div style="font-size:11px; color:var(--gray-500); text-align:center; margin-bottom:8px;">1 : N 참조</div>
+
+          <div style="display:flex; flex-direction:column; gap:8px;">
+            <div style="background:var(--primary-light); border-radius:6px; padding:6px 10px; font-size:12px; color:var(--primary); font-weight:600;">→ organizations.owner_id</div>
+            <div style="background:var(--primary-light); border-radius:6px; padding:6px 10px; font-size:12px; color:var(--primary); font-weight:600;">→ organization_members.user_id</div>
+            <div style="background:var(--primary-light); border-radius:6px; padding:6px 10px; font-size:12px; color:var(--primary); font-weight:600;">→ clothes.created_by</div>
+            <div style="background:var(--primary-light); border-radius:6px; padding:6px 10px; font-size:12px; color:var(--primary); font-weight:600;">→ subscriptions.user_id</div>
+          </div>
+        </div>
+
+        <!-- 오른쪽: 나머지 테이블들 -->
+        <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:20px; align-items:start;">
+
+          <!-- organizations -->
+          <div class="table-card" style="border-color:var(--primary);">
+            <div class="table-header" style="background:var(--primary-light); color:var(--primary);">
+              <div class="table-icon" style="background:var(--primary); color:white;">O</div>
+              organizations
+            </div>
+            <div class="table-body">
+              <div class="col-row">
+                <span class="col-name">id</span>
+                <span class="col-type">uuid</span>
+                <span class="badge badge-pk">PK</span>
+              </div>
+              <div class="col-row">
+                <span class="col-name">name</span>
+                <span class="col-type">text</span>
+                <span class="badge badge-nn">NN</span>
+              </div>
+              <div class="col-row">
+                <span class="col-name">owner_id</span>
+                <span class="col-type">uuid</span>
+                <span class="badge badge-fk">FK</span>
+              </div>
+              <div class="col-row">
+                <span class="col-name">created_at</span>
+                <span class="col-type">timestamptz</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- organization_members -->
+          <div class="table-card">
+            <div class="table-header" style="background:var(--gray-50); color:var(--gray-700);">
+              <div class="table-icon" style="background:var(--gray-500); color:white;">M</div>
+              org_members
+            </div>
+            <div class="table-body">
+              <div class="col-row">
+                <span class="col-name">id</span>
+                <span class="col-type">uuid</span>
+                <span class="badge badge-pk">PK</span>
+              </div>
+              <div class="col-row">
+                <span class="col-name">org_id</span>
+                <span class="col-type">uuid</span>
+                <span class="badge badge-fk">FK</span>
+              </div>
+              <div class="col-row">
+                <span class="col-name">user_id</span>
+                <span class="col-type">uuid</span>
+                <span class="badge badge-fk">FK</span>
+              </div>
+              <div class="col-row">
+                <span class="col-name">role</span>
+                <span class="col-type">text</span>
+                <span class="badge badge-nn">NN</span>
+              </div>
+              <div class="col-row">
+                <span class="col-name">joined_at</span>
+                <span class="col-type">timestamptz</span>
+              </div>
+              <div class="col-row" style="font-size:10px; color:var(--gray-500);">
+                UNIQUE(org_id, user_id)
+              </div>
+            </div>
+          </div>
+
+          <!-- subscriptions -->
+          <div class="table-card">
+            <div class="table-header" style="background:#FFF7ED; color:#C2410C;">
+              <div class="table-icon" style="background:var(--accent); color:white;">$</div>
+              subscriptions
+            </div>
+            <div class="table-body">
+              <div class="col-row">
+                <span class="col-name">id</span>
+                <span class="col-type">uuid</span>
+                <span class="badge badge-pk">PK</span>
+              </div>
+              <div class="col-row">
+                <span class="col-name">user_id</span>
+                <span class="col-type">uuid</span>
+                <span class="badge badge-fk">FK</span>
+                <span class="badge badge-uk">UK</span>
+              </div>
+              <div class="col-row">
+                <span class="col-name">plan</span>
+                <span class="col-type">text</span>
+                <span class="badge badge-nn">NN</span>
+              </div>
+              <div class="col-row">
+                <span class="col-name">billing_cycle</span>
+                <span class="col-type">text</span>
+              </div>
+              <div class="col-row">
+                <span class="col-name">status</span>
+                <span class="col-type">text</span>
+                <span class="badge badge-nn">NN</span>
+              </div>
+              <div class="col-row">
+                <span class="col-name">expires_at</span>
+                <span class="col-type">timestamptz</span>
+              </div>
+              <div class="col-row">
+                <span class="col-name">revenuecat_id</span>
+                <span class="col-type">text</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- storages -->
+          <div class="table-card" style="border-color:var(--primary);">
+            <div class="table-header" style="background:var(--primary-light); color:var(--primary);">
+              <div class="table-icon" style="background:var(--primary); color:white;">S</div>
+              storages
+            </div>
+            <div class="table-body">
+              <div class="col-row">
+                <span class="col-name">id</span>
+                <span class="col-type">uuid</span>
+                <span class="badge badge-pk">PK</span>
+              </div>
+              <div class="col-row">
+                <span class="col-name">org_id</span>
+                <span class="col-type">uuid</span>
+                <span class="badge badge-fk">FK</span>
+              </div>
+              <div class="col-row">
+                <span class="col-name">name</span>
+                <span class="col-type">text</span>
+                <span class="badge badge-nn">NN</span>
+              </div>
+              <div class="col-row">
+                <span class="col-name">photo_url</span>
+                <span class="col-type">text</span>
+              </div>
+              <div class="col-row">
+                <span class="col-name">qr_code</span>
+                <span class="col-type">uuid</span>
+                <span class="badge badge-uk">UK</span>
+              </div>
+              <div class="col-row">
+                <span class="col-name">description</span>
+                <span class="col-type">text</span>
+              </div>
+              <div class="col-row">
+                <span class="col-name">created_at</span>
+                <span class="col-type">timestamptz</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- clothes -->
+          <div class="table-card" style="border-color:var(--primary);">
+            <div class="table-header" style="background:var(--primary-light); color:var(--primary);">
+              <div class="table-icon" style="background:var(--primary); color:white;">C</div>
+              clothes
+            </div>
+            <div class="table-body">
+              <div class="col-row">
+                <span class="col-name">id</span>
+                <span class="col-type">uuid</span>
+                <span class="badge badge-pk">PK</span>
+              </div>
+              <div class="col-row">
+                <span class="col-name">org_id</span>
+                <span class="col-type">uuid</span>
+                <span class="badge badge-fk">FK</span>
+              </div>
+              <div class="col-row">
+                <span class="col-name">storage_id</span>
+                <span class="col-type">uuid</span>
+                <span class="badge badge-fk">FK</span>
+              </div>
+              <div class="col-row">
+                <span class="col-name">photo_url</span>
+                <span class="col-type">text</span>
+              </div>
+              <div class="col-row">
+                <span class="col-name">name</span>
+                <span class="col-type">text</span>
+              </div>
+              <div class="col-row">
+                <span class="col-name">created_by</span>
+                <span class="col-type">uuid</span>
+                <span class="badge badge-fk">FK</span>
+              </div>
+              <div class="col-row">
+                <span class="col-name">created_at</span>
+                <span class="col-type">timestamptz</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- tags + clothes_tags -->
+          <div style="display:flex; flex-direction:column; gap:12px;">
+            <div class="table-card" style="border-color:var(--accent);">
+              <div class="table-header" style="background:#FFFBEB; color:#92400E;">
+                <div class="table-icon" style="background:var(--accent); color:white;">T</div>
+                tags
+              </div>
+              <div class="table-body">
+                <div class="col-row">
+                  <span class="col-name">id</span>
+                  <span class="col-type">uuid</span>
+                  <span class="badge badge-pk">PK</span>
+                </div>
+                <div class="col-row">
+                  <span class="col-name">name</span>
+                  <span class="col-type">text</span>
+                  <span class="badge badge-uk">UK</span>
+                </div>
+                <div class="col-row">
+                  <span class="col-name">category</span>
+                  <span class="col-type">text</span>
+                  <span class="badge badge-nn">NN</span>
+                </div>
+              </div>
+            </div>
+
+            <div style="text-align:center; color:var(--gray-400); font-size:12px;">↑ N:M ↑</div>
+
+            <div class="table-card" style="border-color:var(--accent);">
+              <div class="table-header" style="background:#FFFBEB; color:#92400E;">
+                <div class="table-icon" style="background:var(--accent); color:white;">CT</div>
+                clothes_tags
+              </div>
+              <div class="table-body">
+                <div class="col-row">
+                  <span class="col-name">id</span>
+                  <span class="col-type">uuid</span>
+                  <span class="badge badge-pk">PK</span>
+                </div>
+                <div class="col-row">
+                  <span class="col-name">cloth_id</span>
+                  <span class="col-type">uuid</span>
+                  <span class="badge badge-fk">FK</span>
+                </div>
+                <div class="col-row">
+                  <span class="col-name">tag_id</span>
+                  <span class="col-type">uuid</span>
+                  <span class="badge badge-fk">FK</span>
+                </div>
+                <div class="col-row">
+                  <span class="col-name">ai_generated</span>
+                  <span class="col-type">boolean</span>
+                </div>
+                <div class="col-row" style="font-size:10px; color:var(--gray-500);">
+                  UNIQUE(cloth_id, tag_id)
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 2. 관계 다이어그램 -->
+<section class="section" id="erd-diagram">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-number">02 · Relations</div>
+      <h2>관계 흐름 다이어그램</h2>
+      <p>테이블 간 참조 방향과 카디널리티를 흐름으로 나타냅니다.</p>
+    </div>
+
+    <div style="background:white; border:1px solid var(--gray-200); border-radius:var(--radius); padding:36px; box-shadow:var(--shadow-md);">
+
+      <!-- 행 1: auth.users 중심 -->
+      <div style="margin-bottom:32px;">
+        <div style="font-size:12px; font-weight:600; color:var(--gray-500); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:12px;">사용자 중심 참조</div>
+        <div style="display:flex; align-items:center; flex-wrap:wrap; gap:0;">
+          <div class="rel-node external" style="border-color:var(--secondary); color:#065F46; background:#F0FDF4;">auth.users</div>
+          <div class="rel-arrow">
+            <span class="arrow-label">1 : N</span>
+            <span class="arrow-line">────→</span>
+          </div>
+          <div class="rel-node core">organizations</div>
+          <div style="color:var(--gray-400); padding:0 8px; font-size:12px;">(owner_id)</div>
+        </div>
+        <div style="display:flex; align-items:center; flex-wrap:wrap; gap:0; margin-top:10px;">
+          <div class="rel-node external" style="border-color:var(--secondary); color:#065F46; background:#F0FDF4;">auth.users</div>
+          <div class="rel-arrow">
+            <span class="arrow-label">1 : N</span>
+            <span class="arrow-line">────→</span>
+          </div>
+          <div class="rel-node">organization_members</div>
+          <div style="color:var(--gray-400); padding:0 8px; font-size:12px;">(user_id)</div>
+        </div>
+        <div style="display:flex; align-items:center; flex-wrap:wrap; gap:0; margin-top:10px;">
+          <div class="rel-node external" style="border-color:var(--secondary); color:#065F46; background:#F0FDF4;">auth.users</div>
+          <div class="rel-arrow">
+            <span class="arrow-label">1 : N</span>
+            <span class="arrow-line">────→</span>
+          </div>
+          <div class="rel-node core">clothes</div>
+          <div style="color:var(--gray-400); padding:0 8px; font-size:12px;">(created_by)</div>
+        </div>
+        <div style="display:flex; align-items:center; flex-wrap:wrap; gap:0; margin-top:10px;">
+          <div class="rel-node external" style="border-color:var(--secondary); color:#065F46; background:#F0FDF4;">auth.users</div>
+          <div class="rel-arrow">
+            <span class="arrow-label">1 : 1</span>
+            <span class="arrow-line">────→</span>
+          </div>
+          <div class="rel-node" style="border-color:var(--accent); color:#92400E;">subscriptions</div>
+          <div style="color:var(--gray-400); padding:0 8px; font-size:12px;">(user_id UNIQUE)</div>
+        </div>
+      </div>
+
+      <div style="border-top:1px solid var(--gray-100); margin-bottom:32px;"></div>
+
+      <!-- 행 2: organizations 중심 -->
+      <div style="margin-bottom:32px;">
+        <div style="font-size:12px; font-weight:600; color:var(--gray-500); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:12px;">조직 중심 계층</div>
+        <div style="display:flex; align-items:center; flex-wrap:wrap; gap:0;">
+          <div class="rel-node core">organizations</div>
+          <div class="rel-arrow">
+            <span class="arrow-label">1 : N</span>
+            <span class="arrow-line">────→</span>
+          </div>
+          <div class="rel-node">organization_members</div>
+          <div class="rel-arrow" style="padding:0 16px;">
+            <span class="arrow-label">&nbsp;</span>
+            <span class="arrow-line">&nbsp;</span>
+          </div>
+          <div class="rel-node core">organizations</div>
+          <div class="rel-arrow">
+            <span class="arrow-label">1 : N</span>
+            <span class="arrow-line">────→</span>
+          </div>
+          <div class="rel-node core">storages</div>
+        </div>
+        <div style="display:flex; align-items:center; flex-wrap:wrap; gap:0; margin-top:10px;">
+          <div class="rel-node core">organizations</div>
+          <div class="rel-arrow">
+            <span class="arrow-label">1 : N</span>
+            <span class="arrow-line">────→</span>
+          </div>
+          <div class="rel-node core">clothes</div>
+          <div style="color:var(--gray-400); padding:0 8px; font-size:12px;">(org_id)</div>
+        </div>
+      </div>
+
+      <div style="border-top:1px solid var(--gray-100); margin-bottom:32px;"></div>
+
+      <!-- 행 3: 옷-보관소-태그 -->
+      <div>
+        <div style="font-size:12px; font-weight:600; color:var(--gray-500); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:12px;">옷 — 보관소 — 태그 체인</div>
+        <div style="display:flex; align-items:center; flex-wrap:wrap; gap:0;">
+          <div class="rel-node core">storages</div>
+          <div class="rel-arrow">
+            <span class="arrow-label">1 : N</span>
+            <span class="arrow-line">────→</span>
+          </div>
+          <div class="rel-node core">clothes</div>
+          <div class="rel-arrow">
+            <span class="arrow-label">1 : N</span>
+            <span class="arrow-line">────→</span>
+          </div>
+          <div class="rel-node bridge">clothes_tags</div>
+          <div class="rel-arrow">
+            <span class="arrow-label">N : 1</span>
+            <span class="arrow-line">────→</span>
+          </div>
+          <div class="rel-node" style="border-color:var(--accent); color:#92400E;">tags</div>
+        </div>
+        <div style="margin-top:10px; font-size:12px; color:var(--gray-500); padding-left:4px;">
+          clothes &lt;—&gt; tags : N:M 관계, clothes_tags 가 중간 연결 테이블 역할 (ai_generated 속성 보유)
+        </div>
+        <div style="margin-top:6px; font-size:12px; color:var(--gray-500); padding-left:4px;">
+          clothes.storage_id ON DELETE SET NULL — 보관소 삭제 시 옷은 보존되며 storage_id 가 null 로 변경됨
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 3. 관계 목록 -->
+<section class="section" id="relations">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-number">03 · 관계 설명</div>
+      <h2>관계 상세 목록</h2>
+      <p>모든 외래 키 참조와 카디널리티, 삭제 동작을 정리합니다.</p>
+    </div>
+
+    <div style="background:white; border:1px solid var(--gray-200); border-radius:var(--radius); overflow:hidden; box-shadow:var(--shadow-md);">
+      <table class="relation-table">
+        <thead>
+          <tr>
+            <th>부모 테이블</th>
+            <th>자식 테이블</th>
+            <th>참조 컬럼</th>
+            <th>카디널리티</th>
+            <th>ON DELETE</th>
+            <th>설명</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>auth.users</td>
+            <td>organizations</td>
+            <td><code style="background:var(--gray-100); padding:2px 6px; border-radius:4px; font-size:12px;">owner_id</code></td>
+            <td><span class="cardinality">1 : N</span></td>
+            <td>RESTRICT (기본)</td>
+            <td>조직 소유자. 사용자가 삭제되면 조직도 삭제 불가</td>
+          </tr>
+          <tr>
+            <td>auth.users</td>
+            <td>organization_members</td>
+            <td><code style="background:var(--gray-100); padding:2px 6px; border-radius:4px; font-size:12px;">user_id</code></td>
+            <td><span class="cardinality">1 : N</span></td>
+            <td>RESTRICT (기본)</td>
+            <td>조직 멤버십. 한 사용자가 여러 조직에 소속 가능</td>
+          </tr>
+          <tr>
+            <td>auth.users</td>
+            <td>clothes</td>
+            <td><code style="background:var(--gray-100); padding:2px 6px; border-radius:4px; font-size:12px;">created_by</code></td>
+            <td><span class="cardinality">1 : N</span></td>
+            <td>SET NULL (nullable)</td>
+            <td>옷 등록자. 사용자 삭제 시 created_by 가 null 로 변경</td>
+          </tr>
+          <tr>
+            <td>auth.users</td>
+            <td>subscriptions</td>
+            <td><code style="background:var(--gray-100); padding:2px 6px; border-radius:4px; font-size:12px;">user_id</code></td>
+            <td><span class="cardinality">1 : 1</span></td>
+            <td>CASCADE</td>
+            <td>구독 정보. user_id UNIQUE 제약으로 1:1 관계 보장</td>
+          </tr>
+          <tr>
+            <td>organizations</td>
+            <td>organization_members</td>
+            <td><code style="background:var(--gray-100); padding:2px 6px; border-radius:4px; font-size:12px;">org_id</code></td>
+            <td><span class="cardinality">1 : N</span></td>
+            <td>CASCADE</td>
+            <td>조직 삭제 시 모든 멤버십 레코드도 함께 삭제</td>
+          </tr>
+          <tr>
+            <td>organizations</td>
+            <td>storages</td>
+            <td><code style="background:var(--gray-100); padding:2px 6px; border-radius:4px; font-size:12px;">org_id</code></td>
+            <td><span class="cardinality">1 : N</span></td>
+            <td>CASCADE</td>
+            <td>조직 삭제 시 모든 보관소도 함께 삭제</td>
+          </tr>
+          <tr>
+            <td>organizations</td>
+            <td>clothes</td>
+            <td><code style="background:var(--gray-100); padding:2px 6px; border-radius:4px; font-size:12px;">org_id</code></td>
+            <td><span class="cardinality">1 : N</span></td>
+            <td>CASCADE</td>
+            <td>조직 삭제 시 모든 옷 레코드도 함께 삭제</td>
+          </tr>
+          <tr>
+            <td>storages</td>
+            <td>clothes</td>
+            <td><code style="background:var(--gray-100); padding:2px 6px; border-radius:4px; font-size:12px;">storage_id</code></td>
+            <td><span class="cardinality">1 : N</span></td>
+            <td>SET NULL</td>
+            <td>보관소 삭제 시 옷은 유지되고 storage_id 만 null 처리</td>
+          </tr>
+          <tr>
+            <td>clothes</td>
+            <td>clothes_tags</td>
+            <td><code style="background:var(--gray-100); padding:2px 6px; border-radius:4px; font-size:12px;">cloth_id</code></td>
+            <td><span class="cardinality nm">N : M</span></td>
+            <td>CASCADE</td>
+            <td>옷 삭제 시 해당 옷의 모든 태그 연결도 삭제</td>
+          </tr>
+          <tr>
+            <td>tags</td>
+            <td>clothes_tags</td>
+            <td><code style="background:var(--gray-100); padding:2px 6px; border-radius:4px; font-size:12px;">tag_id</code></td>
+            <td><span class="cardinality nm">N : M</span></td>
+            <td>CASCADE</td>
+            <td>태그 삭제 시 해당 태그의 모든 연결도 삭제</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- 주요 제약 조건 -->
+    <div style="margin-top:24px; display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+      <div style="background:white; border:1px solid var(--gray-200); border-radius:var(--radius); padding:24px; box-shadow:var(--shadow);">
+        <div style="font-size:14px; font-weight:700; margin-bottom:14px; color:var(--gray-900);">UNIQUE 제약</div>
+        <div style="display:flex; flex-direction:column; gap:8px; font-size:13px;">
+          <div style="display:flex; gap:8px; align-items:center;">
+            <span class="badge badge-uk">UK</span>
+            <code style="font-size:12px;">storages.qr_code</code>
+            <span style="color:var(--gray-500);">— QR 코드 전역 유일</span>
+          </div>
+          <div style="display:flex; gap:8px; align-items:center;">
+            <span class="badge badge-uk">UK</span>
+            <code style="font-size:12px;">tags.name</code>
+            <span style="color:var(--gray-500);">— 태그명 중복 불가</span>
+          </div>
+          <div style="display:flex; gap:8px; align-items:center;">
+            <span class="badge badge-uk">UK</span>
+            <code style="font-size:12px;">subscriptions.user_id</code>
+            <span style="color:var(--gray-500);">— 사용자당 구독 1건</span>
+          </div>
+          <div style="display:flex; gap:8px; align-items:center;">
+            <span class="badge badge-uk">UK</span>
+            <code style="font-size:12px;">organization_members(org_id, user_id)</code>
+            <span style="color:var(--gray-500);">— 중복 멤버십 방지</span>
+          </div>
+          <div style="display:flex; gap:8px; align-items:center;">
+            <span class="badge badge-uk">UK</span>
+            <code style="font-size:12px;">clothes_tags(cloth_id, tag_id)</code>
+            <span style="color:var(--gray-500);">— 동일 태그 중복 연결 방지</span>
+          </div>
+        </div>
+      </div>
+      <div style="background:white; border:1px solid var(--gray-200); border-radius:var(--radius); padding:24px; box-shadow:var(--shadow);">
+        <div style="font-size:14px; font-weight:700; margin-bottom:14px; color:var(--gray-900);">CHECK 제약</div>
+        <div style="display:flex; flex-direction:column; gap:8px; font-size:13px;">
+          <div>
+            <code style="font-size:12px; background:var(--gray-100); padding:2px 6px; border-radius:4px;">organization_members.role</code>
+            <div style="color:var(--gray-500); margin-top:3px; font-size:12px;">IN ('owner', 'member')</div>
+          </div>
+          <div>
+            <code style="font-size:12px; background:var(--gray-100); padding:2px 6px; border-radius:4px;">tags.category</code>
+            <div style="color:var(--gray-500); margin-top:3px; font-size:12px;">IN ('color', 'type', 'season', 'brand', 'custom')</div>
+          </div>
+          <div>
+            <code style="font-size:12px; background:var(--gray-100); padding:2px 6px; border-radius:4px;">subscriptions.plan</code>
+            <div style="color:var(--gray-500); margin-top:3px; font-size:12px;">IN ('free', 'ad_free', 'basic', 'ai_voice')</div>
+          </div>
+          <div>
+            <code style="font-size:12px; background:var(--gray-100); padding:2px 6px; border-radius:4px;">subscriptions.billing_cycle</code>
+            <div style="color:var(--gray-500); margin-top:3px; font-size:12px;">IN ('monthly', 'yearly')</div>
+          </div>
+          <div>
+            <code style="font-size:12px; background:var(--gray-100); padding:2px 6px; border-radius:4px;">subscriptions.status</code>
+            <div style="color:var(--gray-500); margin-top:3px; font-size:12px;">IN ('active', 'cancelled', 'expired')</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 4. 오프라인 캐시 -->
+<section class="section" id="offline">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-number">04 · Offline Cache</div>
+      <h2>오프라인 캐시 테이블</h2>
+      <p>Drift SQLite (디바이스 로컬 DB). Supabase 와 직접 FK 관계 없음 — orgId 등은 논리적 참조입니다.</p>
+    </div>
+
+    <div class="cache-grid">
+      <div class="cache-card">
+        <div class="cache-header">
+          <div class="cache-dot" style="background:#6B7280;"></div>
+          LocalStorages
+        </div>
+        <div class="cache-body">
+          <div class="cache-col">
+            <span class="cache-col-name">id</span>
+            <span class="cache-col-type">String (uuid)</span>
+            <span class="badge badge-pk">PK</span>
+          </div>
+          <div class="cache-col">
+            <span class="cache-col-name">orgId</span>
+            <span class="cache-col-type">String</span>
+          </div>
+          <div class="cache-col">
+            <span class="cache-col-name">name</span>
+            <span class="cache-col-type">String</span>
+          </div>
+          <div class="cache-col">
+            <span class="cache-col-name">photoUrl</span>
+            <span class="cache-col-type">String?</span>
+          </div>
+          <div class="cache-col">
+            <span class="cache-col-name">qrCode</span>
+            <span class="cache-col-type">String</span>
+          </div>
+          <div class="cache-col">
+            <span class="cache-col-name">cachedAt</span>
+            <span class="cache-col-type">DateTime</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="cache-card">
+        <div class="cache-header">
+          <div class="cache-dot" style="background:#6B7280;"></div>
+          LocalClothes
+        </div>
+        <div class="cache-body">
+          <div class="cache-col">
+            <span class="cache-col-name">id</span>
+            <span class="cache-col-type">String (uuid)</span>
+            <span class="badge badge-pk">PK</span>
+          </div>
+          <div class="cache-col">
+            <span class="cache-col-name">orgId</span>
+            <span class="cache-col-type">String</span>
+          </div>
+          <div class="cache-col">
+            <span class="cache-col-name">storageId</span>
+            <span class="cache-col-type">String?</span>
+          </div>
+          <div class="cache-col">
+            <span class="cache-col-name">photoUrl</span>
+            <span class="cache-col-type">String?</span>
+          </div>
+          <div class="cache-col">
+            <span class="cache-col-name">name</span>
+            <span class="cache-col-type">String?</span>
+          </div>
+          <div class="cache-col">
+            <span class="cache-col-name">cachedAt</span>
+            <span class="cache-col-type">DateTime</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="cache-card">
+        <div class="cache-header">
+          <div class="cache-dot" style="background:#6B7280;"></div>
+          SyncQueueItems
+        </div>
+        <div class="cache-body">
+          <div class="cache-col">
+            <span class="cache-col-name">id</span>
+            <span class="cache-col-type">int</span>
+            <span class="badge badge-pk">PK</span>
+            <span style="font-size:10px; color:var(--gray-400);">AUTO</span>
+          </div>
+          <div class="cache-col">
+            <span class="cache-col-name">operation</span>
+            <span class="cache-col-type">String</span>
+          </div>
+          <div class="cache-col">
+            <span class="cache-col-name">table</span>
+            <span class="cache-col-type">String</span>
+          </div>
+          <div class="cache-col">
+            <span class="cache-col-name">payload</span>
+            <span class="cache-col-type">String (JSON)</span>
+          </div>
+          <div class="cache-col">
+            <span class="cache-col-name">createdAt</span>
+            <span class="cache-col-type">DateTime</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top:16px; background:#FFF7ED; border:1px solid #FED7AA; border-radius:var(--radius-sm); padding:16px 20px; font-size:13px; color:#92400E;">
+      SyncQueueItems 는 오프라인 중 발생한 쓰기 작업(INSERT / UPDATE / DELETE)을 큐에 쌓았다가 네트워크 복구 시 Supabase 로 순차 동기화하는 용도입니다.
+    </div>
+  </div>
+</section>
+
+<footer style="background:var(--gray-900); color:var(--gray-500); padding:32px 40px; font-size:13px; margin-top:40px;">
+  <div style="max-width:1200px; margin:0 auto; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+    <span>MyStorage — ERD</span>
+    <span>migrations/001_schema.sql · 002_rls.sql · 003_subscriptions.sql · 004_admin_view.sql</span>
+    <span>2026-11-23</span>
+  </div>
+</footer>
+
+</body>
+</html>
