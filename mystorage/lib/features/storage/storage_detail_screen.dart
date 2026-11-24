@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../data/repositories/storage_repository.dart';
 import '../../data/repositories/cloth_repository.dart';
 import '../../data/models/storage_location.dart';
@@ -35,6 +36,23 @@ class _StorageDetailScreenState extends State<StorageDetailScreen> {
     return FutureBuilder<(StorageLocation, List<Cloth>)>(
       future: _future,
       builder: (ctx, snap) {
+        if (snap.hasError) {
+          return Scaffold(
+            appBar: AppBar(),
+            body: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.error_outline, size: 40, color: Colors.grey),
+                  const SizedBox(height: 12),
+                  Text('오류: ${snap.error}', textAlign: TextAlign.center),
+                  const SizedBox(height: 16),
+                  FilledButton(onPressed: _reload, child: const Text('다시 시도')),
+                ],
+              ),
+            ),
+          );
+        }
         if (!snap.hasData) {
           return const Scaffold(
             body: Center(child: CircularProgressIndicator()),
@@ -45,6 +63,16 @@ class _StorageDetailScreenState extends State<StorageDetailScreen> {
           appBar: AppBar(
             title: Text(storage.name),
             actions: [
+              IconButton(
+                icon: const Icon(Icons.edit_outlined),
+                onPressed: () async {
+                  final updated = await context.push<bool>(
+                    '/storage/edit/${storage.id}',
+                    extra: storage,
+                  );
+                  if (updated == true) _reload();
+                },
+              ),
               IconButton(
                 icon: const Icon(Icons.qr_code),
                 onPressed: () =>
@@ -85,8 +113,8 @@ class _ClothCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      clipBehavior: Clip.antiAlias,
+    return GestureDetector(
+      onTap: () => context.push('/cloth/${cloth.id}'),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -96,28 +124,44 @@ class _ClothCard extends StatelessWidget {
                     cloth.photoUrl!,
                     fit: BoxFit.cover,
                     width: double.infinity,
+                    errorBuilder: (_, __, ___) => _placeholder(context),
                   )
-                : Container(
-                    color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                    child: const Center(
-                      child: Icon(Icons.checkroom, size: 40),
-                    ),
-                  ),
+                : _placeholder(context),
           ),
-          Padding(
-            padding: const EdgeInsets.all(8),
-            child: Text(
-              cloth.name ?? '이름 없음',
-              style: const TextStyle(
-                fontWeight: FontWeight.w700,
-                fontSize: 13,
+          const SizedBox(height: 8),
+          Text(
+            cloth.name ?? '이름 없음',
+            style: GoogleFonts.inter(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: const Color(0xFF2C2416),
+              letterSpacing: 0.2,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          if (cloth.tags.isNotEmpty) ...[
+            const SizedBox(height: 3),
+            Text(
+              cloth.tags.take(3).map((t) => t.name).join('  ·  '),
+              style: GoogleFonts.inter(
+                fontSize: 10,
+                color: const Color(0xFF9B8E7E),
+                letterSpacing: 0.3,
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
-          ),
+          ],
         ],
       ),
     );
   }
+
+  Widget _placeholder(BuildContext context) => Container(
+        color: const Color(0xFFEDE7DD),
+        child: const Center(
+          child: Icon(Icons.checkroom, size: 36, color: Color(0xFFBBAA95)),
+        ),
+      );
 }

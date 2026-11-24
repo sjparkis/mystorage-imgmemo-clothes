@@ -377,13 +377,13 @@
 <!-- 커버 -->
 <div class="cover">
   <div class="container">
-    <div class="cover-badge">구현 계획서 v1.0</div>
+    <div class="cover-badge">구현 계획서 v2.0</div>
     <h1>MyStorage</h1>
     <p class="subtitle">Flutter + Supabase 올인원 구현 계획 — Phase 1 · 2 · 3</p>
     <div class="cover-meta">
-      <span>작성일: 2026-11-23</span>
+      <span>작성일: 2026-11-24</span>
       <span>총 태스크: 14개</span>
-      <span>Tech: Flutter · Supabase · OpenAI · RevenueCat</span>
+      <span>Tech: Flutter · Supabase · Anthropic Claude · RevenueCat</span>
     </div>
   </div>
 </div>
@@ -440,7 +440,7 @@
       <tbody>
         <tr><td><strong>Goal</strong></td><td>Flutter + Supabase 올인원으로 옷 보관 위치 관리 앱 전체 구현</td></tr>
         <tr><td><strong>Architecture</strong></td><td>Flutter 단일 코드베이스(iOS·Android·PWA), Supabase(DB+Auth+Storage+Edge Functions), Drift(오프라인 SQLite)</td></tr>
-        <tr><td><strong>AI</strong></td><td>OpenAI Vision (이미지 태그) + GPT-4o-mini (자연어 파싱) — 모두 Supabase Edge Functions 경유</td></tr>
+        <tr><td><strong>AI</strong></td><td>Anthropic Claude claude-haiku-4-5-20251001 (이미지 태그 + 이름 생성 + 자연어 파싱) — 모두 Supabase Edge Functions 경유</td></tr>
         <tr><td><strong>Payment</strong></td><td>RevenueCat (iOS/Android 인앱) + Toss Payments (웹) + Webhook으로 Supabase 동기화</td></tr>
         <tr><td><strong>Test</strong></td><td>flutter_test + mockito — 각 태스크 TDD 방식, 테스트 먼저 작성 후 구현</td></tr>
       </tbody>
@@ -461,9 +461,9 @@
 ├── <span class="dir">supabase/</span>
 │   ├── <span class="dir">functions/</span>
 │   │   ├── <span class="dir">analyze-clothing/</span>
-│   │   │   └── <span class="file">index.ts</span>        <span class="comment"># 옷 이미지 → AI 태그 (OpenAI Vision)</span>
+│   │   │   └── <span class="file">index.ts</span>        <span class="comment"># 옷 이미지 → 이름+AI 태그 (Anthropic Claude)</span>
 │   │   ├── <span class="dir">parse-voice-query/</span>
-│   │   │   └── <span class="file">index.ts</span>        <span class="comment"># 자연어 → 검색 필터 (GPT-4o-mini)</span>
+│   │   │   └── <span class="file">index.ts</span>        <span class="comment"># 자연어 → 검색 필터 (Anthropic Claude)</span>
 │   │   └── <span class="dir">subscription-webhook/</span>
 │   │       └── <span class="file">index.ts</span>        <span class="comment"># RevenueCat webhook → Supabase 플랜 동기화</span>
 │   └── <span class="dir">migrations/</span>
@@ -539,6 +539,9 @@
             <span class="file-tag file-create">supabase/migrations/001_schema.sql</span>
             <span class="file-tag file-create">supabase/migrations/002_rls.sql</span>
             <span class="file-tag file-create">supabase/migrations/003_subscriptions.sql</span>
+            <span class="file-tag file-modify">supabase/migrations/005~010 (storage/perms)</span>
+            <span class="file-tag file-modify">supabase/migrations/011_add_memo.sql</span>
+            <span class="file-tag file-modify">supabase/migrations/012_drop_category_constraint.sql</span>
           </div>
           <div class="steps">
 
@@ -576,7 +579,7 @@
   id uuid <span class="kw">primary key default</span> gen_random_uuid(),
   org_id uuid <span class="kw">references</span> organizations(id) <span class="kw">on delete cascade not null</span>,
   storage_id uuid <span class="kw">references</span> storages(id) <span class="kw">on delete set null</span>,
-  photo_url text, name text,
+  photo_url text, name text, memo text,
   created_by uuid <span class="kw">references</span> auth.users(id),
   created_at timestamptz <span class="kw">default</span> now()
 );
@@ -584,7 +587,7 @@
 <span class="kw">create table</span> tags (
   id uuid <span class="kw">primary key default</span> gen_random_uuid(),
   name text <span class="kw">not null unique</span>,
-  category text <span class="kw">check</span> (category <span class="kw">in</span> (<span class="str">'color'</span>,<span class="str">'type'</span>,<span class="str">'season'</span>,<span class="str">'brand'</span>,<span class="str">'custom'</span>)) <span class="kw">not null</span>
+  category text <span class="kw">not null</span>  <span class="cm">-- CHECK 제약 없음: color,type,material,season,style,condition,brand,custom 모두 허용</span>
 );
 
 <span class="kw">create table</span> clothes_tags (
@@ -890,8 +893,8 @@ dev_dependencies:
             <div class="step">
               <div class="step-check" onclick="checkStep(this)">✓</div>
               <div class="step-content">
-                <div class="step-title">StorageRepository — getOrCreateOrgId + CRUD + fetchByQrCode</div>
-                <p style="font-size:13px; color:var(--gray-500);">신규 유저 최초 접속 시 조직 + 멤버십 자동 생성. <code>storages</code> 테이블 CRUD. QR UUID로 보관함 조회.</p>
+                <div class="step-title">StorageRepository — getOrCreateOrgId + CRUD + fetchByQrCode + update</div>
+                <p style="font-size:13px; color:var(--gray-500);">신규 유저 최초 접속 시 조직 + 멤버십 자동 생성. <code>storages</code> 테이블 CRUD. QR UUID로 보관함 조회. <code>update({id, name, photoUrl})</code> 로 보관함 이름·사진 수정.</p>
               </div>
             </div>
             <div class="step">
@@ -933,8 +936,8 @@ dev_dependencies:
             <div class="step">
               <div class="step-check" onclick="checkStep(this)">✓</div>
               <div class="step-content">
-                <div class="step-title">ClothRepository — fetchByStorage + create (태그 포함) + search</div>
-                <p style="font-size:13px; color:var(--gray-500);">태그 upsert → clothes_tags 연결. <code>ilike</code>로 이름 검색.</p>
+                <div class="step-title">ClothRepository — fetchByStorage + create (태그 포함) + search + updateTags + updateNameAndTags</div>
+                <p style="font-size:13px; color:var(--gray-500);">태그 upsert → clothes_tags 연결. <code>ilike</code>로 이름·태그·메모 검색. <code>updateTags(clothId, tags)</code> 태그 단독 교체. <code>updateNameAndTags(clothId, {name, tags})</code> AI 자동완성 결과 일괄 적용.</p>
               </div>
             </div>
             <div class="step">
@@ -968,7 +971,7 @@ dev_dependencies:
         <div class="task-header" onclick="toggle(this)">
           <div class="task-number" style="background:var(--phase2-light); color:var(--phase2);">7</div>
           <div>
-            <div class="task-title">AI 이미지 태그 — Edge Function (OpenAI Vision)</div>
+            <div class="task-title">AI 이미지 태그 — Edge Function (Anthropic Claude)</div>
             <div class="task-files-preview">supabase/functions/analyze-clothing/index.ts · lib/services/ai_tag_service.dart</div>
           </div>
           <div class="task-toggle">▼</div>
@@ -980,21 +983,25 @@ dev_dependencies:
               <div class="step-check" onclick="checkStep(this)">✓</div>
               <div class="step-content">
                 <div class="step-title">Edge Function — analyze-clothing/index.ts</div>
-<pre><span class="kw">import</span> OpenAI <span class="kw">from</span> <span class="str">"https://esm.sh/openai@4.47.1"</span>;
+<pre><span class="kw">import</span> Anthropic <span class="kw">from</span> <span class="str">"https://esm.sh/@anthropic-ai/sdk@0.27.3"</span>;
 
-<span class="kw">const</span> openai = <span class="kw">new</span> <span class="ty">OpenAI</span>({ apiKey: Deno.env.<span class="fn">get</span>(<span class="str">"OPENAI_API_KEY"</span>)! });
+<span class="kw">const</span> anthropic = <span class="kw">new</span> <span class="ty">Anthropic</span>({ apiKey: Deno.env.<span class="fn">get</span>(<span class="str">"ANTHROPIC_API_KEY"</span>)! });
 
 serve(<span class="kw">async</span> (req) => {
-  <span class="kw">const</span> { imageUrl } = <span class="kw">await</span> req.<span class="fn">json</span>();
-  <span class="kw">const</span> response = <span class="kw">await</span> openai.chat.completions.<span class="fn">create</span>({
-    model: <span class="str">"gpt-4o-mini"</span>,
+  <span class="kw">const</span> { base64Image, contentType, imageUrl } = <span class="kw">await</span> req.<span class="fn">json</span>();
+  <span class="kw">const</span> imageSource = base64Image
+    ? { type: <span class="str">"base64"</span> <span class="kw">as const</span>, media_type: contentType ?? <span class="str">"image/jpeg"</span>, data: base64Image }
+    : { type: <span class="str">"url"</span> <span class="kw">as const</span>, url: imageUrl };
+  <span class="kw">const</span> response = <span class="kw">await</span> anthropic.messages.<span class="fn">create</span>({
+    model: <span class="str">"claude-haiku-4-5-20251001"</span>,
+    max_tokens: <span class="num">300</span>,
     messages: [{ role: <span class="str">"user"</span>, content: [
-      { type: <span class="str">"image_url"</span>, image_url: { url: imageUrl, detail: <span class="str">"low"</span> }},
-      { type: <span class="str">"text"</span>, text: <span class="str">"색상·종류·계절을 JSON으로: {\"tags\":[{\"name\":\"string\",\"category\":\"color|type|season|brand\"}]}"</span>}
+      { type: <span class="str">"image"</span>, source: imageSource },
+      { type: <span class="str">"text"</span>, text: <span class="str">"의류 이미지를 분석해 JSON으로 응답: {\"name\":\"string\",\"tags\":[{\"name\":\"string\",\"category\":\"color|type|material|season|style|condition|brand|custom\"}]} 태그 7-10개"</span>}
     ]}],
-    max_tokens: <span class="num">200</span>, response_format: { type: <span class="str">"json_object"</span> },
   });
-  <span class="kw">return new</span> <span class="ty">Response</span>(response.choices[<span class="num">0</span>].message.content, {
+  <span class="kw">const</span> text = response.content[<span class="num">0</span>].type === <span class="str">"text"</span> ? response.content[<span class="num">0</span>].text : <span class="str">"{}"</span>;
+  <span class="kw">return new</span> <span class="ty">Response</span>(text, {
     headers: { <span class="str">"Content-Type"</span>: <span class="str">"application/json"</span> }
   });
 });</pre>
@@ -1007,7 +1014,7 @@ serve(<span class="kw">async</span> (req) => {
                 <div class="step-title">로컬 테스트 → 배포</div>
                 <div class="cmd">supabase functions serve analyze-clothing --env-file .env.local</div>
                 <div class="cmd">supabase functions deploy analyze-clothing --no-verify-jwt</div>
-                <div class="cmd">supabase secrets set OPENAI_API_KEY=sk-...</div>
+                <div class="cmd">supabase secrets set ANTHROPIC_API_KEY=sk-ant-...</div>
               </div>
             </div>
 
@@ -1016,13 +1023,19 @@ serve(<span class="kw">async</span> (req) => {
               <div class="step-content">
                 <div class="step-title">lib/services/ai_tag_service.dart</div>
 <pre><span class="kw">class</span> <span class="ty">AiTagService</span> {
-  <span class="ty">Future</span>&lt;<span class="ty">List</span>&lt;<span class="ty">Tag</span>&gt;&gt; <span class="fn">analyze</span>(<span class="ty">String</span> imageUrl) <span class="kw">async</span> {
+  <span class="ty">Future</span>&lt;({<span class="ty">String</span> name, <span class="ty">List</span>&lt;<span class="ty">Tag</span>&gt; tags})&gt; <span class="fn">analyze</span>({
+    <span class="ty">String</span>? base64Image, <span class="ty">String</span>? contentType, <span class="ty">String</span>? imageUrl,
+  }) <span class="kw">async</span> {
+    <span class="kw">final</span> body = base64Image != <span class="kw">null</span>
+      ? {<span class="str">'base64Image'</span>: base64Image, <span class="str">'contentType'</span>: contentType ?? <span class="str">'image/jpeg'</span>}
+      : {<span class="str">'imageUrl'</span>: imageUrl};
     <span class="kw">final</span> res = <span class="kw">await</span> Supabase.instance.client.functions.<span class="fn">invoke</span>(
-      <span class="str">'analyze-clothing'</span>, body: {<span class="str">'imageUrl'</span>: imageUrl},
+      <span class="str">'analyze-clothing'</span>, body: body,
     );
-    <span class="kw">return</span> (res.data[<span class="str">'tags'</span>] <span class="kw">as</span> <span class="ty">List</span>).<span class="fn">map</span>((t) => <span class="ty">Tag</span>(
+    <span class="kw">final</span> tags = (res.data[<span class="str">'tags'</span>] <span class="kw">as</span> <span class="ty">List</span>).<span class="fn">map</span>((t) => <span class="ty">Tag</span>(
       id: <span class="str">''</span>, name: t[<span class="str">'name'</span>], category: t[<span class="str">'category'</span>], aiGenerated: <span class="kw">true</span>,
     )).<span class="fn">toList</span>();
+    <span class="kw">return</span> (name: res.data[<span class="str">'name'</span>] <span class="kw">as</span> <span class="ty">String</span>, tags: tags);
   }
 }</pre>
               </div>
@@ -1085,7 +1098,7 @@ serve(<span class="kw">async</span> (req) => {
         <div class="task-header" onclick="toggle(this)">
           <div class="task-number" style="background:var(--phase2-light); color:var(--phase2);">9</div>
           <div>
-            <div class="task-title">AI 음성 검색 — STT + GPT 자연어 파싱</div>
+            <div class="task-title">AI 음성 검색 — STT + Claude 자연어 파싱</div>
             <div class="task-files-preview">functions/parse-voice-query/index.ts · services/voice_search_service.dart · features/search/voice_search_button.dart</div>
           </div>
           <div class="task-toggle">▼</div>
@@ -1096,18 +1109,18 @@ serve(<span class="kw">async</span> (req) => {
             <div class="step">
               <div class="step-check" onclick="checkStep(this)">✓</div>
               <div class="step-content">
-                <div class="step-title">parse-voice-query Edge Function — GPT-4o-mini로 자연어 → 필터 JSON</div>
+                <div class="step-title">parse-voice-query Edge Function — Claude로 자연어 → 필터 JSON</div>
 <pre>serve(<span class="kw">async</span> (req) => {
   <span class="kw">const</span> { query } = <span class="kw">await</span> req.<span class="fn">json</span>();
-  <span class="kw">const</span> response = <span class="kw">await</span> openai.chat.completions.<span class="fn">create</span>({
-    model: <span class="str">"gpt-4o-mini"</span>,
-    messages: [
-      { role: <span class="str">"system"</span>, content: <span class="str">"옷 쿼리에서 JSON 필터 추출: {filters:{type,season,color,keywords}}"</span> },
-      { role: <span class="str">"user"</span>, content: query }
-    ],
-    response_format: { type: <span class="str">"json_object"</span> },
+  <span class="kw">const</span> anthropic = <span class="kw">new</span> <span class="ty">Anthropic</span>({ apiKey: Deno.env.<span class="fn">get</span>(<span class="str">"ANTHROPIC_API_KEY"</span>)! });
+  <span class="kw">const</span> response = <span class="kw">await</span> anthropic.messages.<span class="fn">create</span>({
+    model: <span class="str">"claude-haiku-4-5-20251001"</span>,
+    max_tokens: <span class="num">200</span>,
+    system: <span class="str">"옷 쿼리에서 JSON 필터 추출: {\"filters\":{\"type\":\"string\",\"season\":\"string\",\"color\":\"string\",\"keywords\":[\"string\"]}}"</span>,
+    messages: [{ role: <span class="str">"user"</span>, content: query }],
   });
-  <span class="kw">return new</span> <span class="ty">Response</span>(response.choices[<span class="num">0</span>].message.content);
+  <span class="kw">const</span> text = response.content[<span class="num">0</span>].type === <span class="str">"text"</span> ? response.content[<span class="num">0</span>].text : <span class="str">"{}"</span>;
+  <span class="kw">return new</span> <span class="ty">Response</span>(text, { headers: { <span class="str">"Content-Type"</span>: <span class="str">"application/json"</span> } });
 });</pre>
               </div>
             </div>
@@ -1371,7 +1384,7 @@ serve(<span class="kw">async</span> (req) => {
         <div class="warning-icon">🔑</div>
         <div>
           <div class="warning-title">API Key 관리</div>
-          <div class="warning-desc"><code>.env.local</code>에 <code>OPENAI_API_KEY</code> 저장. <code>.gitignore</code>에 반드시 추가. <code>constants.dart</code>의 Supabase URL/Key는 CI 환경변수로 주입.</div>
+          <div class="warning-desc"><code>.env.local</code>에 <code>ANTHROPIC_API_KEY</code> 저장. <code>.gitignore</code>에 반드시 추가. <code>constants.dart</code>의 Supabase URL/Key는 CI 환경변수로 주입.</div>
         </div>
       </div>
       <div class="warning-item">
@@ -1442,11 +1455,11 @@ serve(<span class="kw">async</span> (req) => {
           <td>supabase.com<br>GitHub 계정으로 가입</td>
         </tr>
         <tr>
-          <td><strong>OpenAI</strong></td>
+          <td><strong>Anthropic</strong></td>
           <td>이미지 태깅 (Vision)<br>음성 쿼리 파싱</td>
-          <td><code>OPENAI_API_KEY</code></td>
-          <td><span class="badge-paid">선불 충전</span><br><small>이미지 ~$0.01/장<br>텍스트 ~$0.001/건</small></td>
-          <td>platform.openai.com<br>신용카드 필수<br>초기 $20 충전 권장</td>
+          <td><code>ANTHROPIC_API_KEY</code></td>
+          <td><span class="badge-paid">선불 충전</span><br><small>이미지 ~$0.003/장<br>텍스트 ~$0.0003/건</small></td>
+          <td>console.anthropic.com<br>신용카드 필수<br>초기 $20 충전 권장</td>
         </tr>
         <tr>
           <td><strong>RevenueCat</strong></td>
@@ -1482,7 +1495,7 @@ serve(<span class="kw">async</span> (req) => {
     <h3 style="font-size:16px; font-weight:700; margin-bottom:16px;">월간 운영 비용 추정</h3>
     <table class="req-table">
       <thead>
-        <tr><th>단계</th><th>Supabase</th><th>OpenAI</th><th>RevenueCat</th><th>합계</th></tr>
+        <tr><th>단계</th><th>Supabase</th><th>Anthropic</th><th>RevenueCat</th><th>합계</th></tr>
       </thead>
       <tbody>
         <tr>
@@ -1513,7 +1526,7 @@ serve(<span class="kw">async</span> (req) => {
     <div class="constraint-card info">
       <div class="constraint-title">키 보관 위치</div>
       <div class="constraint-desc">
-        <strong>Supabase Edge Functions:</strong> Supabase 대시보드 → Settings → Edge Functions Secrets 에 <code>OPENAI_API_KEY</code> 등록<br>
+        <strong>Supabase Edge Functions:</strong> Supabase 대시보드 → Settings → Edge Functions Secrets 에 <code>ANTHROPIC_API_KEY</code> 등록<br>
         <strong>Flutter 앱:</strong> <code>lib/core/constants.dart</code>의 URL/Key는 CI 환경변수(<code>--dart-define</code>)로 주입. <code>.gitignore</code>에 <code>.env</code> 추가 필수<br>
         <strong>RevenueCat Key:</strong> <code>constants.dart</code>에 플랫폼별 분기(<code>Platform.isIOS</code>)로 주입
       </div>
@@ -1527,7 +1540,7 @@ serve(<span class="kw">async</span> (req) => {
       </div>
       <div style="display:flex; align-items:flex-start; gap:14px;">
         <div style="min-width:28px; height:28px; background:var(--primary); color:white; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700;">2</div>
-        <div style="font-size:13px; padding-top:4px;"><strong>OpenAI</strong> 계정 생성 → 크레딧 $20 충전 → API Key 발급 → Supabase Secrets에 등록</div>
+        <div style="font-size:13px; padding-top:4px;"><strong>Anthropic</strong> 계정 생성 → 크레딧 $20 충전 → API Key 발급 → Supabase Secrets에 등록</div>
       </div>
       <div style="display:flex; align-items:flex-start; gap:14px;">
         <div style="min-width:28px; height:28px; background:var(--primary); color:white; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700;">3</div>
@@ -1608,7 +1621,7 @@ vercel deploy ./build/web --prod</pre>
 supabase functions deploy parse-voice-query
 supabase functions deploy subscription-webhook
 # Secrets 등록:
-supabase secrets set OPENAI_API_KEY=sk-...</pre>
+supabase secrets set ANTHROPIC_API_KEY=sk-ant-...</pre>
         </div>
       </div>
     </div>

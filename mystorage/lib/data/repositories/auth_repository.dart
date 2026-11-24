@@ -10,8 +10,9 @@ class AuthRepository {
     await _auth.signInWithPassword(email: email, password: password);
   }
 
-  Future<void> signUp({required String email, required String password}) async {
-    await _auth.signUp(email: email, password: password);
+  Future<Session?> signUp({required String email, required String password}) async {
+    final response = await _auth.signUp(email: email, password: password);
+    return response.session;
   }
 
   Future<void> signOut() async {

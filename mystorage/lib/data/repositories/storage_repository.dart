@@ -3,18 +3,26 @@ import '../models/storage_location.dart';
 
 class StorageRepository {
   final SupabaseClient _db;
+  static String? _cachedOrgId;
 
   StorageRepository({SupabaseClient? db})
       : _db = db ?? Supabase.instance.client;
 
+  static void clearCache() => _cachedOrgId = null;
+
   Future<String> getOrCreateOrgId() async {
+    if (_cachedOrgId != null) return _cachedOrgId!;
+
     final userId = _db.auth.currentUser!.id;
     final existing = await _db
         .from('organization_members')
         .select('org_id')
         .eq('user_id', userId)
         .maybeSingle();
-    if (existing != null) return existing['org_id'] as String;
+    if (existing != null) {
+      _cachedOrgId = existing['org_id'] as String;
+      return _cachedOrgId!;
+    }
 
     final org = await _db
         .from('organizations')
@@ -27,7 +35,8 @@ class StorageRepository {
       'user_id': userId,
       'role': 'owner',
     });
-    return org['id'] as String;
+    _cachedOrgId = org['id'] as String;
+    return _cachedOrgId!;
   }
 
   Future<List<StorageLocation>> fetchAll() async {
@@ -41,7 +50,13 @@ class StorageRepository {
   }
 
   Future<StorageLocation> fetchById(String id) async {
-    final row = await _db.from('storages').select().eq('id', id).single();
+    final orgId = await getOrCreateOrgId();
+    final row = await _db
+        .from('storages')
+        .select()
+        .eq('id', id)
+        .eq('org_id', orgId)
+        .single();
     return StorageLocation.fromMap(row);
   }
 
@@ -69,6 +84,20 @@ class StorageRepository {
           'photo_url': photoUrl,
           'description': description,
         })
+        .select()
+        .single();
+    return StorageLocation.fromMap(row);
+  }
+
+  Future<StorageLocation> update({
+    required String id,
+    required String name,
+    String? photoUrl,
+  }) async {
+    final row = await _db
+        .from('storages')
+        .update({'name': name, 'photo_url': photoUrl})
+        .eq('id', id)
         .select()
         .single();
     return StorageLocation.fromMap(row);

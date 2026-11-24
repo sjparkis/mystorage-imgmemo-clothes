@@ -1,6 +1,6 @@
 class AppConstants {
   static const supabaseUrl = 'https://zwxgkgljuwodgslrdodg.supabase.co';
-  static const supabaseAnonKey = 'sb_publishable_meyFQGEFQMkMU_8yE6knog_GQKnG6Cp';
+  static const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp3eGdrZ2xqdXdvZGdzbHJkb2RnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTU0MjMyMzYsImV4cCI6MjExMDk5OTIzNn0.Ue0XHJ-_kFWm9Iv6GHofluaY-xItIqDwAeNOCzxXeSw';
 
   static const planLimits = {
     'free':     {'storages': 3,  'clothes': 15},

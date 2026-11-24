@@ -1,12 +1,14 @@
-import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../data/repositories/storage_repository.dart';
+import '../../data/models/storage_location.dart';
 
 class AddStorageScreen extends StatefulWidget {
-  const AddStorageScreen({super.key});
+  final StorageLocation? existing;
+  const AddStorageScreen({super.key, this.existing});
   @override
   State<AddStorageScreen> createState() => _AddStorageScreenState();
 }
@@ -14,8 +16,16 @@ class AddStorageScreen extends StatefulWidget {
 class _AddStorageScreenState extends State<AddStorageScreen> {
   final _nameCtrl = TextEditingController();
   final _repo = StorageRepository();
-  File? _photo;
+  Uint8List? _photoBytes;
   bool _loading = false;
+
+  bool get _isEdit => widget.existing != null;
+
+  @override
+  void initState() {
+    super.initState();
+    if (_isEdit) _nameCtrl.text = widget.existing!.name;
+  }
 
   @override
   void dispose() {
@@ -23,30 +33,59 @@ class _AddStorageScreenState extends State<AddStorageScreen> {
     super.dispose();
   }
 
-  Future<void> _pickPhoto() async {
-    final xf = await ImagePicker().pickImage(
-      source: ImageSource.camera,
-      imageQuality: 70,
+  Future<void> _showPhotoOptions() async {
+    final source = await showModalBottomSheet<ImageSource>(
+      context: context,
+      builder: (_) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.camera_alt_outlined),
+              title: const Text('카메라로 찍기'),
+              onTap: () => Navigator.pop(context, ImageSource.camera),
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library_outlined),
+              title: const Text('갤러리에서 가져오기'),
+              onTap: () => Navigator.pop(context, ImageSource.gallery),
+            ),
+          ],
+        ),
+      ),
     );
-    if (xf != null) setState(() => _photo = File(xf.path));
+    if (source == null) return;
+    final xf = await ImagePicker().pickImage(source: source, imageQuality: 70);
+    if (xf == null) return;
+    final bytes = await xf.readAsBytes();
+    setState(() => _photoBytes = bytes);
   }
 
   Future<void> _save() async {
     if (_nameCtrl.text.isEmpty) return;
     setState(() => _loading = true);
     try {
-      String? photoUrl;
-      if (_photo != null) {
-        final path = 'storages/${DateTime.now().millisecondsSinceEpoch}.jpg';
+      String? photoUrl = _isEdit ? widget.existing!.photoUrl : null;
+      if (_photoBytes != null) {
+        final userId = Supabase.instance.client.auth.currentUser!.id;
+        final path = '$userId/${DateTime.now().millisecondsSinceEpoch}.jpg';
         await Supabase.instance.client.storage
             .from('storage-photos')
-            .upload(path, _photo!);
+            .uploadBinary(path, _photoBytes!);
         photoUrl = Supabase.instance.client.storage
             .from('storage-photos')
             .getPublicUrl(path);
       }
-      await _repo.create(name: _nameCtrl.text, photoUrl: photoUrl);
-      if (mounted) context.pop();
+      if (_isEdit) {
+        await _repo.update(
+          id: widget.existing!.id,
+          name: _nameCtrl.text,
+          photoUrl: photoUrl,
+        );
+      } else {
+        await _repo.create(name: _nameCtrl.text, photoUrl: photoUrl);
+      }
+      if (mounted) context.pop(true);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -54,20 +93,21 @@ class _AddStorageScreenState extends State<AddStorageScreen> {
         );
       }
     } finally {
-      setState(() => _loading = false);
+      if (mounted) setState(() => _loading = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final existingPhotoUrl = widget.existing?.photoUrl;
     return Scaffold(
-      appBar: AppBar(title: const Text('보관함 추가')),
+      appBar: AppBar(title: Text(_isEdit ? '보관함 편집' : '보관함 추가')),
       body: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           children: [
             GestureDetector(
-              onTap: _pickPhoto,
+              onTap: _showPhotoOptions,
               child: Container(
                 height: 160,
                 width: double.infinity,
@@ -75,19 +115,29 @@ class _AddStorageScreenState extends State<AddStorageScreen> {
                   color: Theme.of(context).colorScheme.surfaceContainerHighest,
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: _photo != null
+                child: _photoBytes != null
                     ? ClipRRect(
                         borderRadius: BorderRadius.circular(12),
-                        child: Image.file(_photo!, fit: BoxFit.cover),
+                        child: Image.memory(_photoBytes!, fit: BoxFit.cover),
                       )
-                    : const Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.camera_alt_outlined, size: 40),
-                          SizedBox(height: 8),
-                          Text('사진 촬영'),
-                        ],
-                      ),
+                    : existingPhotoUrl != null
+                        ? ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: Image.network(
+                              existingPhotoUrl,
+                              fit: BoxFit.cover,
+                              width: double.infinity,
+                              height: double.infinity,
+                            ),
+                          )
+                        : const Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.camera_alt_outlined, size: 40),
+                              SizedBox(height: 8),
+                              Text('사진 추가'),
+                            ],
+                          ),
               ),
             ),
             const SizedBox(height: 20),

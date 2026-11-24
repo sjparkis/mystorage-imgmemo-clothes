@@ -410,9 +410,9 @@
     <h1>MyStorage — DB 설계서</h1>
     <p class="subtitle">Supabase PostgreSQL 스키마 · RLS 정책 · 오프라인 캐시 (Drift SQLite)</p>
     <div class="cover-meta">
-      <span>버전 1.0</span>
-      <span>2026-11-23</span>
-      <span>migrations/001–004</span>
+      <span>버전 2.0</span>
+      <span>2026-11-24</span>
+      <span>migrations/001–012</span>
     </div>
   </div>
 </div>
@@ -843,10 +843,11 @@
         <div class="table-icon" style="background:var(--primary); color:white;">C</div>
         <div>
           <div class="table-title">clothes</div>
-          <div class="table-desc">핵심 엔티티. 옷 1건을 나타내며 storage_id ON DELETE SET NULL 로 보관소 삭제 시에도 옷 데이터 보존</div>
+          <div class="table-desc">핵심 엔티티. 옷 1건을 나타내며 storage_id ON DELETE SET NULL 로 보관소 삭제 시에도 옷 데이터 보존. memo 컬럼 포함</div>
           <div class="table-badges">
             <span class="tbadge tbadge-rls">RLS 적용</span>
             <span class="tbadge tbadge-migration" style="background:var(--gray-100); color:var(--gray-700);">001_schema.sql</span>
+            <span class="tbadge tbadge-migration" style="background:var(--gray-100); color:var(--gray-700);">011_add_memo.sql</span>
           </div>
         </div>
       </div>
@@ -895,6 +896,12 @@
             <td class="col-type-cell">text</td>
             <td></td>
             <td>옷 이름/설명. null 허용 (AI 태그로만 식별 가능)</td>
+          </tr>
+          <tr>
+            <td class="col-name-cell">memo</td>
+            <td class="col-type-cell">text</td>
+            <td></td>
+            <td>옷 메모. null 허용 (011_add_memo.sql 에서 추가)</td>
           </tr>
           <tr>
             <td class="col-name-cell">created_by</td>
@@ -959,9 +966,10 @@
         <div class="table-icon" style="background:var(--accent); color:white;">T</div>
         <div>
           <div class="table-title">tags</div>
-          <div class="table-desc">태그 마스터. 색상/종류/계절/브랜드/커스텀 카테고리. name 은 전역 유일</div>
+          <div class="table-desc">태그 마스터. category CHECK 제약 없음 — 모든 문자열 허용. name 은 전역 유일</div>
           <div class="table-badges">
             <span class="tbadge tbadge-migration" style="background:var(--gray-100); color:var(--gray-700);">001_schema.sql</span>
+            <span class="tbadge tbadge-migration" style="background:var(--gray-100); color:var(--gray-700);">012_drop_category_constraint.sql</span>
           </div>
         </div>
       </div>
@@ -992,21 +1000,24 @@
             <td class="col-type-cell">text</td>
             <td>
               <span class="badge badge-nn">NOT NULL</span>
-              <span class="badge badge-chk">CHECK</span>
             </td>
-            <td>'color' | 'type' | 'season' | 'brand' | 'custom'</td>
+            <td>카테고리 문자열. CHECK 제약 없음 — 모든 문자열 허용 (012_drop_category_constraint.sql)</td>
           </tr>
         </tbody>
       </table>
       <div style="padding:14px 28px; border-top:1px solid var(--gray-100); background:var(--gray-50);">
-        <div style="font-size:12px; font-weight:700; color:var(--gray-500); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:8px;">category CHECK 허용값</div>
+        <div style="font-size:12px; font-weight:700; color:var(--gray-500); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:8px;">AI가 반환하는 category 값 (Claude 기준)</div>
         <div style="display:flex; gap:8px; flex-wrap:wrap;">
           <span style="background:#FEE2E2; color:#991B1B; font-size:12px; font-weight:600; padding:3px 10px; border-radius:4px;">color</span>
           <span style="background:#DBEAFE; color:#1E40AF; font-size:12px; font-weight:600; padding:3px 10px; border-radius:4px;">type</span>
+          <span style="background:#E0E7FF; color:#3730A3; font-size:12px; font-weight:600; padding:3px 10px; border-radius:4px;">material</span>
           <span style="background:#DCFCE7; color:#166534; font-size:12px; font-weight:600; padding:3px 10px; border-radius:4px;">season</span>
+          <span style="background:#F3E8FF; color:#6D28D9; font-size:12px; font-weight:600; padding:3px 10px; border-radius:4px;">style</span>
+          <span style="background:#FFF7ED; color:#C2410C; font-size:12px; font-weight:600; padding:3px 10px; border-radius:4px;">condition</span>
           <span style="background:#FEF3C7; color:#92400E; font-size:12px; font-weight:600; padding:3px 10px; border-radius:4px;">brand</span>
-          <span style="background:var(--gray-100); color:var(--gray-600); font-size:12px; font-weight:600; padding:3px 10px; border-radius:4px;">custom</span>
+          <span style="background:var(--gray-100); color:var(--gray-700); font-size:12px; font-weight:600; padding:3px 10px; border-radius:4px;">custom</span>
         </div>
+        <div style="font-size:12px; color:var(--gray-500); margin-top:8px;">category CHECK 제약이 제거되어 위 외에도 임의 문자열 허용</div>
       </div>
       <div class="index-section">
         <div class="index-title">인덱스</div>
@@ -1604,13 +1615,16 @@ $$;
 <footer style="background:var(--gray-900); color:var(--gray-500); padding:32px 40px; font-size:13px; margin-top:40px;">
   <div style="max-width:1100px; margin:0 auto; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
     <span>MyStorage — DB 설계서</span>
-    <div style="display:flex; gap:16px;">
+    <div style="display:flex; gap:12px; flex-wrap:wrap;">
       <span>001_schema.sql</span>
       <span>002_rls.sql</span>
       <span>003_subscriptions.sql</span>
       <span>004_admin_view.sql</span>
+      <span>005~010 (storage/perms)</span>
+      <span>011_add_memo.sql</span>
+      <span>012_drop_category_constraint.sql</span>
     </div>
-    <span>2026-11-23</span>
+    <span>2026-11-24</span>
   </div>
 </footer>
 

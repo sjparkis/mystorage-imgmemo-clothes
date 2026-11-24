@@ -931,13 +931,13 @@
 <!-- 커버 -->
 <div class="cover">
   <div class="container">
-    <div class="cover-badge">설계서 v1.2</div>
+    <div class="cover-badge">설계서 v2.0</div>
     <h1>MyStorage</h1>
     <p class="subtitle">옷 보관 위치 사진/QR/AI 음성 검색 앱</p>
     <div class="cover-meta">
-      <span>작성일: 2026-11-23</span>
-      <span>플랫폼: Flutter + Supabase</span>
-      <span>상태: 설계 완료</span>
+      <span>작성일: 2026-11-24</span>
+      <span>플랫폼: Flutter + Supabase + Anthropic Claude</span>
+      <span>상태: 설계 완료 (Warm Atelier 디자인 시스템)</span>
     </div>
   </div>
 </div>
@@ -1061,8 +1061,8 @@
       <div class="stack-item">
         <div class="stack-icon" style="background:#FFFBEB">🤖</div>
         <div>
-          <h4>OpenAI Vision API</h4>
-          <p>Supabase Edge Functions에서 호출. 옷 사진 분석 → 색상·종류·계절 태그 자동 생성.</p>
+          <h4>Anthropic Claude API</h4>
+          <p>Supabase Edge Functions에서 호출. 모델: claude-haiku-4-5-20251001. 옷 사진 분석 → 이름·태그(7-10개) 자동 생성.</p>
           <span class="stack-badge" style="background:#FFFBEB; color:#92400E">AI 이미지 인식</span>
         </div>
       </div>
@@ -1115,8 +1115,8 @@
       <div class="stack-item">
         <div class="stack-icon" style="background:#FFFBEB">💬</div>
         <div>
-          <h4>OpenAI GPT-4o-mini (텍스트)</h4>
-          <p>변환된 음성 텍스트를 자연어 파싱. 의도 파악 후 태그·필터 추출. 1회 약 0.01원.</p>
+          <h4>Anthropic Claude (자연어 파싱)</h4>
+          <p>변환된 음성 텍스트를 자연어 파싱. 의도 파악 후 태그·필터 추출. 모델: claude-haiku-4-5-20251001.</p>
           <span class="stack-badge" style="background:#FFFBEB; color:#92400E">AI 자연어 파싱</span>
         </div>
       </div>
@@ -1169,8 +1169,8 @@
       <div class="arch-layer" style="border-color:#FDE68A; margin-top:0">
         <span class="arch-layer-label" style="color:#92400E">AI Layer — External API</span>
         <div class="arch-nodes">
-          <div class="arch-node" style="background:var(--accent-light); color:#92400E">🤖 OpenAI Vision<br><small style="font-weight:400; font-size:11px">이미지 → 태그 생성</small></div>
-          <div class="arch-node" style="background:#EDE9FE; color:#6D28D9">💬 OpenAI GPT-4o-mini<br><small style="font-weight:400; font-size:11px">자연어 → 검색 필터</small></div>
+          <div class="arch-node" style="background:var(--accent-light); color:#92400E">🤖 Claude (Vision)<br><small style="font-weight:400; font-size:11px">이미지 → 이름+태그 생성</small></div>
+          <div class="arch-node" style="background:#EDE9FE; color:#6D28D9">💬 Claude (텍스트)<br><small style="font-weight:400; font-size:11px">자연어 → 검색 필터</small></div>
         </div>
       </div>
 
@@ -1365,7 +1365,7 @@
             <div style="border-left:2px solid #FCE7F3; margin-left:20px; padding:8px 0 8px 14px; color:var(--gray-500); font-size:12px;">↓ STT 변환</div>
             <div style="background:#FCE7F3; color:#9D174D; padding:10px 14px; border-radius:8px; font-size:13px; font-weight:600;">텍스트 확인<br><span style="font-weight:400; font-size:11px;">"지난 겨울에 샀던 두꺼운 코트"</span></div>
             <div style="border-left:2px solid #FCE7F3; margin-left:20px; padding:8px 0 8px 14px; color:var(--gray-500); font-size:12px;">↓ Edge Function</div>
-            <div style="background:#FCE7F3; color:#9D174D; padding:10px 14px; border-radius:8px; font-size:13px; font-weight:600;">GPT 자연어 파싱<br><span style="font-weight:400; font-size:11px;">→ {type:코트, season:겨울}</span></div>
+            <div style="background:#FCE7F3; color:#9D174D; padding:10px 14px; border-radius:8px; font-size:13px; font-weight:600;">Claude 자연어 파싱<br><span style="font-weight:400; font-size:11px;">→ {type:코트, season:겨울}</span></div>
             <div style="border-left:2px solid #FCE7F3; margin-left:20px; padding:8px 0 8px 14px; color:var(--gray-500); font-size:12px;">↓</div>
             <div style="background:#DB2777; color:white; padding:10px 14px; border-radius:0 0 8px 8px; font-size:13px; font-weight:600;">검색 결과 + 위치 표시</div>
           </div>
@@ -1759,63 +1759,64 @@
     <div class="section-header">
       <div class="section-number">Section 08</div>
       <h2>AI 이미지 인식 흐름</h2>
-      <p>Supabase Edge Functions → OpenAI Vision API — 별도 AI 서버 불필요</p>
+      <p>Supabase Edge Functions → Anthropic Claude API — 별도 AI 서버 불필요</p>
     </div>
 
     <div class="ai-flow">
       <div class="ai-step">
         <div class="ai-step-icon" style="background:#EEF2FF;">📷</div>
-        <h4>사진 촬영</h4>
-        <p>Flutter 앱에서 카메라로 옷 사진 촬영</p>
+        <h4>사진 촬영/선택</h4>
+        <p>카메라 or 갤러리. 바텀 시트에서 선택</p>
       </div>
       <div class="ai-step-arrow">→</div>
       <div class="ai-step">
         <div class="ai-step-icon" style="background:#ECFDF5;">☁️</div>
         <h4>Storage 업로드</h4>
-        <p>Supabase Storage에 이미지 저장, 공개 URL 획득</p>
+        <p>{userId}/{timestamp}.jpg 경로로 public 버킷에 저장</p>
       </div>
       <div class="ai-step-arrow">→</div>
       <div class="ai-step">
         <div class="ai-step-icon" style="background:#F5F3FF;">⚡</div>
         <h4>Edge Function 호출</h4>
-        <p>이미지 URL과 함께 analyze-clothing 함수 호출</p>
+        <p>base64Image 또는 imageUrl 전송 → analyze-clothing</p>
       </div>
       <div class="ai-step-arrow">→</div>
       <div class="ai-step">
         <div class="ai-step-icon" style="background:#FFFBEB;">🤖</div>
-        <h4>OpenAI Vision</h4>
-        <p>GPT-4o Vision이 색상·종류·계절·브랜드 분석</p>
+        <h4>Claude 분석</h4>
+        <p>claude-haiku-4-5-20251001이 이름·태그(7-10개) 생성</p>
       </div>
       <div class="ai-step-arrow">→</div>
       <div class="ai-step">
         <div class="ai-step-icon" style="background:#FFF1F2;">🏷️</div>
-        <h4>태그 반환</h4>
-        <p>JSON 형태로 태그 목록 반환, ai_generated=true 표시</p>
+        <h4>이름+태그 반환</h4>
+        <p>name + tags[] JSON 반환. AI 자동완성으로 폼에 채워짐</p>
       </div>
       <div class="ai-step-arrow">→</div>
       <div class="ai-step">
         <div class="ai-step-icon" style="background:#F0FDF4;">✅</div>
         <h4>사용자 확인</h4>
-        <p>앱에서 태그 표시, 수정/추가 후 최종 저장</p>
+        <p>앱에서 이름·태그 표시, 수정/추가 후 최종 저장</p>
       </div>
     </div>
 
     <div class="mt-24 grid-2">
       <div class="card">
-        <div class="card-title">Edge Function 예시 응답</div>
+        <div class="card-title">Edge Function 예시 응답 (Claude)</div>
         <pre style="font-size:12px; color:var(--gray-700); line-height:1.8; background:var(--gray-50); padding:16px; border-radius:8px; overflow-x:auto;">{
+  "name": "네이비 울 코트",
   "tags": [
     { "name": "겨울", "category": "season" },
     { "name": "네이비", "category": "color" },
     { "name": "코트", "category": "type" },
-    { "name": "아우터", "category": "type" }
-  ],
-  "confidence": 0.92,
-  "ai_generated": true
+    { "name": "울", "category": "material" },
+    { "name": "포멀", "category": "style" },
+    { "name": "새것같음", "category": "condition" }
+  ]
 }</pre>
       </div>
       <div class="card">
-        <div class="card-title">태그 카테고리 정의</div>
+        <div class="card-title">태그 카테고리 정의 (Claude 반환 기준)</div>
         <table style="width:100%; font-size:13px; border-collapse:collapse;">
           <tr style="border-bottom:1px solid var(--gray-100);">
             <td style="padding:8px 0; font-weight:600;">color</td>
@@ -1826,8 +1827,20 @@
             <td style="padding:8px 0; color:var(--gray-500);">티셔츠, 코트, 니트, 청바지…</td>
           </tr>
           <tr style="border-bottom:1px solid var(--gray-100);">
+            <td style="padding:8px 0; font-weight:600;">material</td>
+            <td style="padding:8px 0; color:var(--gray-500);">면, 울, 린넨, 폴리에스터, 실크…</td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--gray-100);">
             <td style="padding:8px 0; font-weight:600;">season</td>
             <td style="padding:8px 0; color:var(--gray-500);">봄, 여름, 가을, 겨울, 사계절</td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--gray-100);">
+            <td style="padding:8px 0; font-weight:600;">style</td>
+            <td style="padding:8px 0; color:var(--gray-500);">캐주얼, 포멀, 스포티, 스트리트…</td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--gray-100);">
+            <td style="padding:8px 0; font-weight:600;">condition</td>
+            <td style="padding:8px 0; color:var(--gray-500);">새것같음, 보통, 착용감있음…</td>
           </tr>
           <tr style="border-bottom:1px solid var(--gray-100);">
             <td style="padding:8px 0; font-weight:600;">brand</td>
@@ -1835,7 +1848,7 @@
           </tr>
           <tr>
             <td style="padding:8px 0; font-weight:600;">custom</td>
-            <td style="padding:8px 0; color:var(--gray-500);">사용자가 직접 추가한 태그</td>
+            <td style="padding:8px 0; color:var(--gray-500);">사용자가 직접 추가한 태그. CHECK 제약 없음</td>
           </tr>
         </table>
       </div>
@@ -1849,7 +1862,7 @@
     <div class="section-header">
       <div class="section-number">Section 09</div>
       <h2>AI 음성 검색 흐름</h2>
-      <p>speech_to_text (온디바이스, 무료) + OpenAI GPT-4o-mini (자연어 파싱) — 검색당 약 0.01원</p>
+      <p>speech_to_text (온디바이스, 무료) + Anthropic Claude (자연어 파싱, claude-haiku-4-5-20251001)</p>
     </div>
 
     <div class="ai-flow">
@@ -1873,7 +1886,7 @@
       <div class="ai-step-arrow">→</div>
       <div class="ai-step">
         <div class="ai-step-icon" style="background:#FFFBEB;">💬</div>
-        <h4>GPT-4o-mini 파싱</h4>
+        <h4>Claude 파싱</h4>
         <p>자연어에서 태그·카테고리·의도 추출. JSON 반환</p>
       </div>
       <div class="ai-step-arrow">→</div>
@@ -1919,7 +1932,7 @@
           </tr>
           <tr style="border-bottom:1px solid var(--gray-100);">
             <td style="padding:8px;">자연어 파싱</td>
-            <td style="padding:8px; color:var(--gray-500);">GPT-4o-mini (~200 tokens)</td>
+            <td style="padding:8px; color:var(--gray-500);">Claude Haiku (~200 tokens)</td>
             <td style="padding:8px;"><span class="badge badge-blue">약 0.01원/회</span></td>
           </tr>
           <tr>
@@ -2277,7 +2290,7 @@
           </div>
           <div class="roadmap-item">
             <div class="roadmap-dot" style="background:var(--secondary);"></div>
-            <div>AI 태그 자동 생성 (Edge Functions + OpenAI Vision)</div>
+            <div>AI 태그 자동 생성 (Edge Functions + Anthropic Claude)</div>
           </div>
           <div class="roadmap-item">
             <div class="roadmap-dot" style="background:var(--secondary);"></div>
@@ -2293,7 +2306,7 @@
           </div>
           <div class="roadmap-item">
             <div class="roadmap-dot" style="background:#DB2777;"></div>
-            <div>AI 음성 검색 (speech_to_text + GPT 자연어 파싱)</div>
+            <div>AI 음성 검색 (speech_to_text + Claude 자연어 파싱)</div>
           </div>
           <div class="roadmap-item">
             <div class="roadmap-dot" style="background:#854D0E;"></div>
@@ -2370,10 +2383,10 @@
           <td>supabase.com<br>GitHub으로 무료 가입</td>
         </tr>
         <tr>
-          <td><strong>OpenAI</strong></td>
-          <td>이미지 자동 태깅 (GPT-4o-mini Vision)<br>음성 쿼리 자연어 파싱</td>
-          <td><code>OPENAI_API_KEY</code></td>
-          <td><span class="badge-paid">선불 충전</span><br><small>이미지 ~$0.01/장<br>텍스트 ~$0.001/건</small></td>
+          <td><strong>Anthropic</strong></td>
+          <td>이미지 자동 태깅 + 이름 생성 (claude-haiku-4-5-20251001)<br>음성 쿼리 자연어 파싱</td>
+          <td><code>ANTHROPIC_API_KEY</code></td>
+          <td><span class="badge-paid">선불 충전</span><br><small>이미지+텍스트 ~$0.01/건</small></td>
           <td>신용카드 필수<br>초기 $20 충전 권장<br>월 ~$10~15 (소규모)</td>
         </tr>
         <tr>
@@ -2410,7 +2423,7 @@
     <h3 style="font-size:16px; font-weight:700; margin-bottom:16px;">월간 운영 비용 추정</h3>
     <table class="req-table">
       <thead>
-        <tr><th>단계</th><th>Supabase</th><th>OpenAI</th><th>RevenueCat</th><th>월 합계</th></tr>
+        <tr><th>단계</th><th>Supabase</th><th>Anthropic</th><th>RevenueCat</th><th>월 합계</th></tr>
       </thead>
       <tbody>
         <tr>
@@ -2438,7 +2451,7 @@
     </table>
 
     <p style="font-size:12px; color:var(--gray-500); margin-top:8px;">
-      * OpenAI 비용은 AI 음성/이미지 기능 사용 유저 수에 비례. AI음성 플랜 구독자가 많을수록 증가.<br>
+      * Anthropic 비용은 AI 음성/이미지 기능 사용 유저 수에 비례. AI음성 플랜 구독자가 많을수록 증가.<br>
       * Toss Payments, Apple, Google 수수료는 별도 (매출 기반 차감).
     </p>
   </div>
@@ -2465,8 +2478,8 @@ Supabase
   ├── Auth
   ├── Storage     (이미지 CDN)
   └── Edge Functions
-        ├── analyze-clothing      →  OpenAI API
-        ├── parse-voice-query     →  OpenAI API
+        ├── analyze-clothing      →  Anthropic Claude API
+        ├── parse-voice-query     →  Anthropic Claude API
         └── subscription-webhook ←  RevenueCat
 
 결제

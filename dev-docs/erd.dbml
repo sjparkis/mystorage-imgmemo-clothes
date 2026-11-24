@@ -42,6 +42,7 @@ Table clothes {
   storage_id uuid [ref: > storages.id, note: "ON DELETE SET NULL"]
   photo_url text
   name text
+  memo text [null]
   created_by uuid [ref: > users.id]
   created_at timestamptz [default: `now()`]
 }
@@ -49,7 +50,7 @@ Table clothes {
 Table tags {
   id uuid [pk, default: `gen_random_uuid()`]
   name text [unique, not null]
-  category text [not null, note: "color | type | season | brand | custom"]
+  category text [not null, note: "color | type | material | season | style | condition | brand | custom"]
 }
 
 Table clothes_tags {

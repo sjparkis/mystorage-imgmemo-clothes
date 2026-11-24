@@ -9,19 +9,19 @@
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
   :root {
-    --primary: #4F46E5;
-    --primary-light: #EEF2FF;
-    --primary-dark: #3730A3;
-    --secondary: #10B981;
+    --primary: #8B7355;
+    --primary-light: #F7F3EE;
+    --primary-dark: #6B5540;
+    --secondary: #9B8E7E;
     --accent: #F59E0B;
     --danger: #EF4444;
-    --text: #111827;
-    --subtext: #6B7280;
-    --bg: #F9FAFB;
-    --surface: #FFFFFF;
-    --border: #E5E7EB;
-    --radius-card: 12px;
-    --radius-sm: 8px;
+    --text: #2C2416;
+    --subtext: #9B8E7E;
+    --bg: #F7F3EE;
+    --surface: #FFFBF7;
+    --border: #E8E0D5;
+    --radius-card: 0px;
+    --radius-sm: 4px;
   }
 
   body {
@@ -33,7 +33,7 @@
 
   /* 커버 */
   .cover {
-    background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%);
+    background: linear-gradient(135deg, #2C2416 0%, #4A3728 100%);
     color: white;
     padding: 60px 48px;
     position: relative;
@@ -44,7 +44,7 @@
     position: absolute;
     top: -60px; right: -60px;
     width: 300px; height: 300px;
-    background: rgba(255,255,255,0.05);
+    background: rgba(255,255,255,0.03);
     border-radius: 50%;
   }
   .cover::after {
@@ -52,7 +52,7 @@
     position: absolute;
     bottom: -80px; right: 100px;
     width: 200px; height: 200px;
-    background: rgba(255,255,255,0.04);
+    background: rgba(255,255,255,0.02);
     border-radius: 50%;
   }
   .cover h1 { font-size: 42px; font-weight: 800; letter-spacing: -1px; position: relative; }
@@ -820,9 +820,9 @@
   <h1>MyStorage 앱 디자인 가이드</h1>
   <p>컬러, 타이포그래피, 컴포넌트, 플랫폼 가이드라인</p>
   <div class="meta">
-    <span>버전 1.0</span>
-    <span>Flutter 3 · Material You · Pretendard</span>
-    <span>2026-11-23</span>
+    <span>버전 2.0</span>
+    <span>Flutter 3 · Warm Atelier · Playfair Display · Inter</span>
+    <span>2026-11-24</span>
   </div>
 </header>
 
@@ -840,54 +840,54 @@
 <section class="section" id="colors">
   <div class="section-number">01 · Colors</div>
   <h2 class="section-title">색상 시스템</h2>
-  <p class="section-desc">Indigo를 주색으로 한 4가지 의미 색상(Semantic Color)과 중립적인 그레이 스케일을 사용합니다.</p>
+  <p class="section-desc">Warm Atelier 팔레트 — 따뜻한 크림과 브라운 계열로 구성된 편집 감성의 색상 시스템입니다.</p>
 
   <div class="subsection">
     <div class="subsection-title">의미 색상 (Semantic Colors)</div>
     <div class="color-grid">
       <div class="color-card">
-        <div class="color-swatch" style="background: #4F46E5;">
-          <span class="color-hex">#4F46E5</span>
+        <div class="color-swatch" style="background: #8B7355;">
+          <span class="color-hex">#8B7355</span>
         </div>
         <div class="color-info">
-          <div class="color-name">Primary · Indigo</div>
+          <div class="color-name">Primary · Warm Brown</div>
           <div class="color-usage">버튼, 아이콘 강조, NavigationBar 활성, FilledButton 배경</div>
         </div>
       </div>
       <div class="color-card">
-        <div class="color-swatch" style="background: #EEF2FF; border: 1px solid #E5E7EB;">
-          <span class="color-hex" style="background:rgba(79,70,229,0.15); color: #3730A3;">#EEF2FF</span>
+        <div class="color-swatch" style="background: #F7F3EE; border: 1px solid #E8E0D5;">
+          <span class="color-hex" style="background:rgba(139,115,85,0.15); color: #6B5540;">#F7F3EE</span>
         </div>
         <div class="color-info">
-          <div class="color-name">Primary Light</div>
-          <div class="color-usage">버튼 호버 배경, 태그 Chip 배경, 아이콘 컨테이너</div>
+          <div class="color-name">Background · Warm Cream</div>
+          <div class="color-usage">페이지 배경, Chip 배경, 아이콘 컨테이너</div>
         </div>
       </div>
       <div class="color-card">
-        <div class="color-swatch" style="background: #3730A3;">
-          <span class="color-hex">#3730A3</span>
+        <div class="color-swatch" style="background: #FFFBF7; border: 1px solid #E8E0D5;">
+          <span class="color-hex" style="background:rgba(139,115,85,0.1); color: #6B5540;">#FFFBF7</span>
         </div>
         <div class="color-info">
-          <div class="color-name">Primary Dark</div>
-          <div class="color-usage">버튼 Hover / Pressed 상태, 텍스트 강조</div>
+          <div class="color-name">Surface · Warm White</div>
+          <div class="color-usage">카드 배경, 시트, 입력 필드 배경</div>
         </div>
       </div>
       <div class="color-card">
-        <div class="color-swatch" style="background: #10B981;">
-          <span class="color-hex">#10B981</span>
+        <div class="color-swatch" style="background: #2C2416;">
+          <span class="color-hex">#2C2416</span>
         </div>
         <div class="color-info">
-          <div class="color-name">Secondary · Emerald</div>
-          <div class="color-usage">성공 상태, 완료 아이콘, 플랜 체크 아이콘</div>
+          <div class="color-name">Text · Warm Dark Brown</div>
+          <div class="color-usage">본문 텍스트, 헤딩, 강조 텍스트</div>
         </div>
       </div>
       <div class="color-card">
-        <div class="color-swatch" style="background: #F59E0B;">
-          <span class="color-hex">#F59E0B</span>
+        <div class="color-swatch" style="background: #9B8E7E;">
+          <span class="color-hex">#9B8E7E</span>
         </div>
         <div class="color-info">
-          <div class="color-name">Accent · Amber</div>
-          <div class="color-usage">경고, 할인 배지, 하이라이트 뱃지</div>
+          <div class="color-name">Secondary · Warm Grey</div>
+          <div class="color-usage">보조 텍스트, 힌트, 아이콘</div>
         </div>
       </div>
       <div class="color-card">
@@ -903,31 +903,31 @@
   </div>
 
   <div class="subsection">
-    <div class="subsection-title">그레이 스케일 (Neutral Colors)</div>
+    <div class="subsection-title">웜 뉴트럴 스케일 (Warm Neutral Scale)</div>
     <div class="gray-scale">
-      <div class="gray-step" style="background:#F9FAFB; color:#374151;">
-        <div style="text-align:center;"><div style="font-size:9px; font-weight:700;">50</div><div style="font-size:8px;">#F9FAFB</div></div>
+      <div class="gray-step" style="background:#FFFBF7; color:#2C2416;">
+        <div style="text-align:center;"><div style="font-size:9px; font-weight:700;">Surface</div><div style="font-size:8px;">#FFFBF7</div></div>
       </div>
-      <div class="gray-step" style="background:#F3F4F6; color:#374151;">
-        <div style="text-align:center;"><div style="font-size:9px; font-weight:700;">100</div><div style="font-size:8px;">#F3F4F6</div></div>
+      <div class="gray-step" style="background:#F7F3EE; color:#2C2416;">
+        <div style="text-align:center;"><div style="font-size:9px; font-weight:700;">BG</div><div style="font-size:8px;">#F7F3EE</div></div>
       </div>
-      <div class="gray-step" style="background:#E5E7EB; color:#374151;">
-        <div style="text-align:center;"><div style="font-size:9px; font-weight:700;">200</div><div style="font-size:8px;">#E5E7EB</div></div>
+      <div class="gray-step" style="background:#E8E0D5; color:#2C2416;">
+        <div style="text-align:center;"><div style="font-size:9px; font-weight:700;">Border</div><div style="font-size:8px;">#E8E0D5</div></div>
       </div>
-      <div class="gray-step" style="background:#D1D5DB; color:#374151;">
-        <div style="text-align:center;"><div style="font-size:9px; font-weight:700;">300</div><div style="font-size:8px;">#D1D5DB</div></div>
+      <div class="gray-step" style="background:#C8BAA8; color:#2C2416;">
+        <div style="text-align:center;"><div style="font-size:9px; font-weight:700;">Muted</div><div style="font-size:8px;">#C8BAA8</div></div>
       </div>
-      <div class="gray-step" style="background:#9CA3AF; color:white;">
-        <div style="text-align:center;"><div style="font-size:9px; font-weight:700;">400</div><div style="font-size:8px;">#9CA3AF</div></div>
+      <div class="gray-step" style="background:#9B8E7E; color:white;">
+        <div style="text-align:center;"><div style="font-size:9px; font-weight:700;">Secondary</div><div style="font-size:8px;">#9B8E7E</div></div>
       </div>
-      <div class="gray-step" style="background:#6B7280; color:white;">
-        <div style="text-align:center;"><div style="font-size:9px; font-weight:700;">500</div><div style="font-size:8px;">#6B7280</div></div>
+      <div class="gray-step" style="background:#8B7355; color:white;">
+        <div style="text-align:center;"><div style="font-size:9px; font-weight:700;">Primary</div><div style="font-size:8px;">#8B7355</div></div>
       </div>
-      <div class="gray-step" style="background:#374151; color:white;">
-        <div style="text-align:center;"><div style="font-size:9px; font-weight:700;">700</div><div style="font-size:8px;">#374151</div></div>
+      <div class="gray-step" style="background:#4A3728; color:white;">
+        <div style="text-align:center;"><div style="font-size:9px; font-weight:700;">Dark</div><div style="font-size:8px;">#4A3728</div></div>
       </div>
-      <div class="gray-step" style="background:#111827; color:white;">
-        <div style="text-align:center;"><div style="font-size:9px; font-weight:700;">900</div><div style="font-size:8px;">#111827</div></div>
+      <div class="gray-step" style="background:#2C2416; color:white;">
+        <div style="text-align:center;"><div style="font-size:9px; font-weight:700;">Text</div><div style="font-size:8px;">#2C2416</div></div>
       </div>
     </div>
   </div>
@@ -943,16 +943,16 @@
         </tr>
       </thead>
       <tbody>
-        <tr><td><code>--primary</code></td><td><span class="token-swatch" style="background:#4F46E5;"></span><span class="token-hex">#4F46E5</span></td><td>주요 액션 버튼, 선택 상태</td></tr>
-        <tr><td><code>--primary-light</code></td><td><span class="token-swatch" style="background:#EEF2FF; border:1px solid #E5E7EB;"></span><span class="token-hex">#EEF2FF</span></td><td>Chip 배경, 아이콘 컨테이너</td></tr>
-        <tr><td><code>--secondary</code></td><td><span class="token-swatch" style="background:#10B981;"></span><span class="token-hex">#10B981</span></td><td>성공, 완료</td></tr>
+        <tr><td><code>--primary</code></td><td><span class="token-swatch" style="background:#8B7355;"></span><span class="token-hex">#8B7355</span></td><td>주요 액션 버튼, 선택 상태</td></tr>
+        <tr><td><code>--primary-light</code></td><td><span class="token-swatch" style="background:#F7F3EE; border:1px solid #E8E0D5;"></span><span class="token-hex">#F7F3EE</span></td><td>Chip 배경, 아이콘 컨테이너, 페이지 배경</td></tr>
+        <tr><td><code>--secondary</code></td><td><span class="token-swatch" style="background:#9B8E7E;"></span><span class="token-hex">#9B8E7E</span></td><td>보조 텍스트, 힌트</td></tr>
         <tr><td><code>--accent</code></td><td><span class="token-swatch" style="background:#F59E0B;"></span><span class="token-hex">#F59E0B</span></td><td>할인 배지, 경고</td></tr>
         <tr><td><code>--danger</code></td><td><span class="token-swatch" style="background:#EF4444;"></span><span class="token-hex">#EF4444</span></td><td>오류, 삭제</td></tr>
-        <tr><td><code>--text</code></td><td><span class="token-swatch" style="background:#111827;"></span><span class="token-hex">#111827</span></td><td>본문 텍스트</td></tr>
-        <tr><td><code>--subtext</code></td><td><span class="token-swatch" style="background:#6B7280;"></span><span class="token-hex">#6B7280</span></td><td>보조 텍스트, 힌트</td></tr>
-        <tr><td><code>--bg</code></td><td><span class="token-swatch" style="background:#F9FAFB; border:1px solid #E5E7EB;"></span><span class="token-hex">#F9FAFB</span></td><td>페이지 배경</td></tr>
-        <tr><td><code>--surface</code></td><td><span class="token-swatch" style="background:#FFFFFF; border:1px solid #E5E7EB;"></span><span class="token-hex">#FFFFFF</span></td><td>카드, 시트 배경</td></tr>
-        <tr><td><code>--border</code></td><td><span class="token-swatch" style="background:#E5E7EB;"></span><span class="token-hex">#E5E7EB</span></td><td>구분선, 테두리</td></tr>
+        <tr><td><code>--text</code></td><td><span class="token-swatch" style="background:#2C2416;"></span><span class="token-hex">#2C2416</span></td><td>본문 텍스트</td></tr>
+        <tr><td><code>--subtext</code></td><td><span class="token-swatch" style="background:#9B8E7E;"></span><span class="token-hex">#9B8E7E</span></td><td>보조 텍스트, 힌트</td></tr>
+        <tr><td><code>--bg</code></td><td><span class="token-swatch" style="background:#F7F3EE; border:1px solid #E8E0D5;"></span><span class="token-hex">#F7F3EE</span></td><td>페이지 배경</td></tr>
+        <tr><td><code>--surface</code></td><td><span class="token-swatch" style="background:#FFFBF7; border:1px solid #E8E0D5;"></span><span class="token-hex">#FFFBF7</span></td><td>카드, 시트 배경</td></tr>
+        <tr><td><code>--border</code></td><td><span class="token-swatch" style="background:#E8E0D5;"></span><span class="token-hex">#E8E0D5</span></td><td>구분선, 테두리</td></tr>
       </tbody>
     </table>
   </div>
@@ -962,11 +962,18 @@
 <section class="section" id="typography">
   <div class="section-number">02 · Typography</div>
   <h2 class="section-title">타이포그래피</h2>
-  <p class="section-desc">시스템 폰트 스택을 우선 사용합니다. iOS는 San Francisco(-apple-system), Android는 Pretendard / Noto Sans KR로 렌더링됩니다.</p>
+  <p class="section-desc">google_fonts 패키지를 통해 Playfair Display (헤딩/세리프), Cormorant (레이블), Inter (본문) 세 가지 폰트를 사용합니다.</p>
 
   <div class="subsection">
-    <div class="subsection-title">폰트 스택</div>
-    <div class="code-block"><span class="kw">fontFamily</span>: <span class="str">'-apple-system, Pretendard, Noto Sans KR, sans-serif'</span></div>
+    <div class="subsection-title">폰트 패밀리</div>
+    <div class="code-block">
+      <div><span class="cm">// 헤딩 / 편집 세리프 — Playfair Display</span></div>
+      <div><span class="kw">headingFont</span>: <span class="str">GoogleFonts.playfairDisplay()</span></div>
+      <div style="margin-top:8px;"><span class="cm">// 레이블 / 태그 — Cormorant</span></div>
+      <div><span class="kw">labelFont</span>: <span class="str">GoogleFonts.cormorant()</span></div>
+      <div style="margin-top:8px;"><span class="cm">// 본문 / UI 텍스트 — Inter</span></div>
+      <div><span class="kw">bodyFont</span>: <span class="str">GoogleFonts.inter()</span></div>
+    </div>
   </div>
 
   <div class="subsection">
@@ -1350,7 +1357,7 @@
           <span class="chip chip-primary">롱</span>
           <span class="chip chip-primary">캐주얼</span>
           <span class="chip chip-primary">다운</span>
-          <span style="font-size: 12px; color: var(--subtext); align-self: center; margin-left: 4px;">← OpenAI Vision 분석</span>
+          <span style="font-size: 12px; color: var(--subtext); align-self: center; margin-left: 4px;">← Claude AI 분석 (7-10개 태그)</span>
         </div>
       </div>
     </div>
@@ -1723,8 +1730,8 @@
           <div style="font-size: 12px; color: var(--subtext); line-height: 1.6;">보관함 사진 업로드<br>옷 사진 업로드<br>공개 URL 반환</div>
         </div>
         <div style="border: 1px solid var(--border); border-radius: 8px; padding: 14px;">
-          <div style="font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 8px;">AI 태그 (OpenAI)</div>
-          <div style="font-size: 12px; color: var(--subtext); line-height: 1.6;">옷 사진 → Vision API<br>자동 태그 생성<br>ai_tag_service.dart</div>
+          <div style="font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 8px;">AI 태그 (Claude)</div>
+          <div style="font-size: 12px; color: var(--subtext); line-height: 1.6;">옷 사진 → Anthropic Claude<br>claude-haiku-4-5-20251001<br>ai_tag_service.dart</div>
         </div>
         <div style="border: 1px solid var(--border); border-radius: 8px; padding: 14px;">
           <div style="font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 8px;">RevenueCat</div>
@@ -1742,12 +1749,23 @@
     <div class="subsection-title">Theme 설정</div>
     <div class="code-block">
 <span class="kw">class</span> AppTheme {
+  <span class="kw">static const</span> Color primary = Color(<span class="str">0xFF8B7355</span>);    <span class="cm">// Warm Brown</span>
+  <span class="kw">static const</span> Color bg      = Color(<span class="str">0xFFF7F3EE</span>);    <span class="cm">// Warm Cream</span>
+  <span class="kw">static const</span> Color surface = Color(<span class="str">0xFFFFFBF7</span>);    <span class="cm">// Warm White</span>
+  <span class="kw">static const</span> Color textMain = Color(<span class="str">0xFF2C2416</span>);   <span class="cm">// Warm Dark Brown</span>
+  <span class="kw">static const</span> Color secondary = Color(<span class="str">0xFF9B8E7E</span>);  <span class="cm">// Warm Grey</span>
+  <span class="kw">static const</span> Color border  = Color(<span class="str">0xFFE8E0D5</span>);    <span class="cm">// Border</span>
+
   <span class="kw">static</span> ThemeData <span class="kw">get</span> light => ThemeData(
     colorScheme: ColorScheme.fromSeed(
-      seedColor: <span class="kw">const</span> Color(<span class="str">0xFF4F46E5</span>),  <span class="cm">// Primary Indigo</span>
+      seedColor: primary,
+      background: bg,
+      surface: surface,
     ),
     useMaterial3: <span class="kw">true</span>,
+    textTheme: GoogleFonts.interTextTheme(),
     appBarTheme: <span class="kw">const</span> AppBarTheme(
+      backgroundColor: bg,
       centerTitle: <span class="kw">false</span>,
       elevation: <span class="str">0</span>,
     ),
@@ -1759,8 +1777,8 @@
 </section>
 
 <footer>
-  <div><strong>MyStorage</strong> 앱 디자인 가이드 v1.0</div>
-  <div>Flutter 3 · Material You · Supabase · RevenueCat</div>
+  <div><strong>MyStorage</strong> 앱 디자인 가이드 v2.0</div>
+  <div>Flutter 3 · Warm Atelier · Supabase · Anthropic Claude · RevenueCat</div>
 </footer>
 
 </body>

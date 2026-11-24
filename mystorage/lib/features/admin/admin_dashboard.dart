@@ -26,7 +26,10 @@ class _AdminDashboardState extends State<AdminDashboard> {
           if (snap.hasError) {
             return Center(child: Text('오류: ${snap.error}'));
           }
-          if (!snap.hasData) return const Center(child: CircularProgressIndicator());
+          if (snap.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (!snap.hasData) return const Center(child: Text('데이터 없음'));
           final s = snap.data!;
           String v(String key) => (s[key] ?? 0).toString();
           return GridView.count(

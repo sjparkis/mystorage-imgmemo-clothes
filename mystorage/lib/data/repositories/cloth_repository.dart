@@ -1,6 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/cloth.dart';
 import '../models/tag.dart';
+import 'storage_repository.dart';
 
 class ClothRepository {
   final SupabaseClient _db;
@@ -11,46 +12,30 @@ class ClothRepository {
   Future<List<Cloth>> fetchByStorage(String storageId) async {
     final rows = await _db
         .from('clothes')
-        .select('*, clothes_tags(ai_generated, tags(id, name, category))')
+        .select('*, storages(name), clothes_tags(ai_generated, tags(id, name, category))')
         .eq('storage_id', storageId)
         .order('created_at');
     return rows.map((r) => Cloth.fromMap(r)).toList();
   }
 
-  Future<String> getOrCreateOrgId() async {
-    final userId = _db.auth.currentUser!.id;
-    final existing = await _db
-        .from('organization_members')
-        .select('org_id')
-        .eq('user_id', userId)
-        .maybeSingle();
-    if (existing != null) return existing['org_id'] as String;
-
-    final org = await _db
-        .from('organizations')
-        .insert({'name': '내 보관함', 'owner_id': userId})
-        .select()
-        .single();
-
-    await _db.from('organization_members').insert({
-      'org_id': org['id'],
-      'user_id': userId,
-      'role': 'owner',
-    });
-    return org['id'] as String;
-  }
+  Future<String> getOrCreateOrgId() => StorageRepository().getOrCreateOrgId();
 
   Future<List<Cloth>> search(String query) async {
     final orgId = await getOrCreateOrgId();
-    var q = _db
+    final rows = await _db
         .from('clothes')
-        .select('*, clothes_tags(ai_generated, tags(id, name, category))')
-        .eq('org_id', orgId);
-    if (query.isNotEmpty) {
-      q = q.ilike('name', '%$query%');
-    }
-    final rows = await q.order('created_at');
-    return rows.map((r) => Cloth.fromMap(r)).toList();
+        .select('*, storages(name), clothes_tags(ai_generated, tags(id, name, category))')
+        .eq('org_id', orgId)
+        .order('created_at');
+    final all = rows.map((r) => Cloth.fromMap(r)).toList();
+    if (query.isEmpty) return all;
+    final q = query.toLowerCase();
+    return all.where((c) {
+      final nameMatch = c.name?.toLowerCase().contains(q) ?? false;
+      final tagMatch = c.tags.any((t) => t.name.toLowerCase().contains(q));
+      final memoMatch = c.memo?.toLowerCase().contains(q) ?? false;
+      return nameMatch || tagMatch || memoMatch;
+    }).toList();
   }
 
   Future<Cloth> create({
@@ -58,6 +43,7 @@ class ClothRepository {
     required String orgId,
     String? photoUrl,
     String? name,
+    String? memo,
     List<Tag> tags = const [],
   }) async {
     final cloth = await _db
@@ -67,6 +53,7 @@ class ClothRepository {
           'org_id': orgId,
           'photo_url': photoUrl,
           'name': name,
+          'memo': memo,
           'created_by': _db.auth.currentUser!.id,
         })
         .select()
@@ -90,10 +77,33 @@ class ClothRepository {
 
     final result = await _db
         .from('clothes')
-        .select('*, clothes_tags(ai_generated, tags(id, name, category))')
+        .select('*, storages(name), clothes_tags(ai_generated, tags(id, name, category))')
         .eq('id', cloth['id'] as String)
         .single();
     return Cloth.fromMap(result);
+  }
+
+  Future<void> updateTags(String clothId, List<Tag> tags) async {
+    await _db.from('clothes_tags').delete().eq('cloth_id', clothId);
+    for (final tag in tags) {
+      final tagRow = await _db
+          .from('tags')
+          .upsert({'name': tag.name, 'category': tag.category}, onConflict: 'name')
+          .select()
+          .single();
+      await _db.from('clothes_tags').insert({
+        'cloth_id': clothId,
+        'tag_id': tagRow['id'],
+        'ai_generated': tag.aiGenerated,
+      });
+    }
+  }
+
+  Future<void> updateNameAndTags(String clothId, {String? name, List<Tag>? tags}) async {
+    if (name != null) {
+      await _db.from('clothes').update({'name': name}).eq('id', clothId);
+    }
+    if (tags != null) await updateTags(clothId, tags);
   }
 
   Future<void> delete(String id) async {
