@@ -139,7 +139,7 @@ class _ClothDetailScreenState extends State<ClothDetailScreen> {
                             color: const Color(0xFF8B7355),
                             fontWeight: FontWeight.w600,
                             letterSpacing: 0.5,
-                          ),
+                          ).copyWith(fontFamilyFallback: const ['ChosunSm']),
                         ),
                       ],
                     ),
@@ -152,7 +152,7 @@ class _ClothDetailScreenState extends State<ClothDetailScreen> {
                       fontWeight: FontWeight.w700,
                       color: const Color(0xFF2C2416),
                       height: 1.2,
-                    ),
+                    ).copyWith(fontFamilyFallback: const ['ChosunSm']),
                   ),
                   if (cloth.createdAt != null) ...[
                     const SizedBox(height: 8),
@@ -162,7 +162,7 @@ class _ClothDetailScreenState extends State<ClothDetailScreen> {
                         fontSize: 11,
                         color: const Color(0xFF9B8E7E),
                         letterSpacing: 0.5,
-                      ),
+                      ).copyWith(fontFamilyFallback: const ['ChosunSm']),
                     ),
                   ],
                   if (cloth.tags.isNotEmpty) ...[
@@ -176,7 +176,7 @@ class _ClothDetailScreenState extends State<ClothDetailScreen> {
                         fontWeight: FontWeight.w700,
                         letterSpacing: 2,
                         color: const Color(0xFF9B8E7E),
-                      ),
+                      ).copyWith(fontFamilyFallback: const ['ChosunSm']),
                     ),
                     const SizedBox(height: 14),
                     ..._buildTagGroups(cloth.tags),
@@ -192,7 +192,7 @@ class _ClothDetailScreenState extends State<ClothDetailScreen> {
                         fontWeight: FontWeight.w700,
                         letterSpacing: 2,
                         color: const Color(0xFF9B8E7E),
-                      ),
+                      ).copyWith(fontFamilyFallback: const ['ChosunSm']),
                     ),
                     const SizedBox(height: 10),
                     Text(
@@ -201,7 +201,7 @@ class _ClothDetailScreenState extends State<ClothDetailScreen> {
                         fontSize: 14,
                         color: const Color(0xFF2C2416),
                         height: 1.6,
-                      ),
+                      ).copyWith(fontFamilyFallback: const ['ChosunSm']),
                     ),
                   ],
                   const SizedBox(height: 40),
@@ -253,7 +253,7 @@ class _ClothDetailScreenState extends State<ClothDetailScreen> {
                     fontSize: 11,
                     color: const Color(0xFF9B8E7E),
                     fontWeight: FontWeight.w500,
-                  ),
+                  ).copyWith(fontFamilyFallback: const ['ChosunSm']),
                 ),
               ),
               Expanded(
@@ -294,7 +294,7 @@ class _TagChip extends StatelessWidget {
           fontSize: 11,
           color: const Color(0xFF2C2416),
           letterSpacing: 0.5,
-        ),
+        ).copyWith(fontFamilyFallback: const ['ChosunSm']),
       ),
     );
   }

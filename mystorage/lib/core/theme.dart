@@ -13,27 +13,27 @@ class AppTheme {
 
   static TextTheme get _textTheme => TextTheme(
         displayLarge: GoogleFonts.playfairDisplay(
-          color: _darkBrown, fontWeight: FontWeight.w700, letterSpacing: -1),
+          color: _darkBrown, fontWeight: FontWeight.w700, letterSpacing: -1).copyWith(fontFamilyFallback: const ['ChosunSm']),
         displayMedium: GoogleFonts.playfairDisplay(
-          color: _darkBrown, fontWeight: FontWeight.w700),
+          color: _darkBrown, fontWeight: FontWeight.w700).copyWith(fontFamilyFallback: const ['ChosunSm']),
         headlineLarge: GoogleFonts.playfairDisplay(
-          color: _darkBrown, fontSize: 32, fontWeight: FontWeight.w700, height: 1.1),
+          color: _darkBrown, fontSize: 32, fontWeight: FontWeight.w700, height: 1.1).copyWith(fontFamilyFallback: const ['ChosunSm']),
         headlineMedium: GoogleFonts.playfairDisplay(
-          color: _darkBrown, fontSize: 24, fontWeight: FontWeight.w700, height: 1.2),
+          color: _darkBrown, fontSize: 24, fontWeight: FontWeight.w700, height: 1.2).copyWith(fontFamilyFallback: const ['ChosunSm']),
         headlineSmall: GoogleFonts.playfairDisplay(
-          color: _darkBrown, fontSize: 18, fontWeight: FontWeight.w600),
+          color: _darkBrown, fontSize: 18, fontWeight: FontWeight.w600).copyWith(fontFamilyFallback: const ['ChosunSm']),
         titleLarge: GoogleFonts.cormorant(
-          color: _darkBrown, fontSize: 17, fontWeight: FontWeight.w600, letterSpacing: 0.3),
+          color: _darkBrown, fontSize: 17, fontWeight: FontWeight.w600, letterSpacing: 0.3).copyWith(fontFamilyFallback: const ['ChosunSm']),
         titleMedium: GoogleFonts.inter(
-          color: _darkBrown, fontSize: 14, fontWeight: FontWeight.w600, letterSpacing: 0.2),
+          color: _darkBrown, fontSize: 14, fontWeight: FontWeight.w600, letterSpacing: 0.2).copyWith(fontFamilyFallback: const ['ChosunSm']),
         titleSmall: GoogleFonts.inter(
-          color: _darkBrown, fontSize: 13, fontWeight: FontWeight.w500),
-        bodyLarge: GoogleFonts.inter(color: _darkBrown, fontSize: 14, height: 1.6),
-        bodyMedium: GoogleFonts.inter(color: _warmGrey, fontSize: 13, height: 1.5),
+          color: _darkBrown, fontSize: 13, fontWeight: FontWeight.w500).copyWith(fontFamilyFallback: const ['ChosunSm']),
+        bodyLarge: GoogleFonts.inter(color: _darkBrown, fontSize: 14, height: 1.6).copyWith(fontFamilyFallback: const ['ChosunSm']),
+        bodyMedium: GoogleFonts.inter(color: _warmGrey, fontSize: 13, height: 1.5).copyWith(fontFamilyFallback: const ['ChosunSm']),
         labelLarge: GoogleFonts.inter(
-          color: _darkBrown, fontSize: 12, fontWeight: FontWeight.w600, letterSpacing: 1.5),
+          color: _darkBrown, fontSize: 12, fontWeight: FontWeight.w600, letterSpacing: 1.5).copyWith(fontFamilyFallback: const ['ChosunSm']),
         labelSmall: GoogleFonts.inter(
-          color: _warmGrey, fontSize: 11, letterSpacing: 1),
+          color: _warmGrey, fontSize: 11, letterSpacing: 1).copyWith(fontFamilyFallback: const ['ChosunSm']),
       );
 
   static ThemeData get light => ThemeData(
@@ -59,7 +59,7 @@ class AppTheme {
             fontSize: 16,
             fontWeight: FontWeight.w600,
             letterSpacing: 2,
-          ),
+          ).copyWith(fontFamilyFallback: const ['ChosunSm']),
           systemOverlayStyle: const SystemUiOverlayStyle(
             statusBarBrightness: Brightness.light,
             statusBarIconBrightness: Brightness.dark,
@@ -76,9 +76,9 @@ class AppTheme {
           labelTextStyle: WidgetStateProperty.resolveWith((states) {
             if (states.contains(WidgetState.selected)) {
               return GoogleFonts.inter(
-                  color: _darkBrown, fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 0.5);
+                  color: _darkBrown, fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 0.5).copyWith(fontFamilyFallback: const ['ChosunSm']);
             }
-            return GoogleFonts.inter(color: _warmGrey, fontSize: 10, letterSpacing: 0.5);
+            return GoogleFonts.inter(color: _warmGrey, fontSize: 10, letterSpacing: 0.5).copyWith(fontFamilyFallback: const ['ChosunSm']);
           }),
           iconTheme: WidgetStateProperty.resolveWith((states) {
             if (states.contains(WidgetState.selected)) {
@@ -110,8 +110,8 @@ class AppTheme {
             borderRadius: BorderRadius.circular(2),
             borderSide: const BorderSide(color: _brown, width: 1.5),
           ),
-          labelStyle: GoogleFonts.inter(color: _warmGrey, fontSize: 13, letterSpacing: 0.3),
-          hintStyle: GoogleFonts.inter(color: _warmGrey, fontSize: 13),
+          labelStyle: GoogleFonts.inter(color: _warmGrey, fontSize: 13, letterSpacing: 0.3).copyWith(fontFamilyFallback: const ['ChosunSm']),
+          hintStyle: GoogleFonts.inter(color: _warmGrey, fontSize: 13).copyWith(fontFamilyFallback: const ['ChosunSm']),
           contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         ),
         filledButtonTheme: FilledButtonThemeData(
@@ -121,7 +121,7 @@ class AppTheme {
             minimumSize: const Size.fromHeight(52),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(2)),
             textStyle: GoogleFonts.inter(
-                fontSize: 12, fontWeight: FontWeight.w700, letterSpacing: 2),
+                fontSize: 12, fontWeight: FontWeight.w700, letterSpacing: 2).copyWith(fontFamilyFallback: const ['ChosunSm']),
           ),
         ),
         outlinedButtonTheme: OutlinedButtonThemeData(
@@ -130,13 +130,13 @@ class AppTheme {
             side: const BorderSide(color: _darkBrown),
             minimumSize: const Size.fromHeight(52),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(2)),
-            textStyle: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w700, letterSpacing: 2),
+            textStyle: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w700, letterSpacing: 2).copyWith(fontFamilyFallback: const ['ChosunSm']),
           ),
         ),
         textButtonTheme: TextButtonThemeData(
           style: TextButton.styleFrom(
             foregroundColor: _warmGrey,
-            textStyle: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w500, letterSpacing: 0.3),
+            textStyle: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w500, letterSpacing: 0.3).copyWith(fontFamilyFallback: const ['ChosunSm']),
           ),
         ),
         floatingActionButtonTheme: const FloatingActionButtonThemeData(
@@ -148,7 +148,7 @@ class AppTheme {
         dividerTheme: const DividerThemeData(color: _border, thickness: 1),
         snackBarTheme: SnackBarThemeData(
           backgroundColor: _darkBrown,
-          contentTextStyle: GoogleFonts.inter(color: _warmWhite, fontSize: 13),
+          contentTextStyle: GoogleFonts.inter(color: _warmWhite, fontSize: 13).copyWith(fontFamilyFallback: const ['ChosunSm']),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(2)),
           behavior: SnackBarBehavior.floating,
         ),
@@ -159,7 +159,7 @@ class AppTheme {
           selectedColor: _brown,
           side: const BorderSide(color: _border),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(2)),
-          labelStyle: GoogleFonts.inter(fontSize: 12, color: _darkBrown),
+          labelStyle: GoogleFonts.inter(fontSize: 12, color: _darkBrown).copyWith(fontFamilyFallback: const ['ChosunSm']),
         ),
       );
 }

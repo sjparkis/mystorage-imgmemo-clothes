@@ -8,6 +8,7 @@ class Cloth {
   final String? photoUrl;
   final String? name;
   final String? memo;
+  final bool? isPresent;
   final DateTime? createdAt;
   final List<Tag> tags;
 
@@ -19,6 +20,7 @@ class Cloth {
     this.photoUrl,
     this.name,
     this.memo,
+    this.isPresent,
     this.createdAt,
     this.tags = const [],
   });
@@ -31,6 +33,7 @@ class Cloth {
         photoUrl: map['photo_url'] as String?,
         name: map['name'] as String?,
         memo: map['memo'] as String?,
+        isPresent: map['is_present'] as bool?,
         createdAt: map['created_at'] != null
             ? DateTime.tryParse(map['created_at'] as String)
             : null,

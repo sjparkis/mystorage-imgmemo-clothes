@@ -12,6 +12,10 @@ import '../features/qr/qr_sticker_screen.dart';
 import '../features/search/search_screen.dart';
 import '../features/subscription/pricing_screen.dart';
 import '../features/admin/admin_dashboard.dart';
+import '../features/profile/profile_screen.dart';
+import '../features/organize/organize_screen.dart';
+import '../features/family/family_screen.dart';
+import '../features/location/locations_screen.dart';
 import '../data/models/storage_location.dart';
 
 final appRouter = GoRouter(
@@ -63,6 +67,22 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/admin',
       builder: (_, __) => const AdminDashboard(),
+    ),
+    GoRoute(
+      path: '/profile',
+      builder: (_, __) => const ProfileScreen(),
+    ),
+    GoRoute(
+      path: '/organize',
+      builder: (_, __) => const OrganizeScreen(),
+    ),
+    GoRoute(
+      path: '/family',
+      builder: (_, __) => const FamilyScreen(),
+    ),
+    GoRoute(
+      path: '/locations',
+      builder: (_, __) => const LocationsScreen(),
     ),
   ],
 );

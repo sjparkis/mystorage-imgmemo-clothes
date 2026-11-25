@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../data/repositories/auth_repository.dart';
 import 'auth_bloc.dart';
 
@@ -27,6 +28,45 @@ class _LoginViewState extends State<_LoginView> {
   final _emailCtrl = TextEditingController();
   final _pwCtrl = TextEditingController();
   bool _showForm = false;
+  bool _saveId = false;
+  bool _savePw = false;
+
+  static const _keyEmail = 'saved_email';
+  static const _keyPw = 'saved_pw';
+  static const _keySaveId = 'save_id';
+  static const _keySavePw = 'save_pw';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSaved();
+  }
+
+  Future<void> _loadSaved() async {
+    final prefs = await SharedPreferences.getInstance();
+    final saveId = prefs.getBool(_keySaveId) ?? false;
+    final savePw = prefs.getBool(_keySavePw) ?? false;
+    if (saveId) _emailCtrl.text = prefs.getString(_keyEmail) ?? '';
+    if (savePw) _pwCtrl.text = prefs.getString(_keyPw) ?? '';
+    if (mounted) setState(() { _saveId = saveId; _savePw = savePw; });
+    if (_emailCtrl.text.isNotEmpty) setState(() => _showForm = true);
+  }
+
+  Future<void> _persistCredentials() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_keySaveId, _saveId);
+    await prefs.setBool(_keySavePw, _savePw);
+    if (_saveId) {
+      await prefs.setString(_keyEmail, _emailCtrl.text);
+    } else {
+      await prefs.remove(_keyEmail);
+    }
+    if (_savePw) {
+      await prefs.setString(_keyPw, _pwCtrl.text);
+    } else {
+      await prefs.remove(_keyPw);
+    }
+  }
 
   @override
   void dispose() {
@@ -41,7 +81,10 @@ class _LoginViewState extends State<_LoginView> {
       backgroundColor: const Color(0xFF1C1510),
       body: BlocListener<AuthBloc, AuthState>(
         listener: (ctx, state) {
-          if (state is AuthSuccess) ctx.go('/');
+          if (state is AuthSuccess) {
+            _persistCredentials();
+            ctx.go('/');
+          }
           if (state is AuthFailure) {
             ScaffoldMessenger.of(ctx).showSnackBar(
               SnackBar(content: Text(state.message)),
@@ -127,7 +170,7 @@ class _LoginViewState extends State<_LoginView> {
                     color: Colors.white,
                     height: 0.9,
                     letterSpacing: -2,
-                  ),
+                  ).copyWith(fontFamilyFallback: const ['ChosunSm']),
                 ),
                 Text(
                   'STORAGE',
@@ -137,7 +180,7 @@ class _LoginViewState extends State<_LoginView> {
                     color: const Color(0xFF8B7355),
                     height: 0.9,
                     letterSpacing: -2,
-                  ),
+                  ).copyWith(fontFamilyFallback: const ['ChosunSm']),
                 ),
                 const SizedBox(height: 24),
                 Container(
@@ -153,7 +196,7 @@ class _LoginViewState extends State<_LoginView> {
                     color: const Color(0xFF9B8E7E),
                     letterSpacing: 2,
                     fontWeight: FontWeight.w400,
-                  ),
+                  ).copyWith(fontFamilyFallback: const ['ChosunSm']),
                 ),
                 const Spacer(flex: 3),
                 GestureDetector(
@@ -170,7 +213,7 @@ class _LoginViewState extends State<_LoginView> {
                         fontWeight: FontWeight.w700,
                         letterSpacing: 3,
                         color: const Color(0xFFFFFBF7),
-                      ),
+                      ).copyWith(fontFamilyFallback: const ['ChosunSm']),
                     ),
                   ),
                 ),
@@ -179,12 +222,12 @@ class _LoginViewState extends State<_LoginView> {
                   child: GestureDetector(
                     onTap: () => context.push('/signup'),
                     child: Text(
-                      '처음이신가요?  회원가입',
+                      'New here?  JOIN',
                       style: GoogleFonts.inter(
                         fontSize: 11,
                         color: const Color(0xFF6B5E50),
                         letterSpacing: 1,
-                      ),
+                      ).copyWith(fontFamilyFallback: const ['ChosunSm']),
                     ),
                   ),
                 ),
@@ -219,7 +262,7 @@ class _LoginViewState extends State<_LoginView> {
                       fontWeight: FontWeight.w600,
                       letterSpacing: 4,
                       color: const Color(0xFF8B7355),
-                    ),
+                    ).copyWith(fontFamilyFallback: const ['ChosunSm']),
                   ),
                   const SizedBox(height: 12),
                   Text(
@@ -230,7 +273,7 @@ class _LoginViewState extends State<_LoginView> {
                       color: Colors.white,
                       height: 1.1,
                       letterSpacing: -1,
-                    ),
+                    ).copyWith(fontFamilyFallback: const ['ChosunSm']),
                   ),
                 ],
               ),
@@ -249,17 +292,39 @@ class _LoginViewState extends State<_LoginView> {
                   TextField(
                     controller: _emailCtrl,
                     keyboardType: TextInputType.emailAddress,
-                    style: GoogleFonts.inter(fontSize: 14, color: const Color(0xFF2C2416)),
+                    style: GoogleFonts.inter(fontSize: 14, color: const Color(0xFF2C2416)).copyWith(fontFamilyFallback: const ['ChosunSm']),
                     decoration: const InputDecoration(labelText: '이메일'),
                   ),
                   const SizedBox(height: 12),
                   TextField(
                     controller: _pwCtrl,
                     obscureText: true,
-                    style: GoogleFonts.inter(fontSize: 14, color: const Color(0xFF2C2416)),
+                    style: GoogleFonts.inter(fontSize: 14, color: const Color(0xFF2C2416)).copyWith(fontFamilyFallback: const ['ChosunSm']),
                     decoration: const InputDecoration(labelText: '비밀번호'),
                   ),
-                  const SizedBox(height: 28),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      _CheckOption(
+                        label: '아이디 저장',
+                        value: _saveId,
+                        onChanged: (v) => setState(() {
+                          _saveId = v;
+                          if (!v) _savePw = false;
+                        }),
+                      ),
+                      const SizedBox(width: 20),
+                      _CheckOption(
+                        label: '비밀번호 저장',
+                        value: _savePw,
+                        onChanged: (v) => setState(() {
+                          _savePw = v;
+                          if (v) _saveId = true;
+                        }),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
                   BlocBuilder<AuthBloc, AuthState>(
                     builder: (ctx, state) => SizedBox(
                       width: double.infinity,
@@ -290,7 +355,7 @@ class _LoginViewState extends State<_LoginView> {
                                   fontSize: 11,
                                   fontWeight: FontWeight.w700,
                                   letterSpacing: 3,
-                                ),
+                                ).copyWith(fontFamilyFallback: const ['ChosunSm']),
                               ),
                       ),
                     ),
@@ -307,7 +372,7 @@ class _LoginViewState extends State<_LoginView> {
                             fontSize: 10,
                             color: const Color(0xFF9B8E7E),
                             letterSpacing: 2,
-                          ),
+                          ).copyWith(fontFamilyFallback: const ['ChosunSm']),
                         ),
                       ),
                       const Expanded(child: Divider(color: Color(0xFFE8E0D5))),
@@ -326,12 +391,12 @@ class _LoginViewState extends State<_LoginView> {
                             borderRadius: BorderRadius.zero),
                       ),
                       child: Text(
-                        '회원가입',
+                        'JOIN',
                         style: GoogleFonts.inter(
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
                           letterSpacing: 3,
-                        ),
+                        ).copyWith(fontFamilyFallback: const ['ChosunSm']),
                       ),
                     ),
                   ),
@@ -345,7 +410,7 @@ class _LoginViewState extends State<_LoginView> {
                           fontSize: 11,
                           color: const Color(0xFF9B8E7E),
                           letterSpacing: 1,
-                        ),
+                        ).copyWith(fontFamilyFallback: const ['ChosunSm']),
                       ),
                     ),
                   ),
@@ -355,6 +420,46 @@ class _LoginViewState extends State<_LoginView> {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _CheckOption extends StatelessWidget {
+  final String label;
+  final bool value;
+  final ValueChanged<bool> onChanged;
+  const _CheckOption({required this.label, required this.value, required this.onChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => onChanged(!value),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SizedBox(
+            width: 18,
+            height: 18,
+            child: Checkbox(
+              value: value,
+              onChanged: (v) => onChanged(v ?? false),
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              activeColor: const Color(0xFF8B7355),
+              side: const BorderSide(color: Color(0xFFE8E0D5)),
+              shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+            ),
+          ),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: GoogleFonts.inter(
+              fontSize: 12,
+              color: const Color(0xFF9B8E7E),
+              letterSpacing: 0.3,
+            ).copyWith(fontFamilyFallback: const ['ChosunSm']),
+          ),
+        ],
+      ),
     );
   }
 }

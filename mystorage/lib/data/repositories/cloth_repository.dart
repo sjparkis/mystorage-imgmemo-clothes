@@ -20,6 +20,21 @@ class ClothRepository {
 
   Future<String> getOrCreateOrgId() => StorageRepository().getOrCreateOrgId();
 
+  Future<Map<String, int>> fetchCountsByOrg() async {
+    final orgId = await getOrCreateOrgId();
+    final rows = await _db
+        .from('clothes')
+        .select('storage_id')
+        .eq('org_id', orgId);
+    final counts = <String, int>{};
+    for (final row in rows) {
+      final id = row['storage_id'] as String?;
+      if (id == null) continue;
+      counts[id] = (counts[id] ?? 0) + 1;
+    }
+    return counts;
+  }
+
   Future<List<Cloth>> search(String query) async {
     final orgId = await getOrCreateOrgId();
     final rows = await _db
@@ -104,6 +119,20 @@ class ClothRepository {
       await _db.from('clothes').update({'name': name}).eq('id', clothId);
     }
     if (tags != null) await updateTags(clothId, tags);
+  }
+
+  Future<void> updateStorage(String clothId, String storageId) async {
+    await _db
+        .from('clothes')
+        .update({'storage_id': storageId})
+        .eq('id', clothId);
+  }
+
+  Future<void> updatePresence(String clothId, bool? isPresent) async {
+    await _db
+        .from('clothes')
+        .update({'is_present': isPresent})
+        .eq('id', clothId);
   }
 
   Future<void> delete(String id) async {

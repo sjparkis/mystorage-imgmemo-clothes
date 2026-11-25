@@ -31,6 +31,17 @@ class _StorageDetailScreenState extends State<StorageDetailScreen> {
         ]).then((r) => (r[0] as StorageLocation, r[1] as List<Cloth>));
       });
 
+  Future<void> _togglePresence(Cloth cloth) async {
+    // null(미확인) → true(있음) → false(없음) → null 순환
+    final next = cloth.isPresent == null
+        ? true
+        : cloth.isPresent == true
+            ? false
+            : null;
+    await _clothRepo.updatePresence(cloth.id, next);
+    _reload();
+  }
+
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<(StorageLocation, List<Cloth>)>(
@@ -55,16 +66,35 @@ class _StorageDetailScreenState extends State<StorageDetailScreen> {
         }
         if (!snap.hasData) {
           return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
+            backgroundColor: Color(0xFFF7F3EE),
+            body: Center(
+              child: CircularProgressIndicator(strokeWidth: 1.5, color: Color(0xFF8B7355)),
+            ),
           );
         }
         final (storage, clothes) = snap.data!;
         return Scaffold(
+          backgroundColor: const Color(0xFFF7F3EE),
           appBar: AppBar(
-            title: Text(storage.name),
+            backgroundColor: const Color(0xFFF7F3EE),
+            surfaceTintColor: Colors.transparent,
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back, size: 20, color: Color(0xFF2C2416)),
+              onPressed: () => context.pop(),
+            ),
+            title: Text(
+              storage.name,
+              style: GoogleFonts.cormorant(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 2,
+                color: const Color(0xFF2C2416),
+              ).copyWith(fontFamilyFallback: const ['ChosunSm']),
+            ),
+            centerTitle: true,
             actions: [
               IconButton(
-                icon: const Icon(Icons.edit_outlined),
+                icon: const Icon(Icons.edit_outlined, size: 20, color: Color(0xFF2C2416)),
                 onPressed: () async {
                   final updated = await context.push<bool>(
                     '/storage/edit/${storage.id}',
@@ -74,32 +104,55 @@ class _StorageDetailScreenState extends State<StorageDetailScreen> {
                 },
               ),
               IconButton(
-                icon: const Icon(Icons.qr_code),
-                onPressed: () =>
-                    context.push('/qr-sticker', extra: storage),
+                icon: const Icon(Icons.qr_code, size: 20, color: Color(0xFF2C2416)),
+                onPressed: () => context.push('/qr-sticker', extra: storage),
               ),
             ],
+            bottom: const PreferredSize(
+              preferredSize: Size.fromHeight(1),
+              child: Divider(height: 1, color: Color(0xFFE8E0D5)),
+            ),
           ),
           body: clothes.isEmpty
-              ? const Center(child: Text('옷을 추가해 주세요'))
+              ? Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.checkroom, size: 44, color: Color(0xFFD5C9BB)),
+                      const SizedBox(height: 20),
+                      Text(
+                        '옷을 추가해 주세요',
+                        style: GoogleFonts.inter(
+                          fontSize: 13,
+                          color: const Color(0xFF9B8E7E),
+                        ).copyWith(fontFamilyFallback: const ['ChosunSm']),
+                      ),
+                    ],
+                  ),
+                )
               : GridView.builder(
-                  padding: const EdgeInsets.all(16),
-                  gridDelegate:
-                      const SliverGridDelegateWithFixedCrossAxisCount(
+                  padding: const EdgeInsets.fromLTRB(16, 20, 16, 100),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 2,
                     childAspectRatio: 0.8,
-                    mainAxisSpacing: 12,
+                    mainAxisSpacing: 16,
                     crossAxisSpacing: 12,
                   ),
                   itemCount: clothes.length,
-                  itemBuilder: (_, i) => _ClothCard(cloth: clothes[i]),
+                  itemBuilder: (_, i) => _ClothCard(
+                    cloth: clothes[i],
+                    onTogglePresence: () => _togglePresence(clothes[i]),
+                  ),
                 ),
           floatingActionButton: FloatingActionButton(
             onPressed: () async {
               await context.push('/cloth/add/${widget.storageId}');
               _reload();
             },
-            child: const Icon(Icons.add),
+            backgroundColor: const Color(0xFF8B7355),
+            foregroundColor: Colors.white,
+            elevation: 0,
+            child: const Icon(Icons.add, size: 20),
           ),
         );
       },
@@ -109,36 +162,91 @@ class _StorageDetailScreenState extends State<StorageDetailScreen> {
 
 class _ClothCard extends StatelessWidget {
   final Cloth cloth;
-  const _ClothCard({required this.cloth});
+  final VoidCallback onTogglePresence;
+
+  const _ClothCard({required this.cloth, required this.onTogglePresence});
 
   @override
   Widget build(BuildContext context) {
+    final isPresent = cloth.isPresent;
+    final isMissing = isPresent == false;
+
     return GestureDetector(
       onTap: () => context.push('/cloth/${cloth.id}'),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Expanded(
-            child: cloth.photoUrl != null
-                ? Image.network(
-                    cloth.photoUrl!,
-                    fit: BoxFit.cover,
-                    width: double.infinity,
-                    errorBuilder: (_, __, ___) => _placeholder(context),
-                  )
-                : _placeholder(context),
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                Opacity(
+                  opacity: isMissing ? 0.45 : 1.0,
+                  child: cloth.photoUrl != null
+                      ? Image.network(
+                          cloth.photoUrl!,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => _placeholder(),
+                        )
+                      : _placeholder(),
+                ),
+                // 없음일 때 중앙 안내 오버레이
+                if (isMissing)
+                  Container(color: Colors.black.withValues(alpha: 0.08)),
+                // 존재 여부 토글 버튼 (우측 하단)
+                Positioned(
+                  right: 0,
+                  bottom: 0,
+                  child: GestureDetector(
+                    onTap: onTogglePresence,
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 150),
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: isPresent == true
+                            ? const Color(0xFF8B7355)
+                            : isPresent == false
+                                ? const Color(0xFFCC5C5C)
+                                : Colors.black.withValues(alpha: 0.45),
+                      ),
+                      child: Text(
+                        isPresent == true
+                            ? '있음'
+                            : isPresent == false
+                                ? '없음'
+                                : '있음 확인?',
+                        style: GoogleFonts.inter(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                          letterSpacing: 0.5,
+                        ).copyWith(fontFamilyFallback: const ['ChosunSm']),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: 8),
-          Text(
-            cloth.name ?? '이름 없음',
-            style: GoogleFonts.inter(
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-              color: const Color(0xFF2C2416),
-              letterSpacing: 0.2,
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  cloth.name ?? '이름 없음',
+                  style: GoogleFonts.inter(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: isMissing
+                        ? const Color(0xFFBBAA95)
+                        : const Color(0xFF2C2416),
+                    letterSpacing: 0.2,
+                  ).copyWith(fontFamilyFallback: const ['ChosunSm']),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
           ),
           if (cloth.tags.isNotEmpty) ...[
             const SizedBox(height: 3),
@@ -148,7 +256,7 @@ class _ClothCard extends StatelessWidget {
                 fontSize: 10,
                 color: const Color(0xFF9B8E7E),
                 letterSpacing: 0.3,
-              ),
+              ).copyWith(fontFamilyFallback: const ['ChosunSm']),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
@@ -158,7 +266,7 @@ class _ClothCard extends StatelessWidget {
     );
   }
 
-  Widget _placeholder(BuildContext context) => Container(
+  Widget _placeholder() => Container(
         color: const Color(0xFFEDE7DD),
         child: const Center(
           child: Icon(Icons.checkroom, size: 36, color: Color(0xFFBBAA95)),

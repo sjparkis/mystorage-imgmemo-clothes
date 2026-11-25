@@ -43,7 +43,7 @@ class StorageRepository {
     final orgId = await getOrCreateOrgId();
     final rows = await _db
         .from('storages')
-        .select()
+        .select('*, locations(id, name)')
         .eq('org_id', orgId)
         .order('created_at');
     return rows.map((r) => StorageLocation.fromMap(r)).toList();
@@ -53,7 +53,7 @@ class StorageRepository {
     final orgId = await getOrCreateOrgId();
     final row = await _db
         .from('storages')
-        .select()
+        .select('*, locations(id, name)')
         .eq('id', id)
         .eq('org_id', orgId)
         .single();
@@ -63,7 +63,7 @@ class StorageRepository {
   Future<StorageLocation?> fetchByQrCode(String qrCode) async {
     final row = await _db
         .from('storages')
-        .select()
+        .select('*, locations(id, name)')
         .eq('qr_code', qrCode)
         .maybeSingle();
     if (row == null) return null;
@@ -74,6 +74,7 @@ class StorageRepository {
     required String name,
     String? photoUrl,
     String? description,
+    String? locationId,
   }) async {
     final orgId = await getOrCreateOrgId();
     final row = await _db
@@ -83,8 +84,9 @@ class StorageRepository {
           'name': name,
           'photo_url': photoUrl,
           'description': description,
+          'location_id': locationId,
         })
-        .select()
+        .select('*, locations(id, name)')
         .single();
     return StorageLocation.fromMap(row);
   }
@@ -93,15 +95,20 @@ class StorageRepository {
     required String id,
     required String name,
     String? photoUrl,
+    Object? locationId = _keep,
   }) async {
+    final data = <String, dynamic>{'name': name, 'photo_url': photoUrl};
+    if (locationId != _keep) data['location_id'] = locationId;
     final row = await _db
         .from('storages')
-        .update({'name': name, 'photo_url': photoUrl})
+        .update(data)
         .eq('id', id)
-        .select()
+        .select('*, locations(id, name)')
         .single();
     return StorageLocation.fromMap(row);
   }
+
+  static const _keep = Object();
 
   Future<void> delete(String id) async {
     await _db.from('storages').delete().eq('id', id);

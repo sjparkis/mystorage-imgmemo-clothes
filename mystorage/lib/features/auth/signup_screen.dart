@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../data/repositories/auth_repository.dart';
 import 'auth_bloc.dart';
 
@@ -38,15 +39,7 @@ class _SignUpViewState extends State<_SignUpView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF111111)),
-          onPressed: () => context.pop(),
-        ),
-        title: const Text('회원가입'),
-      ),
+      backgroundColor: const Color(0xFFF7F3EE),
       body: BlocListener<AuthBloc, AuthState>(
         listener: (ctx, state) {
           if (state is AuthSuccess) ctx.go('/');
@@ -65,83 +58,151 @@ class _SignUpViewState extends State<_SignUpView> {
             );
           }
         },
-        child: SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 32),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 40),
-                const Text(
-                  '회원가입',
-                  style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: -0.5,
-                    color: Color(0xFF111111),
+        child: Column(
+          children: [
+            Container(
+              width: double.infinity,
+              color: const Color(0xFF1C1510),
+              child: SafeArea(
+                bottom: false,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(32, 32, 32, 36),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      GestureDetector(
+                        onTap: () => context.pop(),
+                        child: const Icon(Icons.arrow_back,
+                            size: 20, color: Color(0xFF8B7355)),
+                      ),
+                      const SizedBox(height: 20),
+                      Text(
+                        'MYSTORAGE',
+                        style: GoogleFonts.cormorant(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 4,
+                          color: const Color(0xFF8B7355),
+                        ).copyWith(fontFamilyFallback: const ['ChosunSm']),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        'Create\nAccount.',
+                        style: GoogleFonts.playfairDisplay(
+                          fontSize: 40,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                          height: 1.1,
+                          letterSpacing: -1,
+                        ).copyWith(fontFamilyFallback: const ['ChosunSm']),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 8),
-                const Text(
-                  '이메일과 비밀번호를 입력해 주세요',
-                  style: TextStyle(fontSize: 13, color: Color(0xFF999999)),
-                ),
-                const SizedBox(height: 40),
-                TextField(
-                  controller: _emailCtrl,
-                  keyboardType: TextInputType.emailAddress,
-                  style: const TextStyle(fontSize: 14, color: Color(0xFF111111)),
-                  decoration: const InputDecoration(labelText: '이메일'),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: _pwCtrl,
-                  obscureText: true,
-                  style: const TextStyle(fontSize: 14, color: Color(0xFF111111)),
-                  decoration: const InputDecoration(
-                    labelText: '비밀번호',
-                    helperText: '6자 이상 입력해 주세요',
-                    helperStyle: TextStyle(fontSize: 11, color: Color(0xFF999999)),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: _pwConfirmCtrl,
-                  obscureText: true,
-                  style: const TextStyle(fontSize: 14, color: Color(0xFF111111)),
-                  decoration: const InputDecoration(labelText: '비밀번호 확인'),
-                ),
-                const SizedBox(height: 32),
-                BlocBuilder<AuthBloc, AuthState>(
-                  builder: (ctx, state) => FilledButton(
-                    onPressed: state is AuthLoading
-                        ? null
-                        : () {
-                            if (_pwCtrl.text != _pwConfirmCtrl.text) {
-                              ScaffoldMessenger.of(ctx).showSnackBar(
-                                const SnackBar(content: Text('비밀번호가 일치하지 않습니다.')),
-                              );
-                              return;
-                            }
-                            ctx.read<AuthBloc>().add(
-                                  AuthSignUp(_emailCtrl.text, _pwCtrl.text),
-                                );
-                          },
-                    child: state is AuthLoading
-                        ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
-                          )
-                        : const Text('회원가입'),
-                  ),
-                ),
-              ],
+              ),
             ),
-          ),
+            Expanded(
+              child: Container(
+                color: const Color(0xFFF7F3EE),
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(32, 36, 32, 32),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      TextField(
+                        controller: _emailCtrl,
+                        keyboardType: TextInputType.emailAddress,
+                        style: GoogleFonts.inter(
+                            fontSize: 14, color: const Color(0xFF2C2416)).copyWith(fontFamilyFallback: const ['ChosunSm']),
+                        decoration: const InputDecoration(labelText: '이메일'),
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: _pwCtrl,
+                        obscureText: true,
+                        style: GoogleFonts.inter(
+                            fontSize: 14, color: const Color(0xFF2C2416)).copyWith(fontFamilyFallback: const ['ChosunSm']),
+                        decoration: const InputDecoration(
+                          labelText: '비밀번호',
+                          helperText: '6자 이상 입력해 주세요',
+                          helperStyle:
+                              TextStyle(fontSize: 11, color: Color(0xFF9B8E7E)),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: _pwConfirmCtrl,
+                        obscureText: true,
+                        style: GoogleFonts.inter(
+                            fontSize: 14, color: const Color(0xFF2C2416)).copyWith(fontFamilyFallback: const ['ChosunSm']),
+                        decoration:
+                            const InputDecoration(labelText: '비밀번호 확인'),
+                      ),
+                      const SizedBox(height: 28),
+                      BlocBuilder<AuthBloc, AuthState>(
+                        builder: (ctx, state) => SizedBox(
+                          width: double.infinity,
+                          height: 54,
+                          child: FilledButton(
+                            onPressed: state is AuthLoading
+                                ? null
+                                : () {
+                                    if (_pwCtrl.text != _pwConfirmCtrl.text) {
+                                      ScaffoldMessenger.of(ctx).showSnackBar(
+                                        const SnackBar(
+                                            content:
+                                                Text('비밀번호가 일치하지 않습니다.')),
+                                      );
+                                      return;
+                                    }
+                                    ctx.read<AuthBloc>().add(
+                                          AuthSignUp(
+                                              _emailCtrl.text, _pwCtrl.text),
+                                        );
+                                  },
+                            style: FilledButton.styleFrom(
+                              backgroundColor: const Color(0xFF8B7355),
+                              shape: const RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.zero),
+                            ),
+                            child: state is AuthLoading
+                                ? const SizedBox(
+                                    width: 18,
+                                    height: 18,
+                                    child: CircularProgressIndicator(
+                                        strokeWidth: 2, color: Colors.white),
+                                  )
+                                : Text(
+                                    'JOIN',
+                                    style: GoogleFonts.inter(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w700,
+                                      letterSpacing: 3,
+                                    ).copyWith(fontFamilyFallback: const ['ChosunSm']),
+                                  ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      Center(
+                        child: GestureDetector(
+                          onTap: () => context.pop(),
+                          child: Text(
+                            '← 로그인으로 돌아가기',
+                            style: GoogleFonts.inter(
+                              fontSize: 11,
+                              color: const Color(0xFF9B8E7E),
+                              letterSpacing: 1,
+                            ).copyWith(fontFamilyFallback: const ['ChosunSm']),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

@@ -50,7 +50,7 @@ class _SearchScreenState extends State<SearchScreen> {
         title: Text('SEARCH', style: GoogleFonts.cormorant(
           fontSize: 16, fontWeight: FontWeight.w700, letterSpacing: 3,
           color: const Color(0xFF2C2416),
-        )),
+        ).copyWith(fontFamilyFallback: const ['ChosunSm'])),
         centerTitle: true,
         bottom: const PreferredSize(
           preferredSize: Size.fromHeight(1),
@@ -67,10 +67,10 @@ class _SearchScreenState extends State<SearchScreen> {
                 Expanded(
                   child: TextField(
                     controller: _queryCtrl,
-                    style: GoogleFonts.inter(fontSize: 14, color: const Color(0xFF2C2416)),
+                    style: GoogleFonts.inter(fontSize: 14, color: const Color(0xFF2C2416)).copyWith(fontFamilyFallback: const ['ChosunSm']),
                     decoration: InputDecoration(
                       hintText: '옷 이름, 태그, 메모로 검색',
-                      hintStyle: GoogleFonts.inter(fontSize: 13, color: const Color(0xFF9B8E7E)),
+                      hintStyle: GoogleFonts.inter(fontSize: 13, color: const Color(0xFF9B8E7E)).copyWith(fontFamilyFallback: const ['ChosunSm']),
                       prefixIcon: const Icon(Icons.search, size: 18, color: Color(0xFF9B8E7E)),
                       contentPadding: const EdgeInsets.symmetric(vertical: 12),
                       isDense: true,
@@ -109,7 +109,7 @@ class _SearchScreenState extends State<SearchScreen> {
                     child: Text(
                       '이름 또는 태그로 검색해 보세요',
                       style: GoogleFonts.inter(
-                        fontSize: 13, color: const Color(0xFF9B8E7E)),
+                        fontSize: 13, color: const Color(0xFF9B8E7E)).copyWith(fontFamilyFallback: const ['ChosunSm']),
                     ),
                   )
                 : _results.isEmpty
@@ -117,7 +117,7 @@ class _SearchScreenState extends State<SearchScreen> {
                         child: Text(
                           '검색 결과가 없습니다',
                           style: GoogleFonts.inter(
-                            fontSize: 13, color: const Color(0xFF9B8E7E)),
+                            fontSize: 13, color: const Color(0xFF9B8E7E)).copyWith(fontFamilyFallback: const ['ChosunSm']),
                         ),
                       )
                     : ListView.separated(
@@ -153,7 +153,7 @@ class _SearchScreenState extends State<SearchScreen> {
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,
                                 color: const Color(0xFF2C2416),
-                              ),
+                              ).copyWith(fontFamilyFallback: const ['ChosunSm']),
                             ),
                             subtitle: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -171,7 +171,7 @@ class _SearchScreenState extends State<SearchScreen> {
                                           fontSize: 11,
                                           color: const Color(0xFF8B7355),
                                           fontWeight: FontWeight.w500,
-                                        ),
+                                        ).copyWith(fontFamilyFallback: const ['ChosunSm']),
                                       ),
                                     ],
                                   ),
@@ -183,7 +183,7 @@ class _SearchScreenState extends State<SearchScreen> {
                                     style: GoogleFonts.inter(
                                       fontSize: 11,
                                       color: const Color(0xFF9B8E7E),
-                                    ),
+                                    ).copyWith(fontFamilyFallback: const ['ChosunSm']),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                   ),
@@ -196,7 +196,7 @@ class _SearchScreenState extends State<SearchScreen> {
                                       fontSize: 11,
                                       color: const Color(0xFF7A6E63),
                                       fontStyle: FontStyle.italic,
-                                    ),
+                                    ).copyWith(fontFamilyFallback: const ['ChosunSm']),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                   ),
@@ -208,7 +208,7 @@ class _SearchScreenState extends State<SearchScreen> {
                                     style: GoogleFonts.inter(
                                       fontSize: 10,
                                       color: const Color(0xFFBBAA95),
-                                    ),
+                                    ).copyWith(fontFamilyFallback: const ['ChosunSm']),
                                   ),
                                 ],
                               ],
