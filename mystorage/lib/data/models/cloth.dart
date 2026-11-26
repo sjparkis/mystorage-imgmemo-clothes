@@ -5,6 +5,7 @@ class Cloth {
   final String orgId;
   final String? storageId;
   final String? storageName;
+  final String storageType;
   final String? photoUrl;
   final String? name;
   final String? memo;
@@ -17,6 +18,7 @@ class Cloth {
     required this.orgId,
     this.storageId,
     this.storageName,
+    this.storageType = 'normal',
     this.photoUrl,
     this.name,
     this.memo,
@@ -29,7 +31,12 @@ class Cloth {
         id: map['id'] as String,
         orgId: map['org_id'] as String,
         storageId: map['storage_id'] as String?,
-        storageName: (map['storages'] as Map<String, dynamic>?)?['name'] as String?,
+        storageName:
+            (map['storages'] as Map<String, dynamic>?)?['name'] as String?,
+        storageType:
+            (map['storages'] as Map<String, dynamic>?)?['storage_type']
+                    as String? ??
+                'normal',
         photoUrl: map['photo_url'] as String?,
         name: map['name'] as String?,
         memo: map['memo'] as String?,

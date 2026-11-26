@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../data/models/cloth.dart';
+import '../../data/models/storage_location.dart';
 import '../../data/models/tag.dart';
 import '../../data/repositories/cloth_repository.dart';
+import '../../data/repositories/storage_repository.dart';
 import '../../l10n/app_localizations.dart';
 import '../../services/ai_tag_service.dart';
 
@@ -19,6 +21,7 @@ class _ClothDetailScreenState extends State<ClothDetailScreen> {
   bool _loading = true;
   bool _analyzing = false;
   final _clothRepo = ClothRepository();
+  final _storageRepo = StorageRepository();
 
   @override
   void initState() {
@@ -30,7 +33,7 @@ class _ClothDetailScreenState extends State<ClothDetailScreen> {
     try {
       final row = await Supabase.instance.client
           .from('clothes')
-          .select('*, storages(name), clothes_tags(ai_generated, tags(id, name, category))')
+          .select('*, storages(name, storage_type), clothes_tags(ai_generated, tags(id, name, category))')
           .eq('id', widget.clothId)
           .single();
       if (mounted) setState(() { _cloth = Cloth.fromMap(row); _loading = false; });
@@ -66,6 +69,91 @@ class _ClothDetailScreenState extends State<ClothDetailScreen> {
     } finally {
       if (mounted) setState(() => _analyzing = false);
     }
+  }
+
+  Future<void> _moveToSystemStorage(String type) async {
+    final l10n = AppLocalizations.of(context);
+    try {
+      final target = await _storageRepo.fetchSystemStorage(type);
+      if (target == null) return;
+      await _clothRepo.updateStorage(widget.clothId, target.id);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.moveDone)),
+        );
+        Navigator.of(context).pop();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.moveFailed(e.toString()))),
+        );
+      }
+    }
+  }
+
+  Future<void> _showMoveStorageSheet() async {
+    final l10n = AppLocalizations.of(context);
+    List<StorageLocation> storages = [];
+    try {
+      storages = (await _storageRepo.fetchAll()).where((s) => !s.isSystem).toList();
+    } catch (_) {
+      return;
+    }
+    if (!mounted) return;
+    await showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFFFFFBF7),
+      builder: (ctx) => Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 24, 24, 12),
+            child: Text(
+              l10n.selectStorage,
+              style: GoogleFonts.cormorant(
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 2,
+                color: const Color(0xFF2C2416),
+              ).copyWith(fontFamilyFallback: const ['ChosunSm']),
+            ),
+          ),
+          ...storages.map((s) => ListTile(
+                title: Text(
+                  s.name,
+                  style: GoogleFonts.inter(
+                    fontSize: 13,
+                    color: const Color(0xFF2C2416),
+                  ).copyWith(fontFamilyFallback: const ['ChosunSm']),
+                ),
+                trailing: s.id == _cloth?.storageId
+                    ? const Icon(Icons.check, size: 16, color: Color(0xFF8B7355))
+                    : null,
+                onTap: () async {
+                  Navigator.pop(ctx);
+                  try {
+                    await _clothRepo.updateStorage(widget.clothId, s.id);
+                    await _load();
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(l10n.moveDone)),
+                      );
+                    }
+                  } catch (e) {
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(l10n.moveFailed(e.toString()))),
+                      );
+                    }
+                  }
+                },
+              )),
+          const SizedBox(height: 24),
+        ],
+      ),
+    );
   }
 
   @override
@@ -110,6 +198,23 @@ class _ClothDetailScreenState extends State<ClothDetailScreen> {
                         tooltip: AppLocalizations.of(context).aiReanalyze,
                         onPressed: _reanalyze,
                       ),
+              _ActionIcon(
+                icon: Icons.drive_file_move_outlined,
+                label: AppLocalizations.of(context).moveToStorage,
+                onTap: _showMoveStorageSheet,
+              ),
+              _ActionIcon(
+                icon: Icons.delete_outline,
+                label: AppLocalizations.of(context).moveToTrash,
+                active: _cloth?.storageType == 'trash',
+                onTap: _cloth?.storageType == 'trash' ? null : () => _moveToSystemStorage('trash'),
+              ),
+              _ActionIcon(
+                icon: Icons.sell_outlined,
+                label: AppLocalizations.of(context).moveToSale,
+                active: _cloth?.storageType == 'for_sale',
+                onTap: _cloth?.storageType == 'for_sale' ? null : () => _moveToSystemStorage('for_sale'),
+              ),
             ],
             flexibleSpace: FlexibleSpaceBar(
               background: cloth.photoUrl != null
@@ -275,6 +380,50 @@ class _ClothDetailScreenState extends State<ClothDetailScreen> {
 
   String _formatDate(DateTime dt) {
     return '${dt.year}.${dt.month.toString().padLeft(2, '0')}.${dt.day.toString().padLeft(2, '0')} 등록';
+  }
+}
+
+class _ActionIcon extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool active;
+  final VoidCallback? onTap;
+
+  const _ActionIcon({
+    required this.icon,
+    required this.label,
+    this.active = false,
+    this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final color = active
+        ? Colors.white.withValues(alpha: 0.3)
+        : onTap == null
+            ? Colors.white.withValues(alpha: 0.3)
+            : Colors.white;
+    return GestureDetector(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 20, color: color),
+            const SizedBox(height: 3),
+            Text(
+              label,
+              style: GoogleFonts.inter(
+                fontSize: 9,
+                color: color,
+                letterSpacing: 0.3,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 

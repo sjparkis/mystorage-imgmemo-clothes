@@ -26,6 +26,25 @@ Table organization_members {
   }
 }
 
+Table org_invites {
+  id uuid [pk, default: `gen_random_uuid()`]
+  org_id uuid [not null, ref: > organizations.id]
+  code text [unique, not null]
+  created_by uuid [ref: > users.id]
+  created_at timestamptz [default: `now()`]
+  expires_at timestamptz [default: `now() + interval '48 hours'`]
+  used_at timestamptz
+  used_by uuid [ref: > users.id]
+}
+
+Table locations {
+  id uuid [pk, default: `gen_random_uuid()`]
+  org_id uuid [not null, ref: > organizations.id]
+  name text [not null]
+  sort_order integer [default: 0]
+  created_at timestamptz [default: `now()`]
+}
+
 Table storages {
   id uuid [pk, default: `gen_random_uuid()`]
   org_id uuid [not null, ref: > organizations.id]
@@ -33,6 +52,8 @@ Table storages {
   photo_url text
   qr_code uuid [unique, not null, default: `gen_random_uuid()`]
   description text
+  location_id uuid [ref: > locations.id, note: "ON DELETE SET NULL"]
+  storage_type text [not null, default: 'normal', note: "normal | trash | for_sale"]
   created_at timestamptz [default: `now()`]
 }
 
@@ -42,7 +63,8 @@ Table clothes {
   storage_id uuid [ref: > storages.id, note: "ON DELETE SET NULL"]
   photo_url text
   name text
-  memo text [null]
+  memo text
+  is_present boolean [note: "null=미확인, true=있음, false=없음"]
   created_by uuid [ref: > users.id]
   created_at timestamptz [default: `now()`]
 }
@@ -73,4 +95,12 @@ Table subscriptions {
   started_at timestamptz [default: `now()`]
   expires_at timestamptz
   revenuecat_id text
+}
+
+Table user_settings {
+  user_id uuid [pk, ref: > users.id]
+  show_trash boolean [not null, default: true]
+  show_sale boolean [not null, default: true]
+  created_at timestamptz [default: `now()`]
+  updated_at timestamptz [default: `now()`]
 }

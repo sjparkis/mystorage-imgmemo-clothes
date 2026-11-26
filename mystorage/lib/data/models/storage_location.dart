@@ -7,6 +7,7 @@ class StorageLocation {
   final String? description;
   final String? locationId;
   final String? locationName;
+  final String storageType;
 
   const StorageLocation({
     required this.id,
@@ -17,7 +18,12 @@ class StorageLocation {
     this.description,
     this.locationId,
     this.locationName,
+    this.storageType = 'normal',
   });
+
+  bool get isSystem => storageType != 'normal';
+  bool get isTrash => storageType == 'trash';
+  bool get isForSale => storageType == 'for_sale';
 
   factory StorageLocation.fromMap(Map<String, dynamic> map) => StorageLocation(
         id: map['id'] as String,
@@ -29,5 +35,6 @@ class StorageLocation {
         locationId: map['location_id'] as String?,
         locationName:
             (map['locations'] as Map<String, dynamic>?)?['name'] as String?,
+        storageType: map['storage_type'] as String? ?? 'normal',
       );
 }

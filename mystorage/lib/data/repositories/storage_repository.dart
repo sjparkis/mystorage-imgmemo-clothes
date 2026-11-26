@@ -113,4 +113,34 @@ class StorageRepository {
   Future<void> delete(String id) async {
     await _db.from('storages').delete().eq('id', id);
   }
+
+  Future<void> ensureSystemStorages(String orgId) async {
+    for (final type in ['trash', 'for_sale']) {
+      final name = type == 'trash' ? '휴지통' : '판매 보관함';
+      final existing = await _db
+          .from('storages')
+          .select('id')
+          .eq('org_id', orgId)
+          .eq('storage_type', type)
+          .maybeSingle();
+      if (existing == null) {
+        await _db.from('storages').insert({
+          'org_id': orgId,
+          'name': name,
+          'storage_type': type,
+        });
+      }
+    }
+  }
+
+  Future<StorageLocation?> fetchSystemStorage(String type) async {
+    final orgId = await getOrCreateOrgId();
+    final row = await _db
+        .from('storages')
+        .select('*, locations(id, name)')
+        .eq('org_id', orgId)
+        .eq('storage_type', type)
+        .maybeSingle();
+    return row == null ? null : StorageLocation.fromMap(row);
+  }
 }

@@ -1,0 +1,1028 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>옷 이동 / 휴지통 / 판매 보관함 설계</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --primary: #8B7355;
+    --primary-light: #F7F3EE;
+    --primary-dark: #6B5540;
+    --secondary: #9B8E7E;
+    --danger: #EF4444;
+    --success: #10B981;
+    --warning: #F59E0B;
+    --text: #2C2416;
+    --subtext: #9B8E7E;
+    --bg: #F7F3EE;
+    --surface: #FFFBF7;
+    --border: #E8E0D5;
+  }
+
+  body {
+    font-family: -apple-system, 'Pretendard', 'Noto Sans KR', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+  }
+
+  /* 커버 */
+  .cover {
+    background: linear-gradient(135deg, #2C2416 0%, #4A3728 100%);
+    color: white;
+    padding: 60px 48px;
+    position: relative;
+    overflow: hidden;
+  }
+  .cover::before {
+    content: '';
+    position: absolute;
+    top: -60px; right: -60px;
+    width: 300px; height: 300px;
+    background: rgba(255,255,255,0.03);
+    border-radius: 50%;
+  }
+  .cover::after {
+    content: '';
+    position: absolute;
+    bottom: -80px; right: 100px;
+    width: 200px; height: 200px;
+    background: rgba(255,255,255,0.02);
+    border-radius: 50%;
+  }
+  .cover h1 { font-size: 38px; font-weight: 800; letter-spacing: -1px; position: relative; }
+  .cover p { font-size: 17px; opacity: 0.85; margin-top: 12px; position: relative; }
+  .cover .meta { font-size: 13px; opacity: 0.6; margin-top: 24px; display: flex; gap: 24px; position: relative; flex-wrap: wrap; }
+  .cover .badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.2);
+    padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;
+  }
+
+  /* 목차 */
+  .toc {
+    background: white;
+    border-bottom: 1px solid var(--border);
+    padding: 0 48px;
+    display: flex;
+    gap: 0;
+    overflow-x: auto;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    scrollbar-width: none;
+  }
+  .toc::-webkit-scrollbar { display: none; }
+  .toc a {
+    display: block;
+    padding: 16px 18px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--subtext);
+    text-decoration: none;
+    white-space: nowrap;
+    border-bottom: 3px solid transparent;
+    transition: all 0.15s;
+  }
+  .toc a:hover { color: var(--primary); border-bottom-color: var(--primary); }
+
+  /* 섹션 */
+  .section {
+    padding: 64px 48px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  .section + .section { border-top: 1px solid var(--border); }
+  .section-number { font-size: 12px; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+  .section-title { font-size: 28px; font-weight: 700; color: var(--text); margin-bottom: 8px; letter-spacing: -0.5px; }
+  .section-desc { font-size: 15px; color: var(--subtext); margin-bottom: 40px; max-width: 640px; }
+  .subsection { margin-bottom: 44px; }
+  .subsection-title {
+    font-size: 17px; font-weight: 700; color: var(--text);
+    margin-bottom: 18px; padding-bottom: 10px;
+    border-bottom: 2px solid var(--border);
+  }
+
+  /* 코드 블록 */
+  pre {
+    background: #1C1510;
+    color: #E8DFD0;
+    padding: 20px 24px;
+    border-radius: 8px;
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    font-size: 13px;
+    line-height: 1.7;
+    overflow-x: auto;
+    margin-bottom: 16px;
+  }
+  .lang-label {
+    display: inline-block;
+    background: var(--primary);
+    color: white;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 10px;
+    border-radius: 4px 4px 0 0;
+    letter-spacing: 0.5px;
+    margin-bottom: 0;
+  }
+  code { font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: 13px; }
+  p code, li code {
+    background: rgba(139,115,85,0.12);
+    color: var(--primary-dark);
+    padding: 1px 6px;
+    border-radius: 4px;
+  }
+
+  /* 카드 그리드 */
+  .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; margin-bottom: 24px; }
+  .card {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px;
+  }
+  .card-icon { font-size: 28px; margin-bottom: 10px; }
+  .card-title { font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+  .card-desc { font-size: 13px; color: var(--subtext); line-height: 1.6; }
+  .card.highlight { border-color: var(--primary); border-width: 2px; }
+  .card.trash { border-left: 4px solid var(--danger); }
+  .card.sale { border-left: 4px solid var(--success); }
+
+  /* 플로우 다이어그램 */
+  .flow {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    flex-wrap: wrap;
+    margin-bottom: 24px;
+  }
+  .flow-step {
+    background: white;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 18px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    text-align: center;
+    min-width: 120px;
+  }
+  .flow-step.action { background: var(--primary); color: white; border-color: var(--primary); }
+  .flow-step.system { background: #EDE7DD; color: var(--primary-dark); border-color: var(--primary); }
+  .flow-arrow {
+    font-size: 18px; color: var(--subtext);
+    padding: 0 8px;
+  }
+
+  /* 테이블 */
+  table { width: 100%; border-collapse: collapse; font-size: 14px; background: white; border-radius: 8px; overflow: hidden; border: 1px solid var(--border); }
+  th { background: #F0EBE3; color: var(--text); font-weight: 700; padding: 12px 16px; text-align: left; }
+  td { padding: 12px 16px; border-top: 1px solid var(--border); vertical-align: top; }
+  tr:hover td { background: #FDFAF7; }
+
+  /* 배지 */
+  .badge {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .badge-normal { background: #EDE7DD; color: var(--primary-dark); }
+  .badge-trash { background: #FEE2E2; color: #B91C1C; }
+  .badge-sale { background: #D1FAE5; color: #065F46; }
+  .badge-new { background: #DBEAFE; color: #1E40AF; }
+  .badge-mod { background: #FEF3C7; color: #92400E; }
+
+  /* UI 목업 */
+  .mockup-container { display: flex; gap: 24px; flex-wrap: wrap; }
+  .phone {
+    width: 280px;
+    background: #1C1510;
+    border-radius: 36px;
+    padding: 12px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    flex-shrink: 0;
+  }
+  .phone-screen {
+    background: var(--bg);
+    border-radius: 26px;
+    overflow: hidden;
+    min-height: 500px;
+  }
+  .phone-title {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--subtext);
+    text-align: center;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .screen-appbar {
+    background: #1C1510;
+    color: white;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 15px;
+    font-weight: 700;
+  }
+  .screen-appbar .back { font-size: 18px; opacity: 0.8; }
+  .screen-appbar .actions { display: flex; gap: 8px; }
+  .screen-appbar .action-btn {
+    width: 28px; height: 28px;
+    background: rgba(255,255,255,0.12);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+  }
+  .screen-body { padding: 16px; }
+  .screen-cloth-img {
+    width: 100%;
+    height: 160px;
+    background: linear-gradient(135deg, #EDE7DD, #D5C9BB);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 48px;
+    margin-bottom: 12px;
+  }
+  .screen-section-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--subtext);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-bottom: 8px;
+  }
+
+  /* 메뉴 아이템 */
+  .menu-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 11px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+  }
+  .menu-item:last-child { border-bottom: none; }
+  .menu-icon { font-size: 16px; width: 20px; text-align: center; }
+  .menu-label { flex: 1; font-weight: 500; }
+  .menu-danger { color: var(--danger); }
+  .menu-sale { color: var(--success); }
+
+  /* popup menu */
+  .popup-menu {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    overflow: hidden;
+    width: 200px;
+  }
+  .popup-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px 16px;
+    font-size: 13px;
+    border-bottom: 1px solid #F5F0EB;
+  }
+  .popup-item:last-child { border-bottom: none; }
+
+  /* 홈 화면 섹션 */
+  .home-section-label {
+    font-size: 11px; font-weight: 700;
+    color: var(--subtext); letter-spacing: 0.8px;
+    text-transform: uppercase;
+    padding: 8px 0 6px;
+    border-top: 1px solid var(--border);
+    margin-top: 8px;
+  }
+  .storage-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 0;
+    border-bottom: 1px solid #F5F0EB;
+    font-size: 13px;
+  }
+  .storage-icon { font-size: 18px; }
+  .storage-name { flex: 1; font-weight: 600; }
+  .storage-count { color: var(--subtext); font-size: 12px; }
+
+  /* 프로필 토글 */
+  .toggle-row {
+    display: flex; align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+    gap: 10px;
+  }
+  .toggle-icon { font-size: 16px; width: 20px; text-align: center; }
+  .toggle-label { flex: 1; font-weight: 500; }
+  .toggle-switch {
+    width: 36px; height: 20px;
+    border-radius: 10px;
+    position: relative;
+    flex-shrink: 0;
+  }
+  .toggle-on { background: var(--primary); }
+  .toggle-off { background: #D1C9BE; }
+  .toggle-knob {
+    width: 16px; height: 16px;
+    background: white;
+    border-radius: 50%;
+    position: absolute;
+    top: 2px;
+    transition: left 0.15s;
+  }
+  .toggle-on .toggle-knob { left: 18px; }
+  .toggle-off .toggle-knob { left: 2px; }
+
+  /* 알림 박스 */
+  .info-box {
+    background: rgba(139,115,85,0.08);
+    border-left: 3px solid var(--primary);
+    padding: 14px 16px;
+    border-radius: 0 6px 6px 0;
+    font-size: 13px;
+    margin-bottom: 20px;
+    color: var(--text);
+  }
+  .warn-box {
+    background: rgba(245,158,11,0.08);
+    border-left: 3px solid var(--warning);
+    padding: 14px 16px;
+    border-radius: 0 6px 6px 0;
+    font-size: 13px;
+    margin-bottom: 20px;
+    color: var(--text);
+  }
+
+  /* 목록 */
+  ul.spec-list { list-style: none; padding: 0; }
+  ul.spec-list li {
+    padding: 8px 0 8px 20px;
+    position: relative;
+    border-bottom: 1px solid var(--border);
+    font-size: 14px;
+  }
+  ul.spec-list li:last-child { border-bottom: none; }
+  ul.spec-list li::before {
+    content: '→';
+    position: absolute; left: 0;
+    color: var(--primary); font-weight: 700;
+  }
+
+  footer {
+    background: #1C1510;
+    color: rgba(255,255,255,0.4);
+    text-align: center;
+    padding: 32px;
+    font-size: 13px;
+    margin-top: 40px;
+  }
+</style>
+</head>
+<body>
+
+<!-- 커버 -->
+<div class="cover">
+  <div class="section-number" style="color:rgba(255,255,255,0.5);margin-bottom:12px;">MYSTORAGE · FEATURE DESIGN</div>
+  <h1>옷 이동 / 휴지통 / 판매 보관함</h1>
+  <p>모든 사용자에게 기본 제공되는 기본 보관함과 옷 이동 기능 설계</p>
+  <div class="meta">
+    <span class="badge">📅 2026-11-26</span>
+    <span class="badge">📌 v1.1</span>
+    <span class="badge">Flutter + Supabase</span>
+  </div>
+</div>
+
+<!-- 목차 -->
+<nav class="toc">
+  <a href="#overview">개요</a>
+  <a href="#db">DB 변경</a>
+  <a href="#data-layer">데이터 레이어</a>
+  <a href="#move-ui">옷 이동 UI</a>
+  <a href="#bulk-select">다중 선택 이동</a>
+  <a href="#home">홈 화면</a>
+  <a href="#profile">프로필 설정</a>
+  <a href="#i18n">i18n</a>
+  <a href="#error">에러 처리</a>
+</nav>
+
+<!-- 1. 개요 -->
+<section class="section" id="overview">
+  <div class="section-number">01</div>
+  <h2 class="section-title">개요</h2>
+  <p class="section-desc">세 가지 기능을 하나의 피처로 묶어 구현한다. 모두 "옷의 소속 보관함을 변경한다"는 동일한 기반 위에서 동작한다.</p>
+
+  <div class="card-grid">
+    <div class="card">
+      <div class="card-icon">📦</div>
+      <div class="card-title">다른 보관함으로 이동</div>
+      <div class="card-desc">옷 상세 화면에서 보관함 목록을 열어 원하는 보관함으로 이동. 기존 <code>updateStorage()</code> 재사용.</div>
+    </div>
+    <div class="card trash">
+      <div class="card-icon">🗑️</div>
+      <div class="card-title">휴지통</div>
+      <div class="card-desc">조직마다 자동 생성되는 시스템 보관함. 옷을 이동해 임시 보관. 자동 삭제 없음.</div>
+    </div>
+    <div class="card sale">
+      <div class="card-icon">🏷️</div>
+      <div class="card-title">판매 보관함</div>
+      <div class="card-desc">조직마다 자동 생성되는 시스템 보관함. 판매 예정 옷을 모아두는 공간.</div>
+    </div>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">핵심 설계 원칙</div>
+    <ul class="spec-list">
+      <li>시스템 보관함은 <code>storages.storage_type</code> 컬럼으로 구분 — <code>'normal'</code> / <code>'trash'</code> / <code>'for_sale'</code></li>
+      <li>조직 첫 생성 시 두 시스템 보관함 자동 생성 (기존 사용자는 앱 첫 실행 시 생성)</li>
+      <li>시스템 보관함은 이름 변경·삭제 UI 비노출</li>
+      <li>홈 화면 표시 여부는 <code>user_settings</code>에 저장, 프로필에서 토글</li>
+    </ul>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">이동 플로우</div>
+    <div class="flow">
+      <div class="flow-step">옷 상세 화면</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step action">앱바 아이콘 탭</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">이동 선택</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step system">updateStorage() 호출</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">SnackBar + pop</div>
+    </div>
+  </div>
+</section>
+
+<!-- 2. DB 변경 -->
+<section class="section" id="db">
+  <div class="section-number">02</div>
+  <h2 class="section-title">DB 변경</h2>
+  <p class="section-desc">기존 테이블 최소 변경 + 신규 테이블 1개 추가.</p>
+
+  <div class="subsection">
+    <div class="subsection-title">storages 테이블 — storage_type 컬럼 추가</div>
+    <div class="info-box">기존 보관함은 모두 <code>storage_type = 'normal'</code>이 되며, 시스템 보관함만 별도 타입을 가진다.</div>
+    <div class="lang-label">SQL</div>
+    <pre>ALTER TABLE storages
+  ADD COLUMN storage_type TEXT NOT NULL DEFAULT 'normal'
+  CHECK (storage_type IN ('normal', 'trash', 'for_sale'));</pre>
+
+    <table>
+      <tr>
+        <th>storage_type</th>
+        <th>설명</th>
+        <th>삭제 허용</th>
+        <th>이름 변경</th>
+      </tr>
+      <tr>
+        <td><span class="badge badge-normal">normal</span></td>
+        <td>일반 사용자 보관함</td>
+        <td>허용</td>
+        <td>허용</td>
+      </tr>
+      <tr>
+        <td><span class="badge badge-trash">trash</span></td>
+        <td>휴지통 (시스템)</td>
+        <td>불가</td>
+        <td>불가</td>
+      </tr>
+      <tr>
+        <td><span class="badge badge-sale">for_sale</span></td>
+        <td>판매 보관함 (시스템)</td>
+        <td>불가</td>
+        <td>불가</td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">user_settings 테이블 — 신규</div>
+    <div class="lang-label">SQL</div>
+    <pre>CREATE TABLE user_settings (
+  user_id    UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  show_trash BOOLEAN NOT NULL DEFAULT true,
+  show_sale  BOOLEAN NOT NULL DEFAULT true,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+ALTER TABLE user_settings ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "own_settings" ON user_settings
+  USING  (user_id = auth.uid())
+  WITH CHECK (user_id = auth.uid());</pre>
+  </div>
+</section>
+
+<!-- 3. 데이터 레이어 -->
+<section class="section" id="data-layer">
+  <div class="section-number">03</div>
+  <h2 class="section-title">데이터 레이어</h2>
+  <p class="section-desc">모델 확장 + repository 2개 변경/신규.</p>
+
+  <div class="subsection">
+    <div class="subsection-title">변경/신규 파일</div>
+    <table>
+      <tr><th>파일</th><th>상태</th><th>변경 내용</th></tr>
+      <tr>
+        <td><code>data/models/storage_location.dart</code></td>
+        <td><span class="badge badge-mod">수정</span></td>
+        <td><code>storageType</code> 필드 추가, <code>isSystem</code> / <code>isTrash</code> / <code>isForSale</code> getter 추가</td>
+      </tr>
+      <tr>
+        <td><code>data/repositories/storage_repository.dart</code></td>
+        <td><span class="badge badge-mod">수정</span></td>
+        <td><code>ensureSystemStorages()</code>, <code>fetchSystemStorage(type)</code> 추가</td>
+      </tr>
+      <tr>
+        <td><code>data/repositories/user_settings_repository.dart</code></td>
+        <td><span class="badge badge-new">신규</span></td>
+        <td><code>fetchSettings()</code>, <code>updateShowTrash()</code>, <code>updateShowSale()</code></td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">StorageLocation 모델 변경</div>
+    <div class="lang-label">Dart</div>
+    <pre>class StorageLocation {
+  // ... 기존 필드 유지
+  final String storageType; // 'normal' | 'trash' | 'for_sale'
+
+  bool get isSystem  =&gt; storageType != 'normal';
+  bool get isTrash   =&gt; storageType == 'trash';
+  bool get isForSale =&gt; storageType == 'for_sale';
+}
+
+// fromMap 에 추가
+storageType: map['storage_type'] as String? ?? 'normal',</pre>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">StorageRepository — 신규 메서드</div>
+    <div class="lang-label">Dart</div>
+    <pre>// 조직 생성 직후 or 앱 시작 시 호출
+Future&lt;void&gt; ensureSystemStorages(String orgId) async {
+  for (final type in ['trash', 'for_sale']) {
+    final name = type == 'trash' ? '휴지통' : '판매 보관함';
+    final existing = await _db
+        .from('storages')
+        .select('id')
+        .eq('org_id', orgId)
+        .eq('storage_type', type)
+        .maybeSingle();
+    if (existing == null) {
+      await _db.from('storages').insert({
+        'org_id': orgId,
+        'name': name,
+        'storage_type': type,
+        // qr_code: DB 기본값(gen_random_uuid())으로 자동 생성
+      });
+    }
+  }
+}
+
+// 시스템 보관함 조회
+Future&lt;StorageLocation?&gt; fetchSystemStorage(String type) async {
+  final orgId = await getOrCreateOrgId();
+  final row = await _db
+      .from('storages')
+      .select('*, locations(id, name)')
+      .eq('org_id', orgId)
+      .eq('storage_type', type)
+      .maybeSingle();
+  return row == null ? null : StorageLocation.fromMap(row);
+}</pre>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">UserSettingsRepository — 신규</div>
+    <div class="lang-label">Dart — lib/data/repositories/user_settings_repository.dart</div>
+    <pre>class UserSettingsRepository {
+  final SupabaseClient _db;
+  UserSettingsRepository({SupabaseClient? db})
+      : _db = db ?? Supabase.instance.client;
+
+  Future&lt;({bool showTrash, bool showSale})&gt; fetchSettings() async {
+    final userId = _db.auth.currentUser!.id;
+    final row = await _db
+        .from('user_settings')
+        .select('show_trash, show_sale')
+        .eq('user_id', userId)
+        .maybeSingle();
+    return (
+      showTrash: row?['show_trash'] as bool? ?? true,
+      showSale:  row?['show_sale']  as bool? ?? true,
+    );
+  }
+
+  Future&lt;void&gt; updateShowTrash(bool value) =&gt; _upsert({'show_trash': value});
+  Future&lt;void&gt; updateShowSale(bool value)  =&gt; _upsert({'show_sale': value});
+
+  Future&lt;void&gt; _upsert(Map&lt;String, dynamic&gt; data) async {
+    final userId = _db.auth.currentUser!.id;
+    await _db.from('user_settings').upsert({
+      'user_id': userId,
+      'updated_at': DateTime.now().toIso8601String(),
+      ...data,
+    }, onConflict: 'user_id');
+  }
+}</pre>
+  </div>
+</section>
+
+<!-- 4. 옷 이동 UI -->
+<section class="section" id="move-ui">
+  <div class="section-number">04</div>
+  <h2 class="section-title">옷 이동 UI (옷 상세)</h2>
+  <p class="section-desc">ClothDetailScreen 앱바에 아이콘+라벨 버튼 3개를 나란히 표시한다. 숨겨진 ··· 메뉴 대신 항상 노출되어 발견성을 높인다.</p>
+
+  <div class="subsection">
+    <div class="subsection-title">UI 목업</div>
+    <div class="mockup-container">
+
+      <!-- 옷 상세 화면 -->
+      <div>
+        <div class="phone-title">옷 상세 — 아이콘 버튼</div>
+        <div class="phone">
+          <div class="phone-screen">
+            <div class="screen-appbar">
+              <span class="back">←</span>
+              <span>청바지</span>
+              <div class="actions" style="gap:12px;">
+                <div style="text-align:center;">
+                  <div style="font-size:14px;">✨</div>
+                  <div style="font-size:8px;opacity:0.7;">재분석</div>
+                </div>
+                <div style="text-align:center;">
+                  <div style="font-size:14px;">📦</div>
+                  <div style="font-size:8px;opacity:0.7;">이동</div>
+                </div>
+                <div style="text-align:center;">
+                  <div style="font-size:14px;">🗑️</div>
+                  <div style="font-size:8px;opacity:0.7;">휴지통</div>
+                </div>
+                <div style="text-align:center;">
+                  <div style="font-size:14px;">🏷️</div>
+                  <div style="font-size:8px;opacity:0.7;">판매</div>
+                </div>
+              </div>
+            </div>
+            <div class="screen-cloth-img">👖</div>
+            <div class="screen-body">
+              <div class="screen-section-label">보관함</div>
+              <div class="storage-row">
+                <span class="storage-icon">📦</span>
+                <span class="storage-name">겨울 옷장</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 보관함 선택 bottom sheet -->
+      <div>
+        <div class="phone-title">보관함 목록 선택</div>
+        <div class="phone">
+          <div class="phone-screen">
+            <div style="background:#1C1510;height:40%;opacity:0.4;"></div>
+            <div style="background:white;border-radius:20px 20px 0 0;padding:16px;margin-top:-1px;">
+              <div style="width:40px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 16px;"></div>
+              <div class="screen-section-label">보관함 선택</div>
+              <div class="storage-row">
+                <span class="storage-icon">📦</span>
+                <span class="storage-name">겨울 옷장</span>
+                <span style="color:var(--primary);">✓</span>
+              </div>
+              <div class="storage-row">
+                <span class="storage-icon">📦</span>
+                <span class="storage-name">여름 서랍</span>
+              </div>
+              <div class="storage-row">
+                <span class="storage-icon">📦</span>
+                <span class="storage-name">침실 옷걸이</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">동작 명세</div>
+    <table>
+      <tr><th>아이콘</th><th>동작</th><th>비활성 조건</th></tr>
+      <tr>
+        <td>📦 이동</td>
+        <td>일반 보관함 목록 bottom sheet 표시 → 선택 시 <code>ClothRepository.updateStorage()</code> → <code>_load()</code></td>
+        <td>없음 (항상 활성)</td>
+      </tr>
+      <tr>
+        <td>🗑️ 휴지통</td>
+        <td><code>fetchSystemStorage('trash')</code> → <code>updateStorage()</code> → SnackBar → pop</td>
+        <td>현재 <code>storageType == 'trash'</code></td>
+      </tr>
+      <tr>
+        <td>🏷️ 판매</td>
+        <td><code>fetchSystemStorage('for_sale')</code> → <code>updateStorage()</code> → SnackBar → pop</td>
+        <td>현재 <code>storageType == 'for_sale'</code></td>
+      </tr>
+    </table>
+  </div>
+</section>
+
+<!-- 5. 보관함 다중 선택 이동 -->
+<section class="section" id="bulk-select">
+  <div class="section-number">05</div>
+  <h2 class="section-title">보관함 다중 선택 이동</h2>
+  <p class="section-desc">StorageDetailScreen에서 옷을 복수 선택해 한 번에 이동할 수 있다.</p>
+
+  <div class="subsection">
+    <div class="subsection-title">진입/종료</div>
+    <ul class="spec-list">
+      <li>옷 카드 <strong>길게 누르기</strong> → 선택 모드 진입 (해당 카드 자동 선택)</li>
+      <li>선택 모드 중 카드 탭 → 선택/해제 토글</li>
+      <li>AppBar X 버튼 탭 → 선택 모드 종료 (선택 초기화)</li>
+    </ul>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">UI 목업</div>
+    <div class="mockup-container">
+      <div>
+        <div class="phone-title">선택 모드</div>
+        <div class="phone">
+          <div class="phone-screen">
+            <div class="screen-appbar">
+              <span>✕</span>
+              <span>3개 선택</span>
+              <span></span>
+            </div>
+            <div class="screen-body">
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                <div style="background:linear-gradient(135deg,#EDE7DD,#D5C9BB);border-radius:4px;height:80px;position:relative;border:2px solid var(--primary);">
+                  <div style="position:absolute;top:4px;left:4px;width:18px;height:18px;border-radius:50%;background:var(--primary);display:flex;align-items:center;justify-content:center;font-size:10px;color:white;">✓</div>
+                </div>
+                <div style="background:linear-gradient(135deg,#EDE7DD,#D5C9BB);border-radius:4px;height:80px;position:relative;">
+                  <div style="position:absolute;top:4px;left:4px;width:18px;height:18px;border-radius:50%;background:rgba(255,255,255,0.85);border:1.5px solid #BBAA95;"></div>
+                </div>
+              </div>
+            </div>
+            <div style="background:#2C2416;padding:12px 20px 20px;border-radius:16px 16px 0 0;margin-top:auto;">
+              <div style="display:flex;align-items:center;gap:16px;color:white;">
+                <span style="font-weight:700;font-size:13px;">3개</span>
+                <span style="flex:1;"></span>
+                <div style="text-align:center;">
+                  <div style="font-size:16px;">📦</div>
+                  <div style="font-size:9px;">이동</div>
+                </div>
+                <div style="text-align:center;">
+                  <div style="font-size:16px;">🗑️</div>
+                  <div style="font-size:9px;">휴지통</div>
+                </div>
+                <div style="text-align:center;">
+                  <div style="font-size:16px;">🏷️</div>
+                  <div style="font-size:9px;">판매</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">AppBar 상태 변화</div>
+    <table>
+      <tr><th>모드</th><th>leading</th><th>title</th><th>actions</th></tr>
+      <tr>
+        <td>일반</td>
+        <td>← (뒤로)</td>
+        <td>보관함 이름</td>
+        <td>편집, QR</td>
+      </tr>
+      <tr>
+        <td>선택 중</td>
+        <td>✕ (선택 취소)</td>
+        <td>N개 선택</td>
+        <td>없음</td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">하단 액션바 동작</div>
+    <table>
+      <tr><th>버튼</th><th>동작</th></tr>
+      <tr>
+        <td>📦 이동</td>
+        <td>현재 보관함 제외한 일반 보관함 목록 bottom sheet → 선택 시 선택된 모든 옷에 <code>updateStorage()</code> 병렬 실행</td>
+      </tr>
+      <tr>
+        <td>🗑️ 휴지통</td>
+        <td><code>fetchSystemStorage('trash')</code> → 선택된 모든 옷에 <code>updateStorage()</code> 병렬 실행</td>
+      </tr>
+      <tr>
+        <td>🏷️ 판매</td>
+        <td><code>fetchSystemStorage('for_sale')</code> → 선택된 모든 옷에 <code>updateStorage()</code> 병렬 실행</td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">완료 후 처리</div>
+    <ul class="spec-list">
+      <li>이동 성공 → SnackBar("이동했습니다") + 선택 초기화 + 목록 새로고침</li>
+      <li>이동 실패 → SnackBar 에러 메시지, 선택 상태 유지</li>
+      <li>FAB, 존재 여부 토글 버튼 → 선택 모드 중 미표시</li>
+    </ul>
+  </div>
+</section>
+
+<!-- 6. 홈 화면 -->
+<section class="section" id="home">
+  <div class="section-number">06</div>
+  <h2 class="section-title">홈 화면</h2>
+  <p class="section-desc">기본 보관함(휴지통/판매)은 일반 보관함과 분리해 하단에 별도 섹션으로 표시한다.</p>
+
+  <div class="subsection">
+    <div class="subsection-title">레이아웃 변경</div>
+    <div class="mockup-container">
+      <div>
+        <div class="phone-title">홈 화면 (시스템 보관함 표시)</div>
+        <div class="phone">
+          <div class="phone-screen">
+            <div class="screen-appbar">
+              <span>MyStorage</span>
+              <div class="actions">
+                <div class="action-btn">🔍</div>
+                <div class="action-btn">+</div>
+              </div>
+            </div>
+            <div class="screen-body">
+              <div class="screen-section-label">서울 집</div>
+              <div class="storage-row">
+                <span class="storage-icon">📦</span>
+                <span class="storage-name">겨울 옷장</span>
+                <span class="storage-count">12</span>
+              </div>
+              <div class="storage-row">
+                <span class="storage-icon">📦</span>
+                <span class="storage-name">여름 서랍</span>
+                <span class="storage-count">8</span>
+              </div>
+              <div class="home-section-label">기본 보관함</div>
+              <div class="storage-row">
+                <span class="storage-icon">🗑️</span>
+                <span class="storage-name" style="color:var(--danger);">휴지통</span>
+                <span class="storage-count">3</span>
+              </div>
+              <div class="storage-row">
+                <span class="storage-icon">🏷️</span>
+                <span class="storage-name" style="color:var(--success);">판매 보관함</span>
+                <span class="storage-count">5</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">home_screen.dart 변경</div>
+    <div class="lang-label">Dart</div>
+    <pre>// fetchAll() 결과를 분리
+final normal = storages.where((s) => !s.isSystem).toList();
+final system = storages.where((s) => s.isSystem).toList()
+    .where((s) {
+      if (s.isTrash  && !settings.showTrash) return false;
+      if (s.isForSale && !settings.showSale)  return false;
+      return true;
+    }).toList();
+
+// 렌더링
+// 1) 기존 위치별 그룹 (normal만)
+// 2) 시스템 섹션 (system 비어있으면 미표시)</pre>
+  </div>
+</section>
+
+<!-- 7. 프로필 설정 -->
+<section class="section" id="profile">
+  <div class="section-number">07</div>
+  <h2 class="section-title">프로필 설정</h2>
+  <p class="section-desc">마이프로필에 "보관함 표시 설정" 섹션을 추가한다.</p>
+
+  <div class="subsection">
+    <div class="subsection-title">UI 목업</div>
+    <div class="mockup-container">
+      <div>
+        <div class="phone-title">프로필 — 설정 섹션</div>
+        <div class="phone">
+          <div class="phone-screen">
+            <div class="screen-appbar">
+              <span class="back">←</span>
+              <span>마이</span>
+            </div>
+            <div class="screen-body">
+              <div class="screen-section-label">보관함 표시 설정</div>
+              <div class="toggle-row">
+                <span class="toggle-icon">🗑️</span>
+                <span class="toggle-label">휴지통 보관함 표시</span>
+                <div class="toggle-switch toggle-on">
+                  <div class="toggle-knob"></div>
+                </div>
+              </div>
+              <div class="toggle-row">
+                <span class="toggle-icon">🏷️</span>
+                <span class="toggle-label">판매 보관함 표시</span>
+                <div class="toggle-switch toggle-off">
+                  <div class="toggle-knob"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">동작 명세</div>
+    <ul class="spec-list">
+      <li>화면 진입 시 <code>UserSettingsRepository.fetchSettings()</code>로 현재 값 로드</li>
+      <li>토글 변경 시 즉시 <code>updateShowTrash()</code> / <code>updateShowSale()</code> 호출</li>
+      <li>저장 실패 시 토글 원래 값으로 롤백 + SnackBar 에러 표시</li>
+      <li>홈 화면은 다음 진입 시 반영 (별도 실시간 동기화 없음)</li>
+    </ul>
+  </div>
+</section>
+
+<!-- 8. i18n -->
+<section class="section" id="i18n">
+  <div class="section-number">08</div>
+  <h2 class="section-title">i18n 키 추가</h2>
+  <p class="section-desc">app_ko.arb / app_en.arb 에 추가한 키 목록.</p>
+
+  <table>
+    <tr><th>키</th><th>한국어</th><th>영어</th></tr>
+    <tr><td><code>moveToStorage</code></td><td>다른 보관함으로 이동</td><td>Move to storage</td></tr>
+    <tr><td><code>moveToTrash</code></td><td>휴지통으로 이동</td><td>Move to trash</td></tr>
+    <tr><td><code>moveToSale</code></td><td>판매 보관함으로 이동</td><td>Move to for sale</td></tr>
+    <tr><td><code>moveDone</code></td><td>이동했습니다</td><td>Moved</td></tr>
+    <tr><td><code>moveFailed</code></td><td>이동 실패: {error}</td><td>Move failed: {error}</td></tr>
+    <tr><td><code>systemStorages</code></td><td>기본 보관함</td><td>Default storages</td></tr>
+    <tr><td><code>storageVisibility</code></td><td>보관함 표시 설정</td><td>Storage visibility</td></tr>
+    <tr><td><code>settingsShowTrash</code></td><td>휴지통 보관함 표시</td><td>Show trash storage</td></tr>
+    <tr><td><code>settingsShowSale</code></td><td>판매 보관함 표시</td><td>Show sale storage</td></tr>
+    <tr><td><code>selectStorage</code></td><td>보관함 선택</td><td>Select storage</td></tr>
+  </table>
+</section>
+
+<!-- 9. 에러 처리 -->
+<section class="section" id="error">
+  <div class="section-number">09</div>
+  <h2 class="section-title">에러 처리</h2>
+
+  <table>
+    <tr><th>상황</th><th>처리 방식</th></tr>
+    <tr>
+      <td>기본 보관함 미생성 상태에서 이동 시도</td>
+      <td>이동 전 <code>ensureSystemStorages()</code> 선행 호출로 방지</td>
+    </tr>
+    <tr>
+      <td>보관함 이동 실패 (네트워크 등)</td>
+      <td>SnackBar 에러 메시지 표시, 화면 유지 (다중 선택 시 선택 상태 유지)</td>
+    </tr>
+    <tr>
+      <td>설정 저장 실패</td>
+      <td>토글 원래 값으로 즉시 롤백 + SnackBar</td>
+    </tr>
+    <tr>
+      <td>보관함 목록 로드 실패</td>
+      <td>기존 <code>loadError</code> + 재시도 버튼</td>
+    </tr>
+    <tr>
+      <td>user_settings 테이블 권한 오류 (PGRST205 / 42501)</td>
+      <td>테이블 수동 생성 후 <code>GRANT SELECT, INSERT, UPDATE ON user_settings TO authenticated</code> 필요. <code>NOTIFY pgrst, 'reload schema'</code>로 스키마 캐시 갱신.</td>
+    </tr>
+  </table>
+</section>
+
+<footer>
+  MyStorage · 옷 이동 / 휴지통 / 판매 보관함 설계서 · v1.1 · 2026-11-26
+</footer>
+
+</body>
+</html>

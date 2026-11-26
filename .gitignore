@@ -15,3 +15,6 @@ mystorage/.pub-cache/
 # macOS
 .DS_Store
 **/.DS_Store
+
+# Git worktrees
+.worktrees/
