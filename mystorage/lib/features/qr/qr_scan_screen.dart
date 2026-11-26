@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import '../../data/repositories/storage_repository.dart';
+import '../../l10n/app_localizations.dart';
 
 class QrScanScreen extends StatefulWidget {
   const QrScanScreen({super.key});
@@ -24,7 +25,7 @@ class _QrScanScreenState extends State<QrScanScreen> {
     if (!mounted) return;
     if (storage == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('등록되지 않은 QR입니다')),
+        SnackBar(content: Text(AppLocalizations.of(context).qrNotRegistered)),
       );
       setState(() => _scanned = false);
     } else {
@@ -42,7 +43,7 @@ class _QrScanScreenState extends State<QrScanScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('QR 스캔'),
+        title: Text(AppLocalizations.of(context).qrScanTitle),
         backgroundColor: Colors.black,
         foregroundColor: Colors.white,
       ),

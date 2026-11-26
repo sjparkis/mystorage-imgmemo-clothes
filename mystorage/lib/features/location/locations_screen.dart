@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../data/models/location.dart';
 import '../../data/repositories/location_repository.dart';
+import '../../l10n/app_localizations.dart';
 
 class LocationsScreen extends StatefulWidget {
   const LocationsScreen({super.key});
@@ -62,7 +63,7 @@ class _LocationsScreenState extends State<LocationsScreen> {
                 fontSize: 15,
                 color: const Color(0xFF2C2416),
               ).copyWith(fontFamilyFallback: const ['ChosunSm']),
-              decoration: const InputDecoration(hintText: '위치 이름 입력'),
+              decoration: InputDecoration(hintText: AppLocalizations.of(ctx).locationNameHint),
               onSubmitted: (_) => _submit(ctx, ctrl.text, editing),
             ),
             const SizedBox(height: 20),
@@ -105,7 +106,7 @@ class _LocationsScreenState extends State<LocationsScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('저장 실패: $e')),
+          SnackBar(content: Text(AppLocalizations.of(context).locationSaveFailed(e.toString()))),
         );
       }
     }
@@ -117,7 +118,7 @@ class _LocationsScreenState extends State<LocationsScreen> {
       builder: (_) => AlertDialog(
         backgroundColor: const Color(0xFFFFFBF7),
         title: Text(
-          '위치 삭제',
+          AppLocalizations.of(context).locationDeleteTitle,
           style: GoogleFonts.cormorant(
             fontSize: 18,
             fontWeight: FontWeight.w700,
@@ -125,7 +126,7 @@ class _LocationsScreenState extends State<LocationsScreen> {
           ).copyWith(fontFamilyFallback: const ['ChosunSm']),
         ),
         content: Text(
-          '"${loc.name}"을 삭제하면 해당 위치가 지정된 보관함의 위치 정보가 초기화됩니다.',
+          AppLocalizations.of(context).locationDeleteConfirm(loc.name),
           style: GoogleFonts.inter(
             fontSize: 13,
             color: const Color(0xFF6B5E50),
@@ -135,7 +136,7 @@ class _LocationsScreenState extends State<LocationsScreen> {
           TextButton(
             onPressed: () => Navigator.pop(context, false),
             child: Text(
-              '취소',
+              AppLocalizations.of(context).cancel,
               style: GoogleFonts.inter(
                 fontSize: 13,
                 color: const Color(0xFF9B8E7E),
@@ -145,7 +146,7 @@ class _LocationsScreenState extends State<LocationsScreen> {
           TextButton(
             onPressed: () => Navigator.pop(context, true),
             child: Text(
-              '삭제',
+              AppLocalizations.of(context).delete,
               style: GoogleFonts.inter(
                 fontSize: 13,
                 fontWeight: FontWeight.w700,
@@ -201,7 +202,7 @@ class _LocationsScreenState extends State<LocationsScreen> {
           : _locations.isEmpty
               ? Center(
                   child: Text(
-                    '위치를 추가해 주세요',
+                    AppLocalizations.of(context).locationAddHint,
                     style: GoogleFonts.inter(
                       fontSize: 13,
                       color: const Color(0xFF9B8E7E),

@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../data/repositories/cloth_repository.dart';
 import '../../data/models/cloth.dart';
+import '../../l10n/app_localizations.dart';
 import 'voice_search_button.dart';
 
 class SearchScreen extends StatefulWidget {
@@ -32,7 +33,7 @@ class _SearchScreenState extends State<SearchScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('검색 오류: $e')),
+          SnackBar(content: Text(AppLocalizations.of(context).searchError(e.toString()))),
         );
       }
     } finally {
@@ -69,7 +70,7 @@ class _SearchScreenState extends State<SearchScreen> {
                     controller: _queryCtrl,
                     style: GoogleFonts.inter(fontSize: 14, color: const Color(0xFF2C2416)).copyWith(fontFamilyFallback: const ['ChosunSm']),
                     decoration: InputDecoration(
-                      hintText: '옷 이름, 태그, 메모로 검색',
+                      hintText: AppLocalizations.of(context).searchHint,
                       hintStyle: GoogleFonts.inter(fontSize: 13, color: const Color(0xFF9B8E7E)).copyWith(fontFamilyFallback: const ['ChosunSm']),
                       prefixIcon: const Icon(Icons.search, size: 18, color: Color(0xFF9B8E7E)),
                       contentPadding: const EdgeInsets.symmetric(vertical: 12),
@@ -107,7 +108,7 @@ class _SearchScreenState extends State<SearchScreen> {
             child: !_searched
                 ? Center(
                     child: Text(
-                      '이름 또는 태그로 검색해 보세요',
+                      AppLocalizations.of(context).searchPlaceholder,
                       style: GoogleFonts.inter(
                         fontSize: 13, color: const Color(0xFF9B8E7E)).copyWith(fontFamilyFallback: const ['ChosunSm']),
                     ),
@@ -115,7 +116,7 @@ class _SearchScreenState extends State<SearchScreen> {
                 : _results.isEmpty
                     ? Center(
                         child: Text(
-                          '검색 결과가 없습니다',
+                          AppLocalizations.of(context).searchNoResults,
                           style: GoogleFonts.inter(
                             fontSize: 13, color: const Color(0xFF9B8E7E)).copyWith(fontFamilyFallback: const ['ChosunSm']),
                         ),
@@ -148,7 +149,7 @@ class _SearchScreenState extends State<SearchScreen> {
                                         size: 24, color: Color(0xFFBBAA95)),
                                   ),
                             title: Text(
-                              cloth.name ?? '이름 없음',
+                              cloth.name ?? AppLocalizations.of(context).noName,
                               style: GoogleFonts.inter(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,

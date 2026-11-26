@@ -1,11 +1,14 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../core/locale_cubit.dart';
 import '../../data/repositories/storage_repository.dart';
 import '../../data/repositories/cloth_repository.dart';
+import '../../l10n/app_localizations.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -95,7 +98,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('사진 업로드 실패: $e')),
+          SnackBar(content: Text(AppLocalizations.of(context).profilePhotoFailed(e.toString()))),
         );
       }
     } finally {
@@ -114,7 +117,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('닉네임 저장 실패: $e')),
+          SnackBar(content: Text(AppLocalizations.of(context).profileNicknameFailed(e.toString()))),
         );
       }
     } finally {
@@ -159,8 +162,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
               autofocus: true,
               style: GoogleFonts.inter(
                   fontSize: 15, color: const Color(0xFF2C2416)).copyWith(fontFamilyFallback: const ['ChosunSm']),
-              decoration: const InputDecoration(
-                hintText: '닉네임 입력',
+              decoration: InputDecoration(
+                hintText: AppLocalizations.of(ctx).profileNicknameHint,
               ),
               onSubmitted: (v) {
                 Navigator.pop(ctx);
@@ -337,7 +340,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             child: Row(
               children: [
                 Text(
-                  nickname.isNotEmpty ? nickname : '닉네임 설정',
+                  nickname.isNotEmpty ? nickname : AppLocalizations.of(context).profileNicknameSet,
                   style: GoogleFonts.playfairDisplay(
                     fontSize: 20,
                     fontWeight: FontWeight.w600,
@@ -372,9 +375,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
       padding: const EdgeInsets.symmetric(vertical: 28),
       child: Row(
         children: [
-          Expanded(child: _buildStatItem(_storageCount.toString(), '보관함')),
+          Expanded(child: _buildStatItem(_storageCount.toString(), AppLocalizations.of(context).profileStorages)),
           Container(width: 1, height: 36, color: const Color(0xFFE8E0D5)),
-          Expanded(child: _buildStatItem(_clothCount.toString(), '의류')),
+          Expanded(child: _buildStatItem(_clothCount.toString(), AppLocalizations.of(context).profileClothes)),
         ],
       ),
     );
@@ -411,34 +414,94 @@ class _ProfileScreenState extends State<ProfileScreen> {
         children: [
           _buildMenuItem(
             icon: Icons.inventory_2_outlined,
-            label: '내 보관함',
+            label: AppLocalizations.of(context).profileMyStorages,
             onTap: () => context.go('/'),
           ),
           const Divider(height: 1, color: Color(0xFFE8E0D5), indent: 24, endIndent: 24),
           _buildMenuItem(
             icon: Icons.place_outlined,
-            label: '위치 관리',
+            label: AppLocalizations.of(context).profileLocations,
             onTap: () => context.push('/locations'),
           ),
           const Divider(height: 1, color: Color(0xFFE8E0D5), indent: 24, endIndent: 24),
           _buildMenuItem(
             icon: Icons.people_outline,
-            label: '가족 연결',
+            label: AppLocalizations.of(context).profileFamily,
             onTap: () => context.push('/family'),
           ),
           const Divider(height: 1, color: Color(0xFFE8E0D5), indent: 24, endIndent: 24),
           _buildMenuItem(
             icon: Icons.search_outlined,
-            label: '의류 검색',
+            label: AppLocalizations.of(context).profileClothSearch,
             onTap: () => context.push('/search'),
           ),
           const Divider(height: 1, color: Color(0xFFE8E0D5), indent: 24, endIndent: 24),
           _buildMenuItem(
             icon: Icons.qr_code_outlined,
-            label: 'QR 스캔',
+            label: AppLocalizations.of(context).profileQrScan,
             onTap: () => context.push('/qr-scan'),
           ),
+          const Divider(height: 1, color: Color(0xFFE8E0D5), indent: 24, endIndent: 24),
+          _buildLanguageMenuItem(context),
         ],
+      ),
+    );
+  }
+
+  Widget _buildLanguageMenuItem(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return BlocBuilder<LocaleCubit, Locale>(
+      builder: (ctx, locale) => Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+        child: Row(
+          children: [
+            const Icon(Icons.language_outlined, size: 18, color: Color(0xFF8B7355)),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Text(
+                l10n.settingsLanguage,
+                style: GoogleFonts.inter(
+                  fontSize: 13,
+                  color: const Color(0xFF2C2416),
+                  fontWeight: FontWeight.w500,
+                ).copyWith(fontFamilyFallback: const ['ChosunSm']),
+              ),
+            ),
+            GestureDetector(
+              onTap: () => ctx.read<LocaleCubit>().setLocale(const Locale('ko')),
+              child: Text(
+                '한국어',
+                style: GoogleFonts.inter(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: locale.languageCode == 'ko'
+                      ? const Color(0xFF8B7355)
+                      : const Color(0xFFBBAA95),
+                ).copyWith(fontFamilyFallback: const ['ChosunSm']),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: Text(
+                '|',
+                style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFFD5C9BB)),
+              ),
+            ),
+            GestureDetector(
+              onTap: () => ctx.read<LocaleCubit>().setLocale(const Locale('en')),
+              child: Text(
+                'English',
+                style: GoogleFonts.inter(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: locale.languageCode == 'en'
+                      ? const Color(0xFF8B7355)
+                      : const Color(0xFFBBAA95),
+                ).copyWith(fontFamilyFallback: const ['ChosunSm']),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -17,6 +17,16 @@ class AuthSignUp extends AuthEvent {
 
 class AuthSignOut extends AuthEvent {}
 
+enum AuthErrorCode {
+  required,
+  passwordTooShort,
+  invalidCredentials,
+  emailInUse,
+  invalidInput,
+  network,
+  unknown,
+}
+
 sealed class AuthState {}
 
 class AuthInitial extends AuthState {}
@@ -25,7 +35,8 @@ class AuthSuccess extends AuthState {}
 class AuthEmailVerificationSent extends AuthState {}
 class AuthFailure extends AuthState {
   final String message;
-  AuthFailure(this.message);
+  final AuthErrorCode code;
+  AuthFailure(this.message, {this.code = AuthErrorCode.unknown});
 }
 
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
@@ -39,22 +50,25 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         emit(AuthSuccess());
       } catch (e) {
         debugPrint('[AuthBloc] signIn error: $e');
-        emit(AuthFailure(_parseError(e)));
+        emit(_parseAuthFailure(e));
       }
     });
 
     on<AuthSignUp>((event, emit) async {
       if (event.email.isEmpty || event.password.isEmpty) {
-        emit(AuthFailure('이메일과 비밀번호를 입력해 주세요.'));
+        emit(AuthFailure('이메일과 비밀번호를 입력해 주세요.',
+            code: AuthErrorCode.required));
         return;
       }
       if (event.password.length < 6) {
-        emit(AuthFailure('비밀번호는 6자 이상이어야 합니다.'));
+        emit(AuthFailure('비밀번호는 6자 이상이어야 합니다.',
+            code: AuthErrorCode.passwordTooShort));
         return;
       }
       emit(AuthLoading());
       try {
-        final session = await _repo.signUp(email: event.email, password: event.password);
+        final session =
+            await _repo.signUp(email: event.email, password: event.password);
         debugPrint('[AuthBloc] signUp success, session: ${session != null}');
         if (session != null) {
           emit(AuthSuccess());
@@ -63,7 +77,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         }
       } catch (e) {
         debugPrint('[AuthBloc] signUp error: $e');
-        emit(AuthFailure(_parseError(e)));
+        emit(_parseAuthFailure(e));
       }
     });
 
@@ -74,23 +88,31 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     });
   }
 
-  String _parseError(Object e) {
+  AuthFailure _parseAuthFailure(Object e) {
     final msg = e.toString().toLowerCase();
-    if (msg.contains('invalid login credentials') || msg.contains('invalid_credentials')) {
-      return '이메일 또는 비밀번호가 올바르지 않습니다.';
+    if (msg.contains('invalid login credentials') ||
+        msg.contains('invalid_credentials')) {
+      return AuthFailure('이메일 또는 비밀번호가 올바르지 않습니다.',
+          code: AuthErrorCode.invalidCredentials);
     }
-    if (msg.contains('email already registered') || msg.contains('already registered')) {
-      return '이미 사용 중인 이메일입니다.';
+    if (msg.contains('email already registered') ||
+        msg.contains('already registered')) {
+      return AuthFailure('이미 사용 중인 이메일입니다.',
+          code: AuthErrorCode.emailInUse);
     }
-    if (msg.contains('password') && (msg.contains('least') || msg.contains('short'))) {
-      return '비밀번호는 6자 이상이어야 합니다.';
+    if (msg.contains('password') &&
+        (msg.contains('least') || msg.contains('short'))) {
+      return AuthFailure('비밀번호는 6자 이상이어야 합니다.',
+          code: AuthErrorCode.passwordTooShort);
     }
     if (msg.contains('422')) {
-      return '입력 정보를 확인해 주세요. (비밀번호 6자 이상)';
+      return AuthFailure('입력 정보를 확인해 주세요. (비밀번호 6자 이상)',
+          code: AuthErrorCode.invalidInput);
     }
     if (msg.contains('network') || msg.contains('connection')) {
-      return '네트워크 연결을 확인해 주세요.';
+      return AuthFailure('네트워크 연결을 확인해 주세요.',
+          code: AuthErrorCode.network);
     }
-    return e.toString();
+    return AuthFailure(e.toString());
   }
 }

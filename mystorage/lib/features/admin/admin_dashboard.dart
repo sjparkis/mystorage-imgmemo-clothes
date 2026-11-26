@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../l10n/app_localizations.dart';
 
 class AdminDashboard extends StatefulWidget {
   const AdminDashboard({super.key});
@@ -24,21 +25,21 @@ class _AdminDashboardState extends State<AdminDashboard> {
         future: _stats,
         builder: (_, snap) {
           if (snap.hasError) {
-            return Center(child: Text('오류: ${snap.error}'));
+            return Center(child: Text(AppLocalizations.of(context).loadError(snap.error.toString())));
           }
           if (snap.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
-          if (!snap.hasData) return const Center(child: Text('데이터 없음'));
+          if (!snap.hasData) return Center(child: Text(AppLocalizations.of(context).adminNoData));
           final s = snap.data!;
           String v(String key) => (s[key] ?? 0).toString();
           return GridView.count(
             crossAxisCount: 2, padding: const EdgeInsets.all(16), mainAxisSpacing: 12, crossAxisSpacing: 12,
             children: [
-              _StatCard(label: '전체 사용자', value: v('total_users'), icon: Icons.people),
-              _StatCard(label: '전체 조직', value: v('total_orgs'), icon: Icons.business),
-              _StatCard(label: '전체 보관함', value: v('total_storages'), icon: Icons.inventory_2),
-              _StatCard(label: '전체 옷', value: v('total_clothes'), icon: Icons.checkroom),
+              _StatCard(label: AppLocalizations.of(context).adminTotalUsers, value: v('total_users'), icon: Icons.people),
+              _StatCard(label: AppLocalizations.of(context).adminTotalOrgs, value: v('total_orgs'), icon: Icons.business),
+              _StatCard(label: AppLocalizations.of(context).adminTotalStorages, value: v('total_storages'), icon: Icons.inventory_2),
+              _StatCard(label: AppLocalizations.of(context).adminTotalClothes, value: v('total_clothes'), icon: Icons.checkroom),
               _StatCard(label: '광고제거 구독', value: v('ad_free_count'), icon: Icons.block),
               _StatCard(label: '기본 구독', value: v('basic_count'), icon: Icons.star),
               _StatCard(label: 'AI 음성 구독', value: v('ai_voice_count'), icon: Icons.mic),

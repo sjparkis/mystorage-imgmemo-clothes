@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../data/repositories/storage_repository.dart';
 import '../../data/repositories/cloth_repository.dart';
 import '../../data/models/storage_location.dart';
+import '../../l10n/app_localizations.dart';
 import 'storage_card.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -70,7 +71,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   const Icon(Icons.place_outlined, size: 13, color: Color(0xFF8B7355)),
                   const SizedBox(width: 6),
                   Text(
-                    key ?? '위치 미설정',
+                    key ?? AppLocalizations.of(context).noLocation,
                     style: GoogleFonts.inter(
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
@@ -159,7 +160,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text('불러오기 실패',
+                      Text(AppLocalizations.of(context).loadFailed,
                           style: GoogleFonts.inter(
                               fontSize: 13, color: const Color(0xFF9B8E7E)).copyWith(fontFamilyFallback: const ['ChosunSm'])),
                       const SizedBox(height: 8),
@@ -172,7 +173,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ),
                       const SizedBox(height: 12),
-                      TextButton(onPressed: _load, child: const Text('다시 시도')),
+                      TextButton(onPressed: _load, child: Text(AppLocalizations.of(context).retry)),
                     ],
                   ),
                 )
@@ -195,7 +196,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            '+ 버튼으로 보관함을 추가해 보세요',
+                            AppLocalizations.of(context).addStorageHint,
                             style: GoogleFonts.inter(
                               fontSize: 12,
                               color: const Color(0xFF9B8E7E),
@@ -227,31 +228,31 @@ class _HomeScreenState extends State<HomeScreen> {
           shadowColor: Colors.transparent,
           elevation: 0,
           height: 60,
-          destinations: const [
+          destinations: [
             NavigationDestination(
-              icon: Icon(Icons.home_outlined),
-              selectedIcon: Icon(Icons.home),
-              label: '홈',
+              icon: const Icon(Icons.home_outlined),
+              selectedIcon: const Icon(Icons.home),
+              label: AppLocalizations.of(context).navHome,
             ),
             NavigationDestination(
-              icon: Icon(Icons.search_outlined),
-              selectedIcon: Icon(Icons.search),
-              label: '검색',
+              icon: const Icon(Icons.search_outlined),
+              selectedIcon: const Icon(Icons.search),
+              label: AppLocalizations.of(context).navSearch,
             ),
             NavigationDestination(
-              icon: Icon(Icons.qr_code_scanner_outlined),
-              selectedIcon: Icon(Icons.qr_code_scanner),
+              icon: const Icon(Icons.qr_code_scanner_outlined),
+              selectedIcon: const Icon(Icons.qr_code_scanner),
               label: 'QR',
             ),
             NavigationDestination(
-              icon: Icon(Icons.auto_fix_high_outlined),
-              selectedIcon: Icon(Icons.auto_fix_high),
-              label: 'AI 정리',
+              icon: const Icon(Icons.auto_fix_high_outlined),
+              selectedIcon: const Icon(Icons.auto_fix_high),
+              label: AppLocalizations.of(context).navAiOrganize,
             ),
             NavigationDestination(
-              icon: Icon(Icons.person_outline),
-              selectedIcon: Icon(Icons.person),
-              label: '나의',
+              icon: const Icon(Icons.person_outline),
+              selectedIcon: const Icon(Icons.person),
+              label: AppLocalizations.of(context).navMy,
             ),
           ],
           selectedIndex: 0,

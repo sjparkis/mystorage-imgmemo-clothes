@@ -3,6 +3,7 @@ import 'package:qr_flutter/qr_flutter.dart';
 import 'package:printing/printing.dart';
 import 'package:pdf/widgets.dart' as pw;
 import '../../data/models/storage_location.dart';
+import '../../l10n/app_localizations.dart';
 
 class QrStickerScreen extends StatefulWidget {
   final StorageLocation storage;
@@ -42,7 +43,7 @@ class _QrStickerScreenState extends State<QrStickerScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('출력 중 오류가 발생했습니다')),
+          SnackBar(content: Text(AppLocalizations.of(context).qrPrintError)),
         );
       }
     }
@@ -52,7 +53,7 @@ class _QrStickerScreenState extends State<QrStickerScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('QR 스티커'),
+        title: Text(AppLocalizations.of(context).qrStickerTitle),
         actions: [
           IconButton(
             icon: const Icon(Icons.print),
@@ -73,7 +74,7 @@ class _QrStickerScreenState extends State<QrStickerScreen> {
             const SizedBox(height: 24),
             FilledButton.icon(
               icon: const Icon(Icons.print),
-              label: const Text('스티커 출력'),
+              label: Text(AppLocalizations.of(context).qrPrint),
               onPressed: () => _print(context),
             ),
           ],

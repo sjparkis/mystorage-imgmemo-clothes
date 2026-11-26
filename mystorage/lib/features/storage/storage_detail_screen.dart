@@ -5,6 +5,7 @@ import '../../data/repositories/storage_repository.dart';
 import '../../data/repositories/cloth_repository.dart';
 import '../../data/models/storage_location.dart';
 import '../../data/models/cloth.dart';
+import '../../l10n/app_localizations.dart';
 
 class StorageDetailScreen extends StatefulWidget {
   final String storageId;
@@ -56,9 +57,9 @@ class _StorageDetailScreenState extends State<StorageDetailScreen> {
                 children: [
                   const Icon(Icons.error_outline, size: 40, color: Colors.grey),
                   const SizedBox(height: 12),
-                  Text('오류: ${snap.error}', textAlign: TextAlign.center),
+                  Text(AppLocalizations.of(ctx).loadError(snap.error.toString()), textAlign: TextAlign.center),
                   const SizedBox(height: 16),
-                  FilledButton(onPressed: _reload, child: const Text('다시 시도')),
+                  FilledButton(onPressed: _reload, child: Text(AppLocalizations.of(ctx).retry)),
                 ],
               ),
             ),
@@ -121,7 +122,7 @@ class _StorageDetailScreenState extends State<StorageDetailScreen> {
                       const Icon(Icons.checkroom, size: 44, color: Color(0xFFD5C9BB)),
                       const SizedBox(height: 20),
                       Text(
-                        '옷을 추가해 주세요',
+                        AppLocalizations.of(context).addClothHint,
                         style: GoogleFonts.inter(
                           fontSize: 13,
                           color: const Color(0xFF9B8E7E),
@@ -211,10 +212,10 @@ class _ClothCard extends StatelessWidget {
                       ),
                       child: Text(
                         isPresent == true
-                            ? '있음'
+                            ? AppLocalizations.of(context).present
                             : isPresent == false
-                                ? '없음'
-                                : '있음 확인?',
+                                ? AppLocalizations.of(context).absent
+                                : AppLocalizations.of(context).confirmPresent,
                         style: GoogleFonts.inter(
                           fontSize: 10,
                           fontWeight: FontWeight.w700,
@@ -233,7 +234,7 @@ class _ClothCard extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  cloth.name ?? '이름 없음',
+                  cloth.name ?? AppLocalizations.of(context).noName,
                   style: GoogleFonts.inter(
                     fontSize: 12,
                     fontWeight: FontWeight.w700,

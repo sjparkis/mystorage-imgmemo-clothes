@@ -3,7 +3,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../core/locale_cubit.dart';
 import '../../data/repositories/auth_repository.dart';
+import '../../l10n/app_localizations.dart';
 import 'auth_bloc.dart';
 
 class LoginScreen extends StatelessWidget {
@@ -75,6 +77,19 @@ class _LoginViewState extends State<_LoginView> {
     super.dispose();
   }
 
+  String _errorMessage(BuildContext context, AuthFailure state) {
+    final l10n = AppLocalizations.of(context);
+    return switch (state.code) {
+      AuthErrorCode.required => l10n.authErrRequired,
+      AuthErrorCode.passwordTooShort => l10n.authErrPasswordShort,
+      AuthErrorCode.invalidCredentials => l10n.authErrInvalidCredentials,
+      AuthErrorCode.emailInUse => l10n.authErrEmailInUse,
+      AuthErrorCode.invalidInput => l10n.authErrInvalidInput,
+      AuthErrorCode.network => l10n.authErrNetwork,
+      AuthErrorCode.unknown => state.message,
+    };
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -87,7 +102,7 @@ class _LoginViewState extends State<_LoginView> {
           }
           if (state is AuthFailure) {
             ScaffoldMessenger.of(ctx).showSnackBar(
-              SnackBar(content: Text(state.message)),
+              SnackBar(content: Text(_errorMessage(ctx, state))),
             );
           }
         },
@@ -102,11 +117,11 @@ class _LoginViewState extends State<_LoginView> {
   }
 
   Widget _buildIntro(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final size = MediaQuery.of(context).size;
     return Stack(
       key: const ValueKey('intro'),
       children: [
-        // 배경 그라데이션 (에디토리얼 느낌)
         Container(
           width: double.infinity,
           height: double.infinity,
@@ -123,7 +138,6 @@ class _LoginViewState extends State<_LoginView> {
             ),
           ),
         ),
-        // 장식 원
         Positioned(
           top: -size.height * 0.15,
           right: -size.width * 0.2,
@@ -154,7 +168,6 @@ class _LoginViewState extends State<_LoginView> {
             ),
           ),
         ),
-        // 콘텐츠
         SafeArea(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 36),
@@ -190,7 +203,7 @@ class _LoginViewState extends State<_LoginView> {
                 ),
                 const SizedBox(height: 20),
                 Text(
-                  '나만의 옷 보관함',
+                  l10n.loginSubtitle,
                   style: GoogleFonts.cormorant(
                     fontSize: 16,
                     color: const Color(0xFF9B8E7E),
@@ -241,10 +254,10 @@ class _LoginViewState extends State<_LoginView> {
   }
 
   Widget _buildForm(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Column(
       key: const ValueKey('form'),
       children: [
-        // 헤더
         Container(
           width: double.infinity,
           color: const Color(0xFF1C1510),
@@ -280,7 +293,6 @@ class _LoginViewState extends State<_LoginView> {
             ),
           ),
         ),
-        // 폼 영역
         Expanded(
           child: Container(
             color: const Color(0xFFF7F3EE),
@@ -293,20 +305,20 @@ class _LoginViewState extends State<_LoginView> {
                     controller: _emailCtrl,
                     keyboardType: TextInputType.emailAddress,
                     style: GoogleFonts.inter(fontSize: 14, color: const Color(0xFF2C2416)).copyWith(fontFamilyFallback: const ['ChosunSm']),
-                    decoration: const InputDecoration(labelText: '이메일'),
+                    decoration: InputDecoration(labelText: l10n.email),
                   ),
                   const SizedBox(height: 12),
                   TextField(
                     controller: _pwCtrl,
                     obscureText: true,
                     style: GoogleFonts.inter(fontSize: 14, color: const Color(0xFF2C2416)).copyWith(fontFamilyFallback: const ['ChosunSm']),
-                    decoration: const InputDecoration(labelText: '비밀번호'),
+                    decoration: InputDecoration(labelText: l10n.password),
                   ),
                   const SizedBox(height: 16),
                   Row(
                     children: [
                       _CheckOption(
-                        label: '아이디 저장',
+                        label: l10n.saveId,
                         value: _saveId,
                         onChanged: (v) => setState(() {
                           _saveId = v;
@@ -315,7 +327,7 @@ class _LoginViewState extends State<_LoginView> {
                       ),
                       const SizedBox(width: 20),
                       _CheckOption(
-                        label: '비밀번호 저장',
+                        label: l10n.savePassword,
                         value: _savePw,
                         onChanged: (v) => setState(() {
                           _savePw = v;
@@ -405,13 +417,57 @@ class _LoginViewState extends State<_LoginView> {
                     child: GestureDetector(
                       onTap: () => setState(() => _showForm = false),
                       child: Text(
-                        '← 돌아가기',
+                        l10n.back,
                         style: GoogleFonts.inter(
                           fontSize: 11,
                           color: const Color(0xFF9B8E7E),
                           letterSpacing: 1,
                         ).copyWith(fontFamilyFallback: const ['ChosunSm']),
                       ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  BlocBuilder<LocaleCubit, Locale>(
+                    builder: (ctx, locale) => Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        GestureDetector(
+                          onTap: () => ctx.read<LocaleCubit>().setLocale(const Locale('ko')),
+                          child: Text(
+                            '한국어',
+                            style: GoogleFonts.inter(
+                              fontSize: 11,
+                              color: locale.languageCode == 'ko'
+                                  ? const Color(0xFF8B7355)
+                                  : const Color(0xFFBBB0A5),
+                              letterSpacing: 0.5,
+                            ).copyWith(fontFamilyFallback: const ['ChosunSm']),
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          child: Text(
+                            '|',
+                            style: GoogleFonts.inter(
+                              fontSize: 11,
+                              color: const Color(0xFFBBB0A5),
+                            ),
+                          ),
+                        ),
+                        GestureDetector(
+                          onTap: () => ctx.read<LocaleCubit>().setLocale(const Locale('en')),
+                          child: Text(
+                            'English',
+                            style: GoogleFonts.inter(
+                              fontSize: 11,
+                              color: locale.languageCode == 'en'
+                                  ? const Color(0xFF8B7355)
+                                  : const Color(0xFFBBB0A5),
+                              letterSpacing: 0.5,
+                            ).copyWith(fontFamilyFallback: const ['ChosunSm']),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],

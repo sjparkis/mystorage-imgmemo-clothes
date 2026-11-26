@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../data/repositories/cloth_repository.dart';
 import '../../data/repositories/storage_repository.dart';
 import '../../data/models/cloth.dart';
+import '../../l10n/app_localizations.dart';
 import '../../services/organize_service.dart';
 
 enum _Phase { settings, loading, results }
@@ -18,7 +19,7 @@ class _OrganizeScreenState extends State<OrganizeScreen> {
   final _storageRepo = StorageRepository();
   final _service = OrganizeService();
 
-  final _criteria = <String>{'계절별'};
+  final _criteria = <String>{'season'};
   int _maxPerBox = 10;
   _Phase _phase = _Phase.settings;
   List<OrganizeGroup> _groups = [];
@@ -26,7 +27,14 @@ class _OrganizeScreenState extends State<OrganizeScreen> {
   bool _applying = false;
   String? _error;
 
-  static const _criteriaOptions = ['계절별', '소재별', '색상별'];
+  static const _criteriaOptions = ['season', 'material', 'color'];
+
+  String _criteriaLabel(String key, AppLocalizations l10n) => switch (key) {
+    'season' => l10n.orgCriteriaSeason,
+    'material' => l10n.orgCriteriaMaterial,
+    'color' => l10n.orgCriteriaColor,
+    _ => key,
+  };
 
   Future<void> _analyze() async {
     setState(() { _phase = _Phase.loading; _error = null; });
@@ -37,7 +45,7 @@ class _OrganizeScreenState extends State<OrganizeScreen> {
         all.addAll(await _clothRepo.fetchByStorage(s.id));
       }
       if (all.isEmpty) {
-        setState(() { _phase = _Phase.settings; _error = '등록된 의류가 없습니다.'; });
+        if (mounted) setState(() { _phase = _Phase.settings; _error = AppLocalizations.of(context).orgNoClothes; });
         return;
       }
       _allClothes = all;
@@ -48,7 +56,7 @@ class _OrganizeScreenState extends State<OrganizeScreen> {
       );
       if (mounted) setState(() { _groups = groups; _phase = _Phase.results; });
     } catch (e) {
-      if (mounted) setState(() { _phase = _Phase.settings; _error = 'AI 분석 실패: $e'; });
+      if (mounted) setState(() { _phase = _Phase.settings; _error = AppLocalizations.of(context).orgAnalyzeFailed(e.toString()); });
     }
   }
 
@@ -63,14 +71,14 @@ class _OrganizeScreenState extends State<OrganizeScreen> {
       }
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('새 보관함에 적용됐습니다.')),
+          SnackBar(content: Text(AppLocalizations.of(context).orgApplyDone)),
         );
         setState(() { _phase = _Phase.settings; _groups = []; });
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('적용 실패: $e')),
+          SnackBar(content: Text(AppLocalizations.of(context).orgApplyFailed(e.toString()))),
         );
       }
     } finally {
@@ -109,12 +117,13 @@ class _OrganizeScreenState extends State<OrganizeScreen> {
   }
 
   Widget _buildSettings() {
+    final l10n = AppLocalizations.of(context);
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(24, 32, 24, 32),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _sectionLabel('분류 기준'),
+          _sectionLabel(l10n.orgCriteriaLabel),
           const SizedBox(height: 12),
           Wrap(
             spacing: 8,
@@ -140,7 +149,7 @@ class _OrganizeScreenState extends State<OrganizeScreen> {
                     ),
                   ),
                   child: Text(
-                    opt,
+                    _criteriaLabel(opt, l10n),
                     style: GoogleFonts.inter(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
@@ -153,7 +162,7 @@ class _OrganizeScreenState extends State<OrganizeScreen> {
             }).toList(),
           ),
           const SizedBox(height: 32),
-          _sectionLabel('상자당 최대 의류 수'),
+          _sectionLabel(l10n.orgMaxPerBox),
           const SizedBox(height: 12),
           Container(
             color: const Color(0xFFFFFBF7),
@@ -183,7 +192,7 @@ class _OrganizeScreenState extends State<OrganizeScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            '옷의 평균 부피를 고려해 상자가 너무 많아지지 않도록 적절히 설정하세요.',
+            l10n.orgMaxPerBoxHint,
             style: GoogleFonts.inter(
               fontSize: 11,
               color: const Color(0xFFBBAA95),
@@ -208,7 +217,7 @@ class _OrganizeScreenState extends State<OrganizeScreen> {
                 shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
               ),
               child: Text(
-                'AI 분석 시작',
+                l10n.orgStartAnalysis,
                 style: GoogleFonts.inter(
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
@@ -224,6 +233,7 @@ class _OrganizeScreenState extends State<OrganizeScreen> {
   }
 
   Widget _buildLoading() {
+    final l10n = AppLocalizations.of(context);
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -238,7 +248,7 @@ class _OrganizeScreenState extends State<OrganizeScreen> {
           ),
           const SizedBox(height: 24),
           Text(
-            'AI가 의류를 분석하는 중...',
+            l10n.orgAnalyzing,
             style: GoogleFonts.cormorant(
               fontSize: 18,
               color: const Color(0xFF2C2416),
@@ -247,7 +257,7 @@ class _OrganizeScreenState extends State<OrganizeScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            '${_criteria.join(" · ")} 기준으로 분류 중',
+            l10n.orgSortingBy(_criteria.map((k) => _criteriaLabel(k, l10n)).join(' · ')),
             style: GoogleFonts.inter(
               fontSize: 12,
               color: const Color(0xFF9B8E7E),
@@ -258,12 +268,11 @@ class _OrganizeScreenState extends State<OrganizeScreen> {
     );
   }
 
-  // source → { destinationName → [clothes] }
-  Map<String, Map<String, List<Cloth>>> _buildFlowData() {
+  Map<String, Map<String, List<Cloth>>> _buildFlowData(String uncategorizedLabel) {
     final result = <String, Map<String, List<Cloth>>>{};
     for (final group in _groups) {
       for (final cloth in _allClothes.where((c) => group.clothIds.contains(c.id))) {
-        final from = cloth.storageName ?? '미분류';
+        final from = cloth.storageName ?? uncategorizedLabel;
         result.putIfAbsent(from, () => {});
         result[from]!.putIfAbsent(group.name, () => []);
         result[from]![group.name]!.add(cloth);
@@ -273,7 +282,8 @@ class _OrganizeScreenState extends State<OrganizeScreen> {
   }
 
   Widget _buildResults() {
-    final flowData = _buildFlowData();
+    final l10n = AppLocalizations.of(context);
+    final flowData = _buildFlowData(l10n.orgUncategorized);
     final totalClothes = _groups.fold<int>(0, (s, g) => s + g.clothIds.length);
     final sourceNames = flowData.keys.toList();
 
@@ -283,7 +293,6 @@ class _OrganizeScreenState extends State<OrganizeScreen> {
           child: ListView(
             padding: const EdgeInsets.fromLTRB(0, 0, 0, 24),
             children: [
-              // ── 상단 요약 헤더 ──
               Container(
                 color: const Color(0xFF1C1510),
                 padding: const EdgeInsets.fromLTRB(24, 20, 24, 20),
@@ -294,7 +303,7 @@ class _OrganizeScreenState extends State<OrganizeScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'AI 정리 계획',
+                            l10n.orgPlanTitle,
                             style: GoogleFonts.cormorant(
                               fontSize: 13, fontWeight: FontWeight.w600,
                               letterSpacing: 3, color: const Color(0xFF8B7355),
@@ -302,7 +311,7 @@ class _OrganizeScreenState extends State<OrganizeScreen> {
                           ),
                           const SizedBox(height: 6),
                           Text(
-                            '총 $totalClothes개 의류  →  ${_groups.length}개 새 보관함',
+                            l10n.orgSummary(totalClothes, _groups.length),
                             style: GoogleFonts.playfairDisplay(
                               fontSize: 18, fontWeight: FontWeight.w700,
                               color: Colors.white,
@@ -310,7 +319,10 @@ class _OrganizeScreenState extends State<OrganizeScreen> {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            '기준: ${_criteria.join(" · ")}  ·  상자당 최대 ${_maxPerBox}개',
+                            l10n.orgCriteriaDetail(
+                              _criteria.map((k) => _criteriaLabel(k, l10n)).join(' · '),
+                              _maxPerBox,
+                            ),
                             style: GoogleFonts.inter(
                               fontSize: 11, color: const Color(0xFF6B5E50),
                             ).copyWith(fontFamilyFallback: const ['ChosunSm']),
@@ -326,7 +338,7 @@ class _OrganizeScreenState extends State<OrganizeScreen> {
                           border: Border.all(color: const Color(0xFF8B7355)),
                         ),
                         child: Text(
-                          '다시 설정',
+                          l10n.orgReset,
                           style: GoogleFonts.inter(
                             fontSize: 10, color: const Color(0xFF8B7355),
                             fontWeight: FontWeight.w600, letterSpacing: 1,
@@ -337,8 +349,6 @@ class _OrganizeScreenState extends State<OrganizeScreen> {
                   ],
                 ),
               ),
-
-              // ── 흐름 카드: 출발 보관함 기준 ──
               Padding(
                 padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
                 child: Text(
@@ -351,12 +361,10 @@ class _OrganizeScreenState extends State<OrganizeScreen> {
               ),
               const SizedBox(height: 12),
               ...sourceNames.map((sourceName) =>
-                _buildFlowCard(sourceName, flowData[sourceName]!)),
+                _buildFlowCard(sourceName, flowData[sourceName]!, l10n)),
             ],
           ),
         ),
-
-        // ── 하단 APPLY ──
         Container(
           decoration: const BoxDecoration(
             color: Color(0xFFFFFBF7),
@@ -368,7 +376,7 @@ class _OrganizeScreenState extends State<OrganizeScreen> {
             child: Column(
               children: [
                 Text(
-                  '새 보관함이 생성되고 의류가 이동됩니다.\n기존 보관함은 그대로 유지됩니다.',
+                  l10n.orgApplyConfirm,
                   textAlign: TextAlign.center,
                   style: GoogleFonts.inter(
                     fontSize: 11, color: const Color(0xFFBBAA95), height: 1.5,
@@ -405,8 +413,7 @@ class _OrganizeScreenState extends State<OrganizeScreen> {
     );
   }
 
-  // 출발 보관함 1개 → 여러 도착 보관함 흐름 카드
-  Widget _buildFlowCard(String sourceName, Map<String, List<Cloth>> destinations) {
+  Widget _buildFlowCard(String sourceName, Map<String, List<Cloth>> destinations, AppLocalizations l10n) {
     final totalCount = destinations.values.fold<int>(0, (s, l) => s + l.length);
     final destNames = destinations.keys.toList();
 
@@ -418,7 +425,6 @@ class _OrganizeScreenState extends State<OrganizeScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // 출발 보관함 헤더
           Container(
             color: const Color(0xFF2C2416),
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
@@ -439,7 +445,7 @@ class _OrganizeScreenState extends State<OrganizeScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                   color: const Color(0xFF8B7355),
                   child: Text(
-                    '$totalCount개 이동',
+                    l10n.orgMoveCount(totalCount),
                     style: GoogleFonts.inter(
                       fontSize: 10, fontWeight: FontWeight.w600,
                       color: Colors.white, letterSpacing: 0.5,
@@ -449,24 +455,21 @@ class _OrganizeScreenState extends State<OrganizeScreen> {
               ],
             ),
           ),
-
-          // 도착 보관함별 흐름 블록
           ...destNames.asMap().entries.map((entry) {
             final isLast = entry.key == destNames.length - 1;
             final destName = entry.value;
             final clothes = destinations[destName]!;
-            return _buildDestinationBlock(destName, clothes, isLast);
+            return _buildDestinationBlock(destName, clothes, isLast, l10n);
           }),
         ],
       ),
     );
   }
 
-  Widget _buildDestinationBlock(String destName, List<Cloth> clothes, bool isLast) {
+  Widget _buildDestinationBlock(String destName, List<Cloth> clothes, bool isLast, AppLocalizations l10n) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // 화살표 + 도착 보관함 이름
         Container(
           color: const Color(0xFFFFFBF7),
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
@@ -491,7 +494,7 @@ class _OrganizeScreenState extends State<OrganizeScreen> {
                       ).copyWith(fontFamilyFallback: const ['ChosunSm']),
                     ),
                     Text(
-                      '${clothes.length}개',
+                      l10n.orgMoveCount(clothes.length),
                       style: GoogleFonts.inter(
                         fontSize: 10, color: const Color(0xFF9B8E7E),
                       ).copyWith(fontFamilyFallback: const ['ChosunSm']),
@@ -515,26 +518,23 @@ class _OrganizeScreenState extends State<OrganizeScreen> {
             ],
           ),
         ),
-
-        // 옷 썸네일 가로 스크롤
         Container(
           color: const Color(0xFFF7F3EE),
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
           child: SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
-              children: clothes.map((cloth) => _buildClothTile(cloth)).toList(),
+              children: clothes.map((cloth) => _buildClothTile(cloth, l10n)).toList(),
             ),
           ),
         ),
-
         if (!isLast)
           const Divider(height: 1, color: Color(0xFFE8E0D5)),
       ],
     );
   }
 
-  Widget _buildClothTile(Cloth cloth) {
+  Widget _buildClothTile(Cloth cloth, AppLocalizations l10n) {
     return Container(
       width: 64,
       margin: const EdgeInsets.only(right: 10),
@@ -557,7 +557,7 @@ class _OrganizeScreenState extends State<OrganizeScreen> {
           ),
           const SizedBox(height: 4),
           Text(
-            cloth.name ?? '이름 없음',
+            cloth.name ?? l10n.noName,
             style: GoogleFonts.inter(
               fontSize: 9, color: const Color(0xFF2C2416),
               fontWeight: FontWeight.w500,
@@ -570,6 +570,7 @@ class _OrganizeScreenState extends State<OrganizeScreen> {
       ),
     );
   }
+
   Widget _sectionLabel(String text) => Text(
         text,
         style: GoogleFonts.cormorant(

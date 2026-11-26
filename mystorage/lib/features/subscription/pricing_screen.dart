@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../l10n/app_localizations.dart';
 import '../../services/subscription_service.dart';
 
 class PricingScreen extends StatefulWidget {
@@ -32,7 +33,7 @@ class _PricingScreenState extends State<PricingScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('결제 실패: $e')),
+          SnackBar(content: Text(AppLocalizations.of(context).pricingPayFailed(e.toString()))),
         );
       }
     } finally {
@@ -43,22 +44,22 @@ class _PricingScreenState extends State<PricingScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('구독 플랜')),
+      appBar: AppBar(title: Text(AppLocalizations.of(context).pricingTitle)),
       body: Stack(
         children: [
           SingleChildScrollView(
             padding: const EdgeInsets.all(24),
             child: Column(children: [
               Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                const Text('월 구독', style: TextStyle(fontWeight: FontWeight.w600)),
+                Text(AppLocalizations.of(context).pricingMonthly, style: const TextStyle(fontWeight: FontWeight.w600)),
                 Switch(value: _yearly, onChanged: (v) => setState(() => _yearly = v)),
-                const Text('연 구독', style: TextStyle(fontWeight: FontWeight.w600)),
+                Text(AppLocalizations.of(context).pricingYearly, style: const TextStyle(fontWeight: FontWeight.w600)),
                 if (_yearly)
                   Container(
                     margin: const EdgeInsets.only(left: 8),
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                     decoration: BoxDecoration(color: Colors.green, borderRadius: BorderRadius.circular(20)),
-                    child: const Text('최대 32% 할인', style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700)),
+                    child: Text(AppLocalizations.of(context).pricingDiscount, style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700)),
                   ),
               ]),
               const SizedBox(height: 24),
@@ -137,7 +138,7 @@ class _PlanCard extends StatelessWidget {
             width: double.infinity,
             child: FilledButton(
               onPressed: (isCurrentPlan || isLoading) ? null : onSubscribe,
-              child: Text(isCurrentPlan ? '현재 플랜' : '시작하기'),
+              child: Text(isCurrentPlan ? AppLocalizations.of(context).pricingCurrentPlan : AppLocalizations.of(context).pricingStart),
             ),
           ),
         ]),

@@ -8,6 +8,7 @@ import '../../data/repositories/storage_repository.dart';
 import '../../data/repositories/location_repository.dart';
 import '../../data/models/storage_location.dart';
 import '../../data/models/location.dart';
+import '../../l10n/app_localizations.dart';
 
 class AddStorageScreen extends StatefulWidget {
   final StorageLocation? existing;
@@ -70,7 +71,7 @@ class _AddStorageScreenState extends State<AddStorageScreen> {
               contentPadding: const EdgeInsets.symmetric(horizontal: 24),
               leading: const Icon(Icons.close, size: 18, color: Color(0xFFBBAA95)),
               title: Text(
-                '위치 없음',
+                AppLocalizations.of(ctx).noLocationTag,
                 style: GoogleFonts.inter(
                   fontSize: 14,
                   color: const Color(0xFF9B8E7E),
@@ -127,7 +128,7 @@ class _AddStorageScreenState extends State<AddStorageScreen> {
             ListTile(
               leading: const Icon(Icons.camera_alt_outlined,
                   color: Color(0xFF8B7355)),
-              title: Text('카메라로 찍기',
+              title: Text(AppLocalizations.of(context).takePhoto,
                   style: GoogleFonts.inter(
                       fontSize: 14, color: const Color(0xFF2C2416)).copyWith(fontFamilyFallback: const ['ChosunSm'])),
               onTap: () => Navigator.pop(context, ImageSource.camera),
@@ -136,7 +137,7 @@ class _AddStorageScreenState extends State<AddStorageScreen> {
             ListTile(
               leading: const Icon(Icons.photo_library_outlined,
                   color: Color(0xFF8B7355)),
-              title: Text('갤러리에서 가져오기',
+              title: Text(AppLocalizations.of(context).fromGallery,
                   style: GoogleFonts.inter(
                       fontSize: 14, color: const Color(0xFF2C2416)).copyWith(fontFamilyFallback: const ['ChosunSm'])),
               onTap: () => Navigator.pop(context, ImageSource.gallery),
@@ -265,8 +266,7 @@ class _AddStorageScreenState extends State<AddStorageScreen> {
                     controller: _nameCtrl,
                     style: GoogleFonts.inter(
                         fontSize: 14, color: const Color(0xFF2C2416)).copyWith(fontFamilyFallback: const ['ChosunSm']),
-                    decoration:
-                        const InputDecoration(labelText: '보관함 이름'),
+                    decoration: InputDecoration(labelText: AppLocalizations.of(context).storageName),
                   ),
                   const SizedBox(height: 20),
                   GestureDetector(
@@ -282,7 +282,7 @@ class _AddStorageScreenState extends State<AddStorageScreen> {
                           const SizedBox(width: 10),
                           Expanded(
                             child: Text(
-                              _selectedLocation?.name ?? '위치 선택 (선택사항)',
+                              _selectedLocation?.name ?? AppLocalizations.of(context).locationOptional,
                               style: GoogleFonts.inter(
                                 fontSize: 14,
                                 color: _selectedLocation != null

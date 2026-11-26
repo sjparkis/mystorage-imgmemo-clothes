@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../data/repositories/family_repository.dart';
+import '../../l10n/app_localizations.dart';
 
 class FamilyScreen extends StatefulWidget {
   const FamilyScreen({super.key});
@@ -61,7 +62,7 @@ class _FamilyScreenState extends State<FamilyScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('코드 생성 실패: $e')),
+          SnackBar(content: Text(AppLocalizations.of(context).familyCodeCreateFailed(e.toString()))),
         );
       }
     } finally {
@@ -78,16 +79,17 @@ class _FamilyScreenState extends State<FamilyScreen> {
       _codeCtrl.clear();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('가족 보관함에 연결됐습니다.')),
+          SnackBar(content: Text(AppLocalizations.of(context).familyJoined)),
         );
         _load();
       }
     } catch (e) {
+      final l10n = AppLocalizations.of(context);
       final msg = e.toString().contains('invalid_or_expired')
-          ? '유효하지 않거나 만료된 코드입니다.'
+          ? l10n.familyInvalidCode
           : e.toString().contains('already_member')
-              ? '이미 연결된 가족입니다.'
-              : '연결 실패: $e';
+              ? l10n.familyAlreadyMember
+              : l10n.familyJoinFailed(e.toString());
       if (mounted) {
         ScaffoldMessenger.of(context)
             .showSnackBar(SnackBar(content: Text(msg)));
@@ -102,19 +104,19 @@ class _FamilyScreenState extends State<FamilyScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: const Color(0xFFFFFBF7),
-        title: Text('멤버 제거', style: GoogleFonts.playfairDisplay(fontSize: 18).copyWith(fontFamilyFallback: const ['ChosunSm'])),
+        title: Text(AppLocalizations.of(ctx).familyRemoveMember, style: GoogleFonts.playfairDisplay(fontSize: 18).copyWith(fontFamilyFallback: const ['ChosunSm'])),
         content: Text(
-          '${member.email}을(를) 가족에서 제거할까요?',
+          AppLocalizations.of(ctx).familyRemoveConfirm(member.email),
           style: GoogleFonts.inter(fontSize: 13).copyWith(fontFamilyFallback: const ['ChosunSm']),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: Text('취소', style: GoogleFonts.inter(color: const Color(0xFF9B8E7E)).copyWith(fontFamilyFallback: const ['ChosunSm'])),
+            child: Text(AppLocalizations.of(ctx).cancel, style: GoogleFonts.inter(color: const Color(0xFF9B8E7E)).copyWith(fontFamilyFallback: const ['ChosunSm'])),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: Text('제거', style: GoogleFonts.inter(color: Colors.redAccent).copyWith(fontFamilyFallback: const ['ChosunSm'])),
+            child: Text(AppLocalizations.of(ctx).familyRemove, style: GoogleFonts.inter(color: Colors.redAccent).copyWith(fontFamilyFallback: const ['ChosunSm'])),
           ),
         ],
       ),
@@ -126,7 +128,7 @@ class _FamilyScreenState extends State<FamilyScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('제거 실패: $e')));
+            .showSnackBar(SnackBar(content: Text(AppLocalizations.of(context).familyRemoveFailed(e.toString()))));
       }
     }
   }
@@ -272,7 +274,7 @@ class _FamilyScreenState extends State<FamilyScreen> {
                                 horizontal: 6, vertical: 2),
                             color: const Color(0xFFEDE7DD),
                             child: Text(
-                              '나',
+                              AppLocalizations.of(context).familyRoleMe,
                               style: GoogleFonts.inter(
                                 fontSize: 9,
                                 color: const Color(0xFF8B7355),
@@ -284,7 +286,7 @@ class _FamilyScreenState extends State<FamilyScreen> {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      member.isOwner ? '관리자' : '멤버',
+                      member.isOwner ? AppLocalizations.of(context).familyRoleOwner : AppLocalizations.of(context).familyRoleMember,
                       style: GoogleFonts.inter(
                         fontSize: 10,
                         color: const Color(0xFF9B8E7E),
@@ -324,7 +326,7 @@ class _FamilyScreenState extends State<FamilyScreen> {
           ),
           const SizedBox(height: 6),
           Text(
-            '가족에게 코드를 공유하면 같은 보관함을 사용할 수 있습니다.',
+            AppLocalizations.of(context).familyInviteInfo,
             style: GoogleFonts.inter(
               fontSize: 12,
               color: const Color(0xFF9B8E7E),
@@ -352,7 +354,7 @@ class _FamilyScreenState extends State<FamilyScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    '48시간 유효',
+                    AppLocalizations.of(context).familyCodeExpiry,
                     style: GoogleFonts.inter(
                       fontSize: 11,
                       color: const Color(0xFF9B8E7E),
@@ -367,7 +369,7 @@ class _FamilyScreenState extends State<FamilyScreen> {
                             Clipboard.setData(
                                 ClipboardData(text: _activeCode!));
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('코드가 복사됐습니다.')),
+                              SnackBar(content: Text(AppLocalizations.of(context).familyCodeCopied)),
                             );
                           },
                           child: Container(
@@ -397,7 +399,7 @@ class _FamilyScreenState extends State<FamilyScreen> {
                           ),
                           alignment: Alignment.center,
                           child: Text(
-                            '새로 생성',
+                            AppLocalizations.of(context).familyNewCode,
                             style: GoogleFonts.inter(
                               fontSize: 11,
                               color: const Color(0xFF9B8E7E),
@@ -430,7 +432,7 @@ class _FamilyScreenState extends State<FamilyScreen> {
                             strokeWidth: 2, color: Colors.white),
                       )
                     : Text(
-                        '초대 코드 생성',
+                        AppLocalizations.of(context).familyCreateCode,
                         style: GoogleFonts.inter(
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
@@ -463,7 +465,7 @@ class _FamilyScreenState extends State<FamilyScreen> {
           ),
           const SizedBox(height: 6),
           Text(
-            '가족에게 받은 코드를 입력해 보관함을 공유하세요.',
+            AppLocalizations.of(context).familyJoinHint,
             style: GoogleFonts.inter(
               fontSize: 12,
               color: const Color(0xFF9B8E7E),

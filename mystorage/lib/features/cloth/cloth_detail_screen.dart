@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../data/models/cloth.dart';
 import '../../data/models/tag.dart';
 import '../../data/repositories/cloth_repository.dart';
+import '../../l10n/app_localizations.dart';
 import '../../services/ai_tag_service.dart';
 
 class ClothDetailScreen extends StatefulWidget {
@@ -52,14 +53,14 @@ class _ClothDetailScreenState extends State<ClothDetailScreen> {
         await _load();
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('AI 분석 완료')),
+            SnackBar(content: Text(AppLocalizations.of(context).aiAnalyzeDone)),
           );
         }
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('분석 실패: $e')),
+          SnackBar(content: Text(AppLocalizations.of(context).analyzeError(e.toString()))),
         );
       }
     } finally {
@@ -77,7 +78,7 @@ class _ClothDetailScreenState extends State<ClothDetailScreen> {
     if (_cloth == null) {
       return Scaffold(
         appBar: AppBar(),
-        body: const Center(child: Text('옷 정보를 불러올 수 없습니다')),
+        body: Center(child: Text(AppLocalizations.of(context).clothLoadError)),
       );
     }
     final cloth = _cloth!;
@@ -106,7 +107,7 @@ class _ClothDetailScreenState extends State<ClothDetailScreen> {
                       )
                     : IconButton(
                         icon: const Icon(Icons.auto_awesome, size: 20),
-                        tooltip: 'AI 재분석',
+                        tooltip: AppLocalizations.of(context).aiReanalyze,
                         onPressed: _reanalyze,
                       ),
             ],
@@ -146,7 +147,7 @@ class _ClothDetailScreenState extends State<ClothDetailScreen> {
                     const SizedBox(height: 12),
                   ],
                   Text(
-                    cloth.name ?? '이름 없음',
+                    cloth.name ?? AppLocalizations.of(context).noName,
                     style: GoogleFonts.playfairDisplay(
                       fontSize: 28,
                       fontWeight: FontWeight.w700,
@@ -170,7 +171,7 @@ class _ClothDetailScreenState extends State<ClothDetailScreen> {
                     const Divider(color: Color(0xFFE8E0D5)),
                     const SizedBox(height: 16),
                     Text(
-                      'AI 분석',
+                      AppLocalizations.of(context).aiAnalysis,
                       style: GoogleFonts.inter(
                         fontSize: 10,
                         fontWeight: FontWeight.w700,
@@ -179,7 +180,7 @@ class _ClothDetailScreenState extends State<ClothDetailScreen> {
                       ).copyWith(fontFamilyFallback: const ['ChosunSm']),
                     ),
                     const SizedBox(height: 14),
-                    ..._buildTagGroups(cloth.tags),
+                    ..._buildTagGroups(cloth.tags, AppLocalizations.of(context)),
                   ],
                   if (cloth.memo != null && cloth.memo!.isNotEmpty) ...[
                     const SizedBox(height: 20),
@@ -214,22 +215,23 @@ class _ClothDetailScreenState extends State<ClothDetailScreen> {
     );
   }
 
-  static const _categoryLabel = {
-    'color': '색상',
-    'type': '종류',
-    'material': '소재',
-    'season': '계절',
-    'style': '스타일',
-    'condition': '상태',
-    'brand': '브랜드',
-    'custom': '기타',
-  };
-
   static const _categoryOrder = [
     'type', 'color', 'material', 'season', 'style', 'condition', 'brand', 'custom'
   ];
 
-  List<Widget> _buildTagGroups(List<Tag> tags) {
+  String _catLabel(String cat, AppLocalizations l10n) => switch (cat) {
+    'color' => l10n.tagColor,
+    'type' => l10n.tagType,
+    'material' => l10n.tagMaterial,
+    'season' => l10n.tagSeason,
+    'style' => l10n.tagStyle,
+    'condition' => l10n.tagCondition,
+    'brand' => l10n.tagBrand,
+    'custom' => l10n.tagOther,
+    _ => cat,
+  };
+
+  List<Widget> _buildTagGroups(List<Tag> tags, AppLocalizations l10n) {
     final grouped = <String, List<Tag>>{};
     for (final t in tags) {
       grouped.putIfAbsent(t.category, () => []).add(t);
@@ -237,7 +239,7 @@ class _ClothDetailScreenState extends State<ClothDetailScreen> {
     final widgets = <Widget>[];
     for (final cat in _categoryOrder) {
       if (!grouped.containsKey(cat)) continue;
-      final label = _categoryLabel[cat] ?? cat;
+      final label = _catLabel(cat, l10n);
       final catTags = grouped[cat]!;
       widgets.add(
         Padding(

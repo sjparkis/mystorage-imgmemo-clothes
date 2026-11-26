@@ -6,6 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../data/repositories/cloth_repository.dart';
 import '../../data/repositories/storage_repository.dart';
 import '../../data/models/tag.dart';
+import '../../l10n/app_localizations.dart';
 import '../../services/ai_tag_service.dart';
 
 class AddClothScreen extends StatefulWidget {
@@ -43,12 +44,12 @@ class _AddClothScreenState extends State<AddClothScreen> {
           children: [
             ListTile(
               leading: const Icon(Icons.camera_alt_outlined),
-              title: const Text('카메라로 찍기'),
+              title: Text(AppLocalizations.of(context).takePhoto),
               onTap: () => Navigator.pop(context, ImageSource.camera),
             ),
             ListTile(
               leading: const Icon(Icons.photo_library_outlined),
-              title: const Text('갤러리에서 가져오기'),
+              title: Text(AppLocalizations.of(context).fromGallery),
               onTap: () => Navigator.pop(context, ImageSource.gallery),
             ),
           ],
@@ -127,7 +128,7 @@ class _AddClothScreenState extends State<AddClothScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('옷 추가')),
+      appBar: AppBar(title: Text(AppLocalizations.of(context).addCloth)),
       body: Column(
         children: [
           Expanded(
@@ -160,15 +161,15 @@ class _AddClothScreenState extends State<AddClothScreen> {
                   ),
                   if (_analyzingAI) ...[
                     const SizedBox(height: 12),
-                    const Row(
+                    Row(
                       children: [
-                        SizedBox(
+                        const SizedBox(
                           width: 16,
                           height: 16,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         ),
-                        SizedBox(width: 8),
-                        Text('AI 분석 중...', style: TextStyle(fontSize: 13)),
+                        const SizedBox(width: 8),
+                        Text(AppLocalizations.of(context).aiAnalyzing, style: const TextStyle(fontSize: 13)),
                       ],
                     ),
                   ],
@@ -195,12 +196,12 @@ class _AddClothScreenState extends State<AddClothScreen> {
                   const SizedBox(height: 16),
                   TextField(
                     controller: _nameCtrl,
-                    decoration: const InputDecoration(labelText: '이름 (선택)'),
+                    decoration: InputDecoration(labelText: AppLocalizations.of(context).nameOptional),
                   ),
                   const SizedBox(height: 12),
                   TextField(
                     controller: _memoCtrl,
-                    decoration: const InputDecoration(labelText: '메모 (선택)'),
+                    decoration: InputDecoration(labelText: AppLocalizations.of(context).memoOptional),
                     maxLines: 3,
                     minLines: 1,
                   ),
@@ -225,7 +226,7 @@ class _AddClothScreenState extends State<AddClothScreen> {
                             color: Colors.white,
                           ),
                         )
-                      : const Text('저장'),
+                      : Text(AppLocalizations.of(context).save),
                 ),
               ),
             ),

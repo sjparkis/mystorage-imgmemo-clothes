@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../data/repositories/auth_repository.dart';
+import '../../l10n/app_localizations.dart';
 import 'auth_bloc.dart';
 
 class SignUpScreen extends StatelessWidget {
@@ -36,8 +37,22 @@ class _SignUpViewState extends State<_SignUpView> {
     super.dispose();
   }
 
+  String _errorMessage(BuildContext context, AuthFailure state) {
+    final l10n = AppLocalizations.of(context);
+    return switch (state.code) {
+      AuthErrorCode.required => l10n.authErrRequired,
+      AuthErrorCode.passwordTooShort => l10n.authErrPasswordShort,
+      AuthErrorCode.invalidCredentials => l10n.authErrInvalidCredentials,
+      AuthErrorCode.emailInUse => l10n.authErrEmailInUse,
+      AuthErrorCode.invalidInput => l10n.authErrInvalidInput,
+      AuthErrorCode.network => l10n.authErrNetwork,
+      AuthErrorCode.unknown => state.message,
+    };
+  }
+
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       backgroundColor: const Color(0xFFF7F3EE),
       body: BlocListener<AuthBloc, AuthState>(
@@ -45,16 +60,16 @@ class _SignUpViewState extends State<_SignUpView> {
           if (state is AuthSuccess) ctx.go('/');
           if (state is AuthEmailVerificationSent) {
             ScaffoldMessenger.of(ctx).showSnackBar(
-              const SnackBar(
-                content: Text('인증 이메일을 보냈습니다. 이메일을 확인해 주세요.'),
-                duration: Duration(seconds: 5),
+              SnackBar(
+                content: Text(AppLocalizations.of(ctx).emailVerificationSent),
+                duration: const Duration(seconds: 5),
               ),
             );
             ctx.go('/login');
           }
           if (state is AuthFailure) {
             ScaffoldMessenger.of(ctx).showSnackBar(
-              SnackBar(content: Text(state.message)),
+              SnackBar(content: Text(_errorMessage(ctx, state))),
             );
           }
         },
@@ -114,7 +129,7 @@ class _SignUpViewState extends State<_SignUpView> {
                         keyboardType: TextInputType.emailAddress,
                         style: GoogleFonts.inter(
                             fontSize: 14, color: const Color(0xFF2C2416)).copyWith(fontFamilyFallback: const ['ChosunSm']),
-                        decoration: const InputDecoration(labelText: '이메일'),
+                        decoration: InputDecoration(labelText: l10n.email),
                       ),
                       const SizedBox(height: 12),
                       TextField(
@@ -122,11 +137,10 @@ class _SignUpViewState extends State<_SignUpView> {
                         obscureText: true,
                         style: GoogleFonts.inter(
                             fontSize: 14, color: const Color(0xFF2C2416)).copyWith(fontFamilyFallback: const ['ChosunSm']),
-                        decoration: const InputDecoration(
-                          labelText: '비밀번호',
-                          helperText: '6자 이상 입력해 주세요',
-                          helperStyle:
-                              TextStyle(fontSize: 11, color: Color(0xFF9B8E7E)),
+                        decoration: InputDecoration(
+                          labelText: l10n.password,
+                          helperText: l10n.passwordMinLength,
+                          helperStyle: const TextStyle(fontSize: 11, color: Color(0xFF9B8E7E)),
                         ),
                       ),
                       const SizedBox(height: 12),
@@ -135,8 +149,7 @@ class _SignUpViewState extends State<_SignUpView> {
                         obscureText: true,
                         style: GoogleFonts.inter(
                             fontSize: 14, color: const Color(0xFF2C2416)).copyWith(fontFamilyFallback: const ['ChosunSm']),
-                        decoration:
-                            const InputDecoration(labelText: '비밀번호 확인'),
+                        decoration: InputDecoration(labelText: l10n.passwordConfirm),
                       ),
                       const SizedBox(height: 28),
                       BlocBuilder<AuthBloc, AuthState>(
@@ -149,9 +162,8 @@ class _SignUpViewState extends State<_SignUpView> {
                                 : () {
                                     if (_pwCtrl.text != _pwConfirmCtrl.text) {
                                       ScaffoldMessenger.of(ctx).showSnackBar(
-                                        const SnackBar(
-                                            content:
-                                                Text('비밀번호가 일치하지 않습니다.')),
+                                        SnackBar(
+                                            content: Text(AppLocalizations.of(ctx).passwordMismatch)),
                                       );
                                       return;
                                     }
@@ -188,7 +200,7 @@ class _SignUpViewState extends State<_SignUpView> {
                         child: GestureDetector(
                           onTap: () => context.pop(),
                           child: Text(
-                            '← 로그인으로 돌아가기',
+                            l10n.backToLogin,
                             style: GoogleFonts.inter(
                               fontSize: 11,
                               color: const Color(0xFF9B8E7E),
