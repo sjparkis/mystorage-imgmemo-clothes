@@ -145,5 +145,16 @@
   "qrPrintError": "An error occurred while printing",
   "qrPrint": "Print Sticker",
   "qrScanTitle": "QR Scan",
-  "qrNotRegistered": "Unregistered QR code"
+  "qrNotRegistered": "Unregistered QR code",
+
+  "moveToStorage": "Move to storage",
+  "moveToTrash": "Move to trash",
+  "moveToSale": "Move to for sale",
+  "moveDone": "Moved",
+  "moveFailed": "Move failed: {error}",
+  "systemStorages": "Default storages",
+  "settingsShowTrash": "Show trash storage",
+  "settingsShowSale": "Show sale storage",
+  "storageVisibility": "Storage visibility",
+  "selectStorage": "Select storage"
 }

@@ -390,10 +390,10 @@
 <div class="cover">
   <div class="section-number" style="color:rgba(255,255,255,0.5);margin-bottom:12px;">MYSTORAGE · FEATURE DESIGN</div>
   <h1>옷 이동 / 휴지통 / 판매 보관함</h1>
-  <p>모든 사용자에게 기본 제공되는 시스템 보관함과 옷 이동 기능 설계</p>
+  <p>모든 사용자에게 기본 제공되는 기본 보관함과 옷 이동 기능 설계</p>
   <div class="meta">
     <span class="badge">📅 2026-11-26</span>
-    <span class="badge">📌 v1.0</span>
+    <span class="badge">📌 v1.1</span>
     <span class="badge">Flutter + Supabase</span>
   </div>
 </div>
@@ -404,6 +404,7 @@
   <a href="#db">DB 변경</a>
   <a href="#data-layer">데이터 레이어</a>
   <a href="#move-ui">옷 이동 UI</a>
+  <a href="#bulk-select">다중 선택 이동</a>
   <a href="#home">홈 화면</a>
   <a href="#profile">프로필 설정</a>
   <a href="#i18n">i18n</a>
@@ -449,7 +450,7 @@
     <div class="flow">
       <div class="flow-step">옷 상세 화면</div>
       <div class="flow-arrow">→</div>
-      <div class="flow-step action">··· 메뉴 탭</div>
+      <div class="flow-step action">앱바 아이콘 탭</div>
       <div class="flow-arrow">→</div>
       <div class="flow-step">이동 선택</div>
       <div class="flow-arrow">→</div>
@@ -583,7 +584,7 @@ Future&lt;void&gt; ensureSystemStorages(String orgId) async {
         'org_id': orgId,
         'name': name,
         'storage_type': type,
-        'qr_code': '${orgId}_$type',
+        // qr_code: DB 기본값(gen_random_uuid())으로 자동 생성
       });
     }
   }
@@ -641,8 +642,8 @@ Future&lt;StorageLocation?&gt; fetchSystemStorage(String type) async {
 <!-- 4. 옷 이동 UI -->
 <section class="section" id="move-ui">
   <div class="section-number">04</div>
-  <h2 class="section-title">옷 이동 UI</h2>
-  <p class="section-desc">ClothDetailScreen 앱바에 더보기 메뉴를 추가한다.</p>
+  <h2 class="section-title">옷 이동 UI (옷 상세)</h2>
+  <p class="section-desc">ClothDetailScreen 앱바에 아이콘+라벨 버튼 3개를 나란히 표시한다. 숨겨진 ··· 메뉴 대신 항상 노출되어 발견성을 높인다.</p>
 
   <div class="subsection">
     <div class="subsection-title">UI 목업</div>
@@ -650,15 +651,29 @@ Future&lt;StorageLocation?&gt; fetchSystemStorage(String type) async {
 
       <!-- 옷 상세 화면 -->
       <div>
-        <div class="phone-title">옷 상세 화면</div>
+        <div class="phone-title">옷 상세 — 아이콘 버튼</div>
         <div class="phone">
           <div class="phone-screen">
             <div class="screen-appbar">
               <span class="back">←</span>
               <span>청바지</span>
-              <div class="actions">
-                <div class="action-btn">✨</div>
-                <div class="action-btn">⋯</div>
+              <div class="actions" style="gap:12px;">
+                <div style="text-align:center;">
+                  <div style="font-size:14px;">✨</div>
+                  <div style="font-size:8px;opacity:0.7;">재분석</div>
+                </div>
+                <div style="text-align:center;">
+                  <div style="font-size:14px;">📦</div>
+                  <div style="font-size:8px;opacity:0.7;">이동</div>
+                </div>
+                <div style="text-align:center;">
+                  <div style="font-size:14px;">🗑️</div>
+                  <div style="font-size:8px;opacity:0.7;">휴지통</div>
+                </div>
+                <div style="text-align:center;">
+                  <div style="font-size:14px;">🏷️</div>
+                  <div style="font-size:8px;opacity:0.7;">판매</div>
+                </div>
               </div>
             </div>
             <div class="screen-cloth-img">👖</div>
@@ -667,39 +682,6 @@ Future&lt;StorageLocation?&gt; fetchSystemStorage(String type) async {
               <div class="storage-row">
                 <span class="storage-icon">📦</span>
                 <span class="storage-name">겨울 옷장</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ··· 메뉴 -->
-      <div>
-        <div class="phone-title">··· 메뉴 열림</div>
-        <div class="phone">
-          <div class="phone-screen">
-            <div class="screen-appbar">
-              <span class="back">←</span>
-              <span>청바지</span>
-              <div class="actions">
-                <div class="action-btn">✨</div>
-                <div class="action-btn" style="background:rgba(255,255,255,0.3);">⋯</div>
-              </div>
-            </div>
-            <div style="display:flex;justify-content:flex-end;padding:4px 12px;">
-              <div class="popup-menu">
-                <div class="popup-item">
-                  <span>📦</span>
-                  <span>다른 보관함으로 이동</span>
-                </div>
-                <div class="popup-item">
-                  <span>🗑️</span>
-                  <span style="color:var(--danger);">휴지통으로 이동</span>
-                </div>
-                <div class="popup-item">
-                  <span>🏷️</span>
-                  <span style="color:var(--success);">판매 보관함으로 이동</span>
-                </div>
               </div>
             </div>
           </div>
@@ -728,15 +710,6 @@ Future&lt;StorageLocation?&gt; fetchSystemStorage(String type) async {
                 <span class="storage-icon">📦</span>
                 <span class="storage-name">침실 옷걸이</span>
               </div>
-              <div class="home-section-label">시스템</div>
-              <div class="storage-row">
-                <span class="storage-icon">🗑️</span>
-                <span class="storage-name" style="color:var(--danger);">휴지통</span>
-              </div>
-              <div class="storage-row">
-                <span class="storage-icon">🏷️</span>
-                <span class="storage-name" style="color:var(--success);">판매 보관함</span>
-              </div>
             </div>
           </div>
         </div>
@@ -748,31 +721,140 @@ Future&lt;StorageLocation?&gt; fetchSystemStorage(String type) async {
   <div class="subsection">
     <div class="subsection-title">동작 명세</div>
     <table>
-      <tr><th>메뉴 항목</th><th>동작</th><th>비활성 조건</th></tr>
+      <tr><th>아이콘</th><th>동작</th><th>비활성 조건</th></tr>
       <tr>
-        <td>다른 보관함으로 이동</td>
-        <td>전체 보관함 목록 bottom sheet 표시 → 선택 시 <code>ClothRepository.updateStorage()</code></td>
+        <td>📦 이동</td>
+        <td>일반 보관함 목록 bottom sheet 표시 → 선택 시 <code>ClothRepository.updateStorage()</code> → <code>_load()</code></td>
         <td>없음 (항상 활성)</td>
       </tr>
       <tr>
-        <td>휴지통으로 이동</td>
+        <td>🗑️ 휴지통</td>
         <td><code>fetchSystemStorage('trash')</code> → <code>updateStorage()</code> → SnackBar → pop</td>
-        <td>현재 보관함이 이미 trash</td>
+        <td>현재 <code>storageType == 'trash'</code></td>
       </tr>
       <tr>
-        <td>판매 보관함으로 이동</td>
+        <td>🏷️ 판매</td>
         <td><code>fetchSystemStorage('for_sale')</code> → <code>updateStorage()</code> → SnackBar → pop</td>
-        <td>현재 보관함이 이미 for_sale</td>
+        <td>현재 <code>storageType == 'for_sale'</code></td>
       </tr>
     </table>
   </div>
 </section>
 
-<!-- 5. 홈 화면 -->
-<section class="section" id="home">
+<!-- 5. 보관함 다중 선택 이동 -->
+<section class="section" id="bulk-select">
   <div class="section-number">05</div>
+  <h2 class="section-title">보관함 다중 선택 이동</h2>
+  <p class="section-desc">StorageDetailScreen에서 옷을 복수 선택해 한 번에 이동할 수 있다.</p>
+
+  <div class="subsection">
+    <div class="subsection-title">진입/종료</div>
+    <ul class="spec-list">
+      <li>옷 카드 <strong>길게 누르기</strong> → 선택 모드 진입 (해당 카드 자동 선택)</li>
+      <li>선택 모드 중 카드 탭 → 선택/해제 토글</li>
+      <li>AppBar X 버튼 탭 → 선택 모드 종료 (선택 초기화)</li>
+    </ul>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">UI 목업</div>
+    <div class="mockup-container">
+      <div>
+        <div class="phone-title">선택 모드</div>
+        <div class="phone">
+          <div class="phone-screen">
+            <div class="screen-appbar">
+              <span>✕</span>
+              <span>3개 선택</span>
+              <span></span>
+            </div>
+            <div class="screen-body">
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                <div style="background:linear-gradient(135deg,#EDE7DD,#D5C9BB);border-radius:4px;height:80px;position:relative;border:2px solid var(--primary);">
+                  <div style="position:absolute;top:4px;left:4px;width:18px;height:18px;border-radius:50%;background:var(--primary);display:flex;align-items:center;justify-content:center;font-size:10px;color:white;">✓</div>
+                </div>
+                <div style="background:linear-gradient(135deg,#EDE7DD,#D5C9BB);border-radius:4px;height:80px;position:relative;">
+                  <div style="position:absolute;top:4px;left:4px;width:18px;height:18px;border-radius:50%;background:rgba(255,255,255,0.85);border:1.5px solid #BBAA95;"></div>
+                </div>
+              </div>
+            </div>
+            <div style="background:#2C2416;padding:12px 20px 20px;border-radius:16px 16px 0 0;margin-top:auto;">
+              <div style="display:flex;align-items:center;gap:16px;color:white;">
+                <span style="font-weight:700;font-size:13px;">3개</span>
+                <span style="flex:1;"></span>
+                <div style="text-align:center;">
+                  <div style="font-size:16px;">📦</div>
+                  <div style="font-size:9px;">이동</div>
+                </div>
+                <div style="text-align:center;">
+                  <div style="font-size:16px;">🗑️</div>
+                  <div style="font-size:9px;">휴지통</div>
+                </div>
+                <div style="text-align:center;">
+                  <div style="font-size:16px;">🏷️</div>
+                  <div style="font-size:9px;">판매</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">AppBar 상태 변화</div>
+    <table>
+      <tr><th>모드</th><th>leading</th><th>title</th><th>actions</th></tr>
+      <tr>
+        <td>일반</td>
+        <td>← (뒤로)</td>
+        <td>보관함 이름</td>
+        <td>편집, QR</td>
+      </tr>
+      <tr>
+        <td>선택 중</td>
+        <td>✕ (선택 취소)</td>
+        <td>N개 선택</td>
+        <td>없음</td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">하단 액션바 동작</div>
+    <table>
+      <tr><th>버튼</th><th>동작</th></tr>
+      <tr>
+        <td>📦 이동</td>
+        <td>현재 보관함 제외한 일반 보관함 목록 bottom sheet → 선택 시 선택된 모든 옷에 <code>updateStorage()</code> 병렬 실행</td>
+      </tr>
+      <tr>
+        <td>🗑️ 휴지통</td>
+        <td><code>fetchSystemStorage('trash')</code> → 선택된 모든 옷에 <code>updateStorage()</code> 병렬 실행</td>
+      </tr>
+      <tr>
+        <td>🏷️ 판매</td>
+        <td><code>fetchSystemStorage('for_sale')</code> → 선택된 모든 옷에 <code>updateStorage()</code> 병렬 실행</td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">완료 후 처리</div>
+    <ul class="spec-list">
+      <li>이동 성공 → SnackBar("이동했습니다") + 선택 초기화 + 목록 새로고침</li>
+      <li>이동 실패 → SnackBar 에러 메시지, 선택 상태 유지</li>
+      <li>FAB, 존재 여부 토글 버튼 → 선택 모드 중 미표시</li>
+    </ul>
+  </div>
+</section>
+
+<!-- 6. 홈 화면 -->
+<section class="section" id="home">
+  <div class="section-number">06</div>
   <h2 class="section-title">홈 화면</h2>
-  <p class="section-desc">시스템 보관함은 일반 보관함과 분리해 하단에 별도 섹션으로 표시한다.</p>
+  <p class="section-desc">기본 보관함(휴지통/판매)은 일반 보관함과 분리해 하단에 별도 섹션으로 표시한다.</p>
 
   <div class="subsection">
     <div class="subsection-title">레이아웃 변경</div>
@@ -800,7 +882,7 @@ Future&lt;StorageLocation?&gt; fetchSystemStorage(String type) async {
                 <span class="storage-name">여름 서랍</span>
                 <span class="storage-count">8</span>
               </div>
-              <div class="home-section-label">시스템 보관함</div>
+              <div class="home-section-label">기본 보관함</div>
               <div class="storage-row">
                 <span class="storage-icon">🗑️</span>
                 <span class="storage-name" style="color:var(--danger);">휴지통</span>
@@ -836,9 +918,9 @@ final system = storages.where((s) => s.isSystem).toList()
   </div>
 </section>
 
-<!-- 6. 프로필 설정 -->
+<!-- 7. 프로필 설정 -->
 <section class="section" id="profile">
-  <div class="section-number">06</div>
+  <div class="section-number">07</div>
   <h2 class="section-title">프로필 설정</h2>
   <p class="section-desc">마이프로필에 "보관함 표시 설정" 섹션을 추가한다.</p>
 
@@ -887,11 +969,11 @@ final system = storages.where((s) => s.isSystem).toList()
   </div>
 </section>
 
-<!-- 7. i18n -->
+<!-- 8. i18n -->
 <section class="section" id="i18n">
-  <div class="section-number">07</div>
+  <div class="section-number">08</div>
   <h2 class="section-title">i18n 키 추가</h2>
-  <p class="section-desc">app_ko.arb / app_en.arb 에 추가할 키 목록.</p>
+  <p class="section-desc">app_ko.arb / app_en.arb 에 추가한 키 목록.</p>
 
   <table>
     <tr><th>키</th><th>한국어</th><th>영어</th></tr>
@@ -899,27 +981,29 @@ final system = storages.where((s) => s.isSystem).toList()
     <tr><td><code>moveToTrash</code></td><td>휴지통으로 이동</td><td>Move to trash</td></tr>
     <tr><td><code>moveToSale</code></td><td>판매 보관함으로 이동</td><td>Move to for sale</td></tr>
     <tr><td><code>moveDone</code></td><td>이동했습니다</td><td>Moved</td></tr>
-    <tr><td><code>systemStorages</code></td><td>시스템 보관함</td><td>System storages</td></tr>
+    <tr><td><code>moveFailed</code></td><td>이동 실패: {error}</td><td>Move failed: {error}</td></tr>
+    <tr><td><code>systemStorages</code></td><td>기본 보관함</td><td>Default storages</td></tr>
     <tr><td><code>storageVisibility</code></td><td>보관함 표시 설정</td><td>Storage visibility</td></tr>
     <tr><td><code>settingsShowTrash</code></td><td>휴지통 보관함 표시</td><td>Show trash storage</td></tr>
     <tr><td><code>settingsShowSale</code></td><td>판매 보관함 표시</td><td>Show sale storage</td></tr>
+    <tr><td><code>selectStorage</code></td><td>보관함 선택</td><td>Select storage</td></tr>
   </table>
 </section>
 
-<!-- 8. 에러 처리 -->
+<!-- 9. 에러 처리 -->
 <section class="section" id="error">
-  <div class="section-number">08</div>
+  <div class="section-number">09</div>
   <h2 class="section-title">에러 처리</h2>
 
   <table>
     <tr><th>상황</th><th>처리 방식</th></tr>
     <tr>
-      <td>시스템 보관함 미생성 상태에서 이동 시도</td>
+      <td>기본 보관함 미생성 상태에서 이동 시도</td>
       <td>이동 전 <code>ensureSystemStorages()</code> 선행 호출로 방지</td>
     </tr>
     <tr>
       <td>보관함 이동 실패 (네트워크 등)</td>
-      <td>SnackBar 에러 메시지 표시, 화면 유지</td>
+      <td>SnackBar 에러 메시지 표시, 화면 유지 (다중 선택 시 선택 상태 유지)</td>
     </tr>
     <tr>
       <td>설정 저장 실패</td>
@@ -929,11 +1013,15 @@ final system = storages.where((s) => s.isSystem).toList()
       <td>보관함 목록 로드 실패</td>
       <td>기존 <code>loadError</code> + 재시도 버튼</td>
     </tr>
+    <tr>
+      <td>user_settings 테이블 권한 오류 (PGRST205 / 42501)</td>
+      <td>테이블 수동 생성 후 <code>GRANT SELECT, INSERT, UPDATE ON user_settings TO authenticated</code> 필요. <code>NOTIFY pgrst, 'reload schema'</code>로 스키마 캐시 갱신.</td>
+    </tr>
   </table>
 </section>
 
 <footer>
-  MyStorage · 옷 이동 / 휴지통 / 판매 보관함 설계서 · 2026-11-26
+  MyStorage · 옷 이동 / 휴지통 / 판매 보관함 설계서 · v1.1 · 2026-11-26
 </footer>
 
 </body>

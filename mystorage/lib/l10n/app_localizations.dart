@@ -889,6 +889,66 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'등록되지 않은 QR입니다'**
   String get qrNotRegistered;
+
+  /// 다른 보관함으로 이동 메뉴
+  ///
+  /// In ko, this message translates to:
+  /// **'다른 보관함으로 이동'**
+  String get moveToStorage;
+
+  /// 휴지통으로 이동 메뉴
+  ///
+  /// In ko, this message translates to:
+  /// **'휴지통으로 이동'**
+  String get moveToTrash;
+
+  /// 판매 보관함으로 이동 메뉴
+  ///
+  /// In ko, this message translates to:
+  /// **'판매 보관함으로 이동'**
+  String get moveToSale;
+
+  /// 이동 완료 SnackBar 메시지
+  ///
+  /// In ko, this message translates to:
+  /// **'이동했습니다'**
+  String get moveDone;
+
+  /// 이동 실패 오류
+  ///
+  /// In ko, this message translates to:
+  /// **'이동 실패: {error}'**
+  String moveFailed(String error);
+
+  /// 홈 화면 기본 보관함 섹션 헤더
+  ///
+  /// In ko, this message translates to:
+  /// **'기본 보관함'**
+  String get systemStorages;
+
+  /// 프로필 휴지통 표시 토글
+  ///
+  /// In ko, this message translates to:
+  /// **'휴지통 보관함 표시'**
+  String get settingsShowTrash;
+
+  /// 프로필 판매 보관함 표시 토글
+  ///
+  /// In ko, this message translates to:
+  /// **'판매 보관함 표시'**
+  String get settingsShowSale;
+
+  /// 프로필 보관함 표시 설정 섹션 헤더
+  ///
+  /// In ko, this message translates to:
+  /// **'보관함 표시 설정'**
+  String get storageVisibility;
+
+  /// 보관함 선택 BottomSheet 타이틀
+  ///
+  /// In ko, this message translates to:
+  /// **'보관함 선택'**
+  String get selectStorage;
 }
 
 class _AppLocalizationsDelegate

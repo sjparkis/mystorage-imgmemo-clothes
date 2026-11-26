@@ -337,5 +337,29 @@
   "qrScanTitle": "QR 스캔",
   "@qrScanTitle": {"description": "QR 스캔 화면 타이틀"},
   "qrNotRegistered": "등록되지 않은 QR입니다",
-  "@qrNotRegistered": {"description": "미등록 QR 오류 메시지"}
+  "@qrNotRegistered": {"description": "미등록 QR 오류 메시지"},
+
+  "moveToStorage": "다른 보관함으로 이동",
+  "@moveToStorage": {"description": "다른 보관함으로 이동 메뉴"},
+  "moveToTrash": "휴지통으로 이동",
+  "@moveToTrash": {"description": "휴지통으로 이동 메뉴"},
+  "moveToSale": "판매 보관함으로 이동",
+  "@moveToSale": {"description": "판매 보관함으로 이동 메뉴"},
+  "moveDone": "이동했습니다",
+  "@moveDone": {"description": "이동 완료 SnackBar 메시지"},
+  "moveFailed": "이동 실패: {error}",
+  "@moveFailed": {
+    "description": "이동 실패 오류",
+    "placeholders": {"error": {"type": "String"}}
+  },
+  "systemStorages": "기본 보관함",
+  "@systemStorages": {"description": "홈 화면 기본 보관함 섹션 헤더"},
+  "settingsShowTrash": "휴지통 보관함 표시",
+  "@settingsShowTrash": {"description": "프로필 휴지통 표시 토글"},
+  "settingsShowSale": "판매 보관함 표시",
+  "@settingsShowSale": {"description": "프로필 판매 보관함 표시 토글"},
+  "storageVisibility": "보관함 표시 설정",
+  "@storageVisibility": {"description": "프로필 보관함 표시 설정 섹션 헤더"},
+  "selectStorage": "보관함 선택",
+  "@selectStorage": {"description": "보관함 선택 BottomSheet 타이틀"}
 }

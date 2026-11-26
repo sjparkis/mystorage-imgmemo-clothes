@@ -440,4 +440,36 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get qrNotRegistered => '등록되지 않은 QR입니다';
+
+  @override
+  String get moveToStorage => '다른 보관함으로 이동';
+
+  @override
+  String get moveToTrash => '휴지통으로 이동';
+
+  @override
+  String get moveToSale => '판매 보관함으로 이동';
+
+  @override
+  String get moveDone => '이동했습니다';
+
+  @override
+  String moveFailed(String error) {
+    return '이동 실패: $error';
+  }
+
+  @override
+  String get systemStorages => '기본 보관함';
+
+  @override
+  String get settingsShowTrash => '휴지통 보관함 표시';
+
+  @override
+  String get settingsShowSale => '판매 보관함 표시';
+
+  @override
+  String get storageVisibility => '보관함 표시 설정';
+
+  @override
+  String get selectStorage => '보관함 선택';
 }

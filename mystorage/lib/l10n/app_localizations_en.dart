@@ -446,4 +446,36 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get qrNotRegistered => 'Unregistered QR code';
+
+  @override
+  String get moveToStorage => 'Move to storage';
+
+  @override
+  String get moveToTrash => 'Move to trash';
+
+  @override
+  String get moveToSale => 'Move to for sale';
+
+  @override
+  String get moveDone => 'Moved';
+
+  @override
+  String moveFailed(String error) {
+    return 'Move failed: $error';
+  }
+
+  @override
+  String get systemStorages => 'Default storages';
+
+  @override
+  String get settingsShowTrash => 'Show trash storage';
+
+  @override
+  String get settingsShowSale => 'Show sale storage';
+
+  @override
+  String get storageVisibility => 'Storage visibility';
+
+  @override
+  String get selectStorage => 'Select storage';
 }

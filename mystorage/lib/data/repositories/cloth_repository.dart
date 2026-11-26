@@ -12,7 +12,7 @@ class ClothRepository {
   Future<List<Cloth>> fetchByStorage(String storageId) async {
     final rows = await _db
         .from('clothes')
-        .select('*, storages(name), clothes_tags(ai_generated, tags(id, name, category))')
+        .select('*, storages(name, storage_type), clothes_tags(ai_generated, tags(id, name, category))')
         .eq('storage_id', storageId)
         .order('created_at');
     return rows.map((r) => Cloth.fromMap(r)).toList();
@@ -39,7 +39,7 @@ class ClothRepository {
     final orgId = await getOrCreateOrgId();
     final rows = await _db
         .from('clothes')
-        .select('*, storages(name), clothes_tags(ai_generated, tags(id, name, category))')
+        .select('*, storages(name, storage_type), clothes_tags(ai_generated, tags(id, name, category))')
         .eq('org_id', orgId)
         .order('created_at');
     final all = rows.map((r) => Cloth.fromMap(r)).toList();
@@ -92,7 +92,7 @@ class ClothRepository {
 
     final result = await _db
         .from('clothes')
-        .select('*, storages(name), clothes_tags(ai_generated, tags(id, name, category))')
+        .select('*, storages(name, storage_type), clothes_tags(ai_generated, tags(id, name, category))')
         .eq('id', cloth['id'] as String)
         .single();
     return Cloth.fromMap(result);

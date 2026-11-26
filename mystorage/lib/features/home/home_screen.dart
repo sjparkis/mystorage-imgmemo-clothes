@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../data/repositories/storage_repository.dart';
 import '../../data/repositories/cloth_repository.dart';
+import '../../data/repositories/user_settings_repository.dart';
 import '../../data/models/storage_location.dart';
 import '../../l10n/app_localizations.dart';
 import 'storage_card.dart';
@@ -16,8 +17,11 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final _repo = StorageRepository();
   final _clothRepo = ClothRepository();
-  List<StorageLocation> _storages = [];
+  final _settingsRepo = UserSettingsRepository();
+  List<StorageLocation> _normalStorages = [];
+  List<StorageLocation> _systemStorages = [];
   Map<String, int> _clothCounts = {};
+  Map<String, dynamic> _visibility = {'show_trash': true, 'show_sale': true};
   bool _loading = true;
   String? _error;
 
@@ -31,14 +35,23 @@ class _HomeScreenState extends State<HomeScreen> {
     if (!mounted) return;
     setState(() { _loading = true; _error = null; });
     try {
+      final orgId = await _repo.getOrCreateOrgId();
+      await Future.wait([
+        _repo.ensureSystemStorages(orgId),
+        _settingsRepo.ensureUserSettings(),
+      ]);
       final results = await Future.wait([
         _repo.fetchAll(),
         _clothRepo.fetchCountsByOrg(),
+        _settingsRepo.fetchSettings(),
       ]);
       if (mounted) {
+        final allStorages = results[0] as List<StorageLocation>;
         setState(() {
-          _storages = results[0] as List<StorageLocation>;
+          _normalStorages = allStorages.where((s) => !s.isSystem).toList();
+          _systemStorages = allStorages.where((s) => s.isSystem).toList();
           _clothCounts = results[1] as Map<String, int>;
+          _visibility = results[2] as Map<String, dynamic>;
           _loading = false;
         });
       }
@@ -48,9 +61,8 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildGroupedGrid() {
-    // 위치별 그룹: 위치 없음은 맨 뒤
     final grouped = <String?, List<StorageLocation>>{};
-    for (final s in _storages) {
+    for (final s in _normalStorages) {
       grouped.putIfAbsent(s.locationName, () => []).add(s);
     }
     final keys = grouped.keys.toList()
@@ -111,9 +123,69 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
         ],
+        if (_systemStorages.isNotEmpty) ..._buildSystemSection(),
         const SliverToBoxAdapter(child: SizedBox(height: 100)),
       ],
     );
+  }
+
+  List<Widget> _buildSystemSection() {
+    final l10n = AppLocalizations.of(context);
+    final visible = _systemStorages.where((s) {
+      if (s.isTrash) return _visibility['show_trash'] ?? true;
+      if (s.isForSale) return _visibility['show_sale'] ?? true;
+      return false;
+    }).toList();
+
+    if (visible.isEmpty) return [];
+
+    return [
+      SliverToBoxAdapter(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 32, 20, 10),
+          child: Row(
+            children: [
+              const Icon(Icons.folder_special_outlined, size: 13, color: Color(0xFF8B7355)),
+              const SizedBox(width: 6),
+              Text(
+                l10n.systemStorages,
+                style: GoogleFonts.inter(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: const Color(0xFF8B7355),
+                  letterSpacing: 1.2,
+                ).copyWith(fontFamilyFallback: const ['ChosunSm']),
+              ),
+            ],
+          ),
+        ),
+      ),
+      SliverPadding(
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        sliver: SliverGrid(
+          delegate: SliverChildBuilderDelegate(
+            (_, i) {
+              final s = visible[i];
+              return StorageCard(
+                storage: s,
+                clothCount: _clothCounts[s.id] ?? 0,
+                onTap: () async {
+                  await context.push('/storage/${s.id}');
+                  _load();
+                },
+              );
+            },
+            childCount: visible.length,
+          ),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            crossAxisSpacing: 16,
+            mainAxisSpacing: 28,
+            childAspectRatio: 0.75,
+          ),
+        ),
+      ),
+    ];
   }
 
   @override
@@ -177,7 +249,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ],
                   ),
                 )
-              : _storages.isEmpty
+              : _normalStorages.isEmpty && _systemStorages.isEmpty
                   ? Center(
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
@@ -239,9 +311,9 @@ class _HomeScreenState extends State<HomeScreen> {
               selectedIcon: const Icon(Icons.search),
               label: AppLocalizations.of(context).navSearch,
             ),
-            NavigationDestination(
-              icon: const Icon(Icons.qr_code_scanner_outlined),
-              selectedIcon: const Icon(Icons.qr_code_scanner),
+            const NavigationDestination(
+              icon: Icon(Icons.qr_code_scanner_outlined),
+              selectedIcon: Icon(Icons.qr_code_scanner),
               label: 'QR',
             ),
             NavigationDestination(
@@ -258,14 +330,10 @@ class _HomeScreenState extends State<HomeScreen> {
           selectedIndex: 0,
           onDestinationSelected: (i) {
             switch (i) {
-              case 1:
-                context.push('/search');
-              case 2:
-                context.push('/qr-scan');
-              case 3:
-                context.push('/organize');
-              case 4:
-                context.push('/profile');
+              case 1: context.push('/search');
+              case 2: context.push('/qr-scan');
+              case 3: context.push('/organize');
+              case 4: context.push('/profile').then((_) => _load());
             }
           },
         ),

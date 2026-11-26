@@ -8,6 +8,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/locale_cubit.dart';
 import '../../data/repositories/storage_repository.dart';
 import '../../data/repositories/cloth_repository.dart';
+import '../../data/repositories/user_settings_repository.dart';
 import '../../l10n/app_localizations.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -19,17 +20,23 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   final _storageRepo = StorageRepository();
   final _clothRepo = ClothRepository();
+  final _settingsRepo = UserSettingsRepository();
   final _nicknameCtrl = TextEditingController();
 
   int _storageCount = 0;
   int _clothCount = 0;
   bool _loadingStats = true;
   bool _savingProfile = false;
+  Map<String, dynamic> _visibility = {'show_trash': true, 'show_sale': true, 'role': 'user'};
+  bool _loadingVisibility = true;
+  String get _role => _visibility['role'] as String? ?? 'user';
+  bool get _isAdmin => _role == 'admin' || _role == 'manager';
 
   @override
   void initState() {
     super.initState();
     _loadStats();
+    _loadVisibility();
     final meta = Supabase.instance.client.auth.currentUser?.userMetadata;
     _nicknameCtrl.text = (meta?['nickname'] as String?) ?? '';
   }
@@ -57,6 +64,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
       }
     } catch (_) {
       if (mounted) setState(() => _loadingStats = false);
+    }
+  }
+
+  Future<void> _loadVisibility() async {
+    try {
+      final settings = await _settingsRepo.fetchSettings();
+      if (mounted) setState(() { _visibility = settings; _loadingVisibility = false; });
+    } catch (_) {
+      if (mounted) setState(() => _loadingVisibility = false);
     }
   }
 
@@ -237,7 +253,41 @@ class _ProfileScreenState extends State<ProfileScreen> {
             if (!_loadingStats) _buildStats(),
             const SizedBox(height: 2),
             _buildMenuSection(),
+            const SizedBox(height: 2),
+            if (!_loadingVisibility) _buildVisibilitySection(),
             const SizedBox(height: 32),
+            if (_isAdmin) ...[
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: GestureDetector(
+                  onTap: () => context.go('/admin'),
+                  child: Container(
+                    height: 50,
+                    alignment: Alignment.center,
+                    decoration: const BoxDecoration(
+                      color: Color(0xFF2C2416),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.admin_panel_settings_outlined, size: 16, color: Color(0xFF8B7355)),
+                        const SizedBox(width: 10),
+                        Text(
+                          'ADMIN',
+                          style: GoogleFonts.inter(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 3,
+                            color: const Color(0xFF8B7355),
+                          ).copyWith(fontFamilyFallback: const ['ChosunSm']),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+            ],
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24),
               child: GestureDetector(
@@ -533,6 +583,98 @@ class _ProfileScreenState extends State<ProfileScreen> {
             const Icon(Icons.arrow_forward_ios, size: 12, color: Color(0xFFBBAA95)),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildVisibilitySection() {
+    final l10n = AppLocalizations.of(context);
+    return Container(
+      color: const Color(0xFFFFFBF7),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 20, 24, 8),
+            child: Text(
+              l10n.storageVisibility,
+              style: GoogleFonts.inter(
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 2,
+                color: const Color(0xFF9B8E7E),
+              ).copyWith(fontFamilyFallback: const ['ChosunSm']),
+            ),
+          ),
+          _buildVisibilityToggle(
+            label: l10n.settingsShowTrash,
+            value: _visibility['show_trash'] ?? true,
+            onChanged: (v) async {
+              final prev = _visibility['show_trash'];
+              setState(() => _visibility = {..._visibility, 'show_trash': v});
+              try {
+                await _settingsRepo.updateShowTrash(v);
+              } catch (e) {
+                if (mounted) {
+                  setState(() => _visibility = {..._visibility, 'show_trash': prev ?? true});
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(l10n.moveFailed(e.toString()))),
+                  );
+                }
+              }
+            },
+          ),
+          const Divider(height: 1, color: Color(0xFFE8E0D5), indent: 24, endIndent: 24),
+          _buildVisibilityToggle(
+            label: l10n.settingsShowSale,
+            value: _visibility['show_sale'] ?? true,
+            onChanged: (v) async {
+              final prev = _visibility['show_sale'];
+              setState(() => _visibility = {..._visibility, 'show_sale': v});
+              try {
+                await _settingsRepo.updateShowSale(v);
+              } catch (e) {
+                if (mounted) {
+                  setState(() => _visibility = {..._visibility, 'show_sale': prev ?? true});
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(l10n.moveFailed(e.toString()))),
+                  );
+                }
+              }
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildVisibilityToggle({
+    required String label,
+    required bool value,
+    required ValueChanged<bool> onChanged,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
+      child: Row(
+        children: [
+          const Icon(Icons.visibility_outlined, size: 18, color: Color(0xFF8B7355)),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Text(
+              label,
+              style: GoogleFonts.inter(
+                fontSize: 13,
+                color: const Color(0xFF2C2416),
+                fontWeight: FontWeight.w500,
+              ).copyWith(fontFamilyFallback: const ['ChosunSm']),
+            ),
+          ),
+          Switch(
+            value: value,
+            onChanged: onChanged,
+            activeThumbColor: const Color(0xFF8B7355),
+          ),
+        ],
       ),
     );
   }
